@@ -1,5 +1,4 @@
 import streamlit as st
-import sqlite3
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
@@ -1036,4 +1035,5 @@ elif modo == "Profesor":
         if st.sidebar.button("🚪 Cerrar Sesión", use_container_width=True):
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
+
             st.rerun()
