@@ -775,36 +775,35 @@ def completar_inasistencias_con_uno():
         confirmar = input("¿Confirmamos el cierre de la planilla del día completando con 1 a aquellos alumnos que faltaron? (S/N): ").strip().upper()
         
         if confirmar == 'S':
-            if confirmar == 'S':
-            # 1. Obtenemos la fecha de hoy para el cierre
-            fecha_cierre = datetime.date.today().strftime("%d/%m/%Y")
+        # 1. Obtenemos la fecha de hoy para el cierre
+        fecha_cierre = datetime.date.today().strftime("%d/%m/%Y")
             
-            # 2. ACTUALIZAMOS LA FECHA EN LA TABLA CLASES
-            cursor.execute("""
-                UPDATE clases 
-                SET fecha = ? 
-                WHERE id_clase = ?
-            """, (fecha_cierre, id_clase_activa))
+        # 2. ACTUALIZAMOS LA FECHA EN LA TABLA CLASES
+        cursor.execute("""
+            UPDATE clases 
+            SET fecha = ? 
+            WHERE id_clase = ?
+        """, (fecha_cierre, id_clase_activa))
             
-            # 3. Ejecución de la carga masiva
-            query = """
-                INSERT INTO reportes_diarios (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_final)
-                SELECT id_alumno, ?, 0, 0, 1.0
-                FROM alumnos
-                WHERE UPPER(curso) = UPPER(?) 
-                AND id_alumno NOT IN (
-                    SELECT id_alumno FROM reportes_diarios WHERE id_clase = ?
-                )
-            """
-            cursor.execute(query, (id_clase_activa, curso_activo, id_clase_activa))
-            filas_afectadas = cursor.rowcount
-            conn.commit()
+        # 3. Ejecución de la carga masiva
+        query = """
+            INSERT INTO reportes_diarios (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_final)
+            SELECT id_alumno, ?, 0, 0, 1.0
+            FROM alumnos
+            WHERE UPPER(curso) = UPPER(?) 
+            AND id_alumno NOT IN (
+                SELECT id_alumno FROM reportes_diarios WHERE id_clase = ?
+            )
+        """
+        cursor.execute(query, (id_clase_activa, curso_activo, id_clase_activa))
+        filas_afectadas = cursor.rowcount
+        conn.commit()
             
-            print(f"\n✅ Planilla cerrada con fecha {fecha_cierre}. Se registraron {filas_afectadas} ausentes.")
-        else:
-            print("\n🛑 Operación cancelada. No se modificó ninguna nota.")
+        print(f"\n✅ Planilla cerrada con fecha {fecha_cierre}. Se registraron {filas_afectadas} ausentes.")
+    else:
+        print("\n🛑 Operación cancelada. No se modificó ninguna nota.")
             
-        conn.close()
+    conn.close()
         
     except Exception as e:
         print(f"❌ Error en la base de datos: {e}")
@@ -1127,3 +1126,4 @@ def ver_repaso_examen(alumno):
     except Exception as e:
 
         print(f"❌ Error al cargar el repaso: {e}")
+
