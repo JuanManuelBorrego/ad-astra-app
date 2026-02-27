@@ -166,9 +166,7 @@ def menu_profesor_cargar_examen():
     # --- NUEVO: Captura de Trimestre ---
     trimestre = ""
     while trimestre not in ['1', '2', '3']:
-        trimestre = input("📅 Trimestre al que pertenece (1, 2 o 3): ").strip()
-    
-    fecha_hoy = datetime.date.today().strftime("%d/%m/%Y") 
+        trimestre = input("📅 Trimestre al que pertenece (1, 2 o 3): ").strip() 
 
     try:
         cant = int(input("❓ ¿Cuántas preguntas vas a cargar hoy?: "))
@@ -202,7 +200,7 @@ def menu_profesor_cargar_examen():
         cursor.execute("""
             INSERT OR REPLACE INTO clases (id_clase, fecha, tema, ejercicios_totales, trimestre) 
             VALUES (?, ?, ?, ?, ?)
-        """, (id_clase, fecha_hoy, tema, cant, int(trimestre)))
+        """, (id_clase, None, tema, cant, int(trimestre)))
 
         # PASO B: LIMPIEZA DE PREGUNTAS PREVIAS
         cursor.execute("DELETE FROM preguntas WHERE id_clase = ?", (id_clase,))
@@ -777,6 +775,17 @@ def completar_inasistencias_con_uno():
         confirmar = input("¿Confirmamos el cierre de la planilla del día completando con 1 a aquellos alumnos que faltaron? (S/N): ").strip().upper()
         
         if confirmar == 'S':
+            if confirmar == 'S':
+            # 1. Obtenemos la fecha de hoy para el cierre
+            fecha_cierre = datetime.date.today().strftime("%d/%m/%Y")
+            
+            # 2. ACTUALIZAMOS LA FECHA EN LA TABLA CLASES
+            cursor.execute("""
+                UPDATE clases 
+                SET fecha = ? 
+                WHERE id_clase = ?
+            """, (fecha_cierre, id_clase_activa))
+            
             # 3. Ejecución de la carga masiva
             query = """
                 INSERT INTO reportes_diarios (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_final)
@@ -791,7 +800,7 @@ def completar_inasistencias_con_uno():
             filas_afectadas = cursor.rowcount
             conn.commit()
             
-            print(f"\n✅ Planilla cerrada con éxito. Se registraron {filas_afectadas} inasistencias.")
+            print(f"\n✅ Planilla cerrada con fecha {fecha_cierre}. Se registraron {filas_afectadas} ausentes.")
         else:
             print("\n🛑 Operación cancelada. No se modificó ninguna nota.")
             
@@ -1116,4 +1125,5 @@ def ver_repaso_examen(alumno):
         input("\nPresioná Enter para volver...")
         
     except Exception as e:
+
         print(f"❌ Error al cargar el repaso: {e}")
