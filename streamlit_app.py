@@ -605,11 +605,11 @@ elif modo == "Profesor":
                                                (id_al, clase_id_activa))
                                 
                                 if cursor.fetchone()[0] == 0:
-                                    # Asignamos el 1.0 automático (Instrucción del 21-02-2026)
+                                    # Aquí grabamos el AUSENTE y el 1.0 inicial
                                     cursor.execute("""
                                         INSERT INTO reportes_diarios 
-                                        (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final)
-                                        VALUES (?, ?, 0, 0, NULL, 1.0)
+                                        (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_final, asistencia)
+                                        VALUES (?, ?, 0, 0, 1.0, 'AUSENTE')
                                     """, (id_al, clase_id_activa))
                                     contador_ausentes += 1
                                     nombres_ausentes.append(nombre_al)
@@ -1050,6 +1050,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
