@@ -736,16 +736,14 @@ elif modo == "Profesor":
                 except Exception as e:
                     st.error(f"Error al guardar nota: {e}")
                     
-        # --- 6. JUSTIFICAR INASISTENCIA (Versión Estable) ---
+        # --- 6. JUSTIFICAR INASISTENCIA (Versión con Registro de Ausencia Permanente) ---
         st.divider()
         st.subheader("🏥 Justificar Inasistencia")
         
         with st.expander("Abrir panel de justificación"):
-            st.info("Esta acción eliminará el registro (el 1.0) para que el alumno pueda ser calificado de nuevo.")
+            st.info("Esta acción mantendrá el registro de 'AUSENTE' pero eliminará la nota 1.0 para que el alumno pueda rendir.")
             
             busqueda = st.text_input("Buscar alumno por nombre o apellido:", key="input_justificar")
-            
-            # Inicializamos variables para evitar el error de "not defined"
             resultados = []
             
             if busqueda:
@@ -762,26 +760,32 @@ elif modo == "Profesor":
                 seleccion = st.selectbox("Seleccioná el alumno correcto:", opciones_alumnos.keys())
                 id_al_elegido = opciones_alumnos[seleccion]
                 
-                id_clase_justificar = st.number_input("ID de Clase a limpiar:", value=id_clase_input, key="nro_clase_just")
+                # Asumimos que id_clase_input viene de la configuración de arriba
+                id_clase_justificar = st.number_input("ID de Clase a justificar:", value=id_clase_input, key="nro_clase_just")
                 
-                if st.button("⚠️ ELIMINAR REGISTRO Y JUSTIFICAR", use_container_width=True):
+                if st.button("⚠️ JUSTIFICAR Y LIMPIAR NOTAS", use_container_width=True):
                     try:
                         with sqlite3.connect(ruta) as conn:
                             cursor = conn.cursor()
+                            # CAMBIO CLAVE: UPDATE en lugar de DELETE
+                            # Seteamos notas y ejercicios en NULL para que el sistema lo vea como "no rendido"
+                            # pero NO tocamos la columna 'asistencia' (que seguirá siendo 'AUSENTE')
                             cursor.execute("""
-                                DELETE FROM reportes_diarios 
+                                UPDATE reportes_diarios 
+                                SET ejercicios_completados = NULL, 
+                                    ejercicios_correctos = NULL, 
+                                    nota_final = NULL 
                                 WHERE id_alumno = ? AND id_clase = ?
                             """, (id_al_elegido, id_clase_justificar))
                             conn.commit()
                         
-                        st.session_state.msg_justificar = f"✅ Registro eliminado para {seleccion}."
+                        st.session_state.msg_justificar = f"✅ Inasistencia justificada para {seleccion}. Registro histórico mantenido."
                         st.rerun()
                     except Exception as e:
-                        st.error(f"Error al borrar: {e}")
+                        st.error(f"Error al justificar: {e}")
             elif busqueda:
                 st.warning("No se encontraron coincidencias.")
 
-        # Mostrar el mensaje persistente FUERA del expander para que se vea bien
         if 'msg_justificar' in st.session_state:
             st.success(st.session_state.msg_justificar)
             del st.session_state.msg_justificar
@@ -1050,6 +1054,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
