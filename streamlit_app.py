@@ -399,6 +399,7 @@ if modo == "Estudiantes":
                         SELECT 
                             c.fecha as 'Fecha', 
                             c.tema as 'Tema', 
+                            r.asistencia as 'Asistencia',
                             CAST(c.ejercicios_totales AS INTEGER) as 'Ejercicios del día',
                             CAST(r.ejercicios_completados AS INTEGER) as 'Total resueltos',
                             CAST(r.ejercicios_correctos AS INTEGER) as 'Total correctos',
@@ -406,6 +407,7 @@ if modo == "Estudiantes":
                             ROUND(
                                 CASE 
                                     WHEN r.nota_oral > 0 THEN r.nota_oral
+                                    WHEN r.ejercicios_completados IS NULL THEN NULL
                                     ELSE ((CAST(r.ejercicios_completados AS REAL) / c.ejercicios_totales) + 
                                           (CAST(r.ejercicios_correctos AS REAL) / c.ejercicios_totales)) / 2 * 10
                                 END, 2
@@ -419,18 +421,22 @@ if modo == "Estudiantes":
                     conn.close()
 
                     if not df_repaso.empty:
-                        # Forzamos a Pandas a mostrar las columnas de conteo como enteros puros
+                        # Para las columnas de conteo: 
+                        # Si es NULL (justificado), lo dejamos vacío para no confundir con un "0" real
                         cols_enteros = ['Ejercicios del día', 'Total resueltos', 'Total correctos']
-                        df_repaso[cols_enteros] = df_repaso[cols_enteros].fillna(0).astype(int)
-
+                        
+                        # Aplicamos formato y estilo
                         st.dataframe(
-                            df_repaso.style.background_gradient(
+                            df_repaso.style.applymap(
+                                lambda x: 'color: #FF4B4B; font-weight: bold' if x == 'AUSENTE' else 'color: #28a745',
+                                subset=['Asistencia']
+                            ).background_gradient(
                                 subset=['Nota final de la clase'], 
                                 cmap='RdYlGn', vmin=1, vmax=10
                             ).format({
                                 "Nota examen Oral": "{:.1f}", 
-                                "Nota final de la clase": "{:.1f}"
-                            }),
+                                "Nota final de la clase": lambda x: f"{x:.1f}" if pd.notnull(x) else "-"
+                            }, na_rep="-"), # na_rep pone un guion en los NULLs
                             use_container_width=True,
                             hide_index=True
                         )
@@ -1062,6 +1068,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
