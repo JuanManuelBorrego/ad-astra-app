@@ -577,6 +577,13 @@ elif modo == "Profesor":
                 # 2. Botón principal: Solo abre el cartel de confirmación
                 st.info(f"Presione el botón para cerrar la **Clase {clase_id_activa}** del curso **{curso_activo}**.")
                 if st.button(f"🔴 EJECUTAR CIERRE DE JORNADA", use_container_width=True):
+                    # --- EN LA FUNCIÓN DE CIERRE DE JORNADA ---
+                    fecha_actual = datetime.date.today().strftime("%d/%m/%Y")
+                    cursor.execute("""
+                        UPDATE clases 
+                        SET fecha = ? 
+                        WHERE id_clase = ?
+                    """, (fecha_actual, clase_id_activa))
                     confirmar_cierre_dialog(clase_id_activa, curso_activo)
 
                 # 3. Lógica que se dispara SOLO si el usuario confirmó en el cartel
@@ -939,9 +946,6 @@ elif modo == "Profesor":
                     st.error("Por favor, ingresa un tema para la clase.")
                 else:
                     try:
-                        import datetime
-                        fecha_hoy = datetime.date.today().strftime("%d/%m/%Y")
-                        
                         with sqlite3.connect(ruta) as conn:
                             cursor = conn.cursor()
 
@@ -950,7 +954,7 @@ elif modo == "Profesor":
                             cursor.execute("""
                                 INSERT INTO clases (fecha, tema, ejercicios_totales, trimestre) 
                                 VALUES (?, ?, ?, ?)
-                            """, (fecha_hoy, tema_new, cant_preguntas, int(trimestre_new)))
+                            """, (None, tema_new, cant_preguntas, int(trimestre_new)))
 
                             # PASO B: Obtener el ID que SQLite acaba de generar
                             id_clase_generado = cursor.lastrowid
@@ -1037,3 +1041,4 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
