@@ -797,10 +797,11 @@ elif modo == "Profesor":
 
         try:
             with sqlite3.connect(ruta) as conn:
-                # La consulta solo trae registros que existen en ambas tablas (Filtro doble)
+                # Actualizamos la consulta para incluir 'asistencia'
                 query_monitor = """
                     SELECT 
                         a.nombre AS 'Alumno', 
+                        r.asistencia AS 'Asistencia',
                         r.ejercicios_completados AS 'Hechos', 
                         r.ejercicios_correctos AS 'Correctos', 
                         r.nota_oral AS 'Nota Oral',
@@ -812,11 +813,18 @@ elif modo == "Profesor":
                     ORDER BY a.nombre ASC
                 """
                 
-                # Ejecutamos con los dos parámetros de filtro
                 df_mon = pd.read_sql_query(query_monitor, conn, params=(id_clase_input, curso_seleccionado))
                 
                 if not df_mon.empty:
-                    st.dataframe(df_mon, use_container_width=True, hide_index=True)
+                    # --- FUNCIÓN DE ESTILO PARA RESALTAR AUSENCIAS ---
+                    def resaltar_ausencia(val):
+                        color = '#FF4B4B' if val == 'AUSENTE' else '#28a745'
+                        return f'color: {color}; font-weight: bold'
+
+                    # Aplicamos el estilo a la columna Asistencia
+                    df_estilado = df_mon.style.applymap(resaltar_ausencia, subset=['Asistencia'])
+
+                    st.dataframe(df_estilado, use_container_width=True, hide_index=True)
                     st.caption(f"✅ Mostrando {len(df_mon)} registros encontrados en la tabla reportes_diarios.")
                 else:
                     st.info(f"Empty Set: No hay registros grabados en la base de datos para el curso {curso_seleccionado} en la clase {id_clase_input}.")
@@ -1054,6 +1062,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
