@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt # Ya que lo usás en la clase Alumno
 import sqlite3
 import random
 import getpass # Para ocultar la clave al escribir
+import datetime # Asegurate de tener este import arriba
 from clases import Alumno # <-- IMPORTANTE: Trae la clase para poder instanciar
 from config import ruta # <-- IMPORTANTE: Trae la ruta única
 
@@ -153,8 +154,6 @@ def cargar_nota_oral_manual():
 
 #-----------------------------------------------------------------------------------------------------------------------------
 #3 (valor 5 del menu profesor) CREAMOS EXAMENES NUEVOS DESDE EL MENU PROFESOR
-
-import datetime # Asegurate de tener este import arriba
 
 def menu_profesor_cargar_examen():
     print("\n" + "🍎" * 5 + " CREADOR DE EXÁMENES Y CLASES " + "🍎" * 5)
@@ -1127,5 +1126,6 @@ def ver_repaso_examen(alumno):
     except Exception as e:
 
         print(f"❌ Error al cargar el repaso: {e}")
+
 
 
