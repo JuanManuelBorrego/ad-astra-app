@@ -935,7 +935,7 @@ elif modo == "Profesor":
         st.divider()
         st.subheader("🍎 Creador de Exámenes")
 
-        with st.expander("Configurar Nueva Clase/Examen", expanded=True):
+        with st.expander("Configurar Nueva Clase/Examen", expanded=False):
             # 1. Datos Maestros (Sin pedir ID, SQLite lo hace solo)
             col_tri, col_preg = st.columns(2)
             trimestre_new = col_tri.selectbox("📅 Trimestre:", ["1", "2", "3"], key="tri_new_auto")
@@ -1068,6 +1068,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
