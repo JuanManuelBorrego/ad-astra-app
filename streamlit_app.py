@@ -954,7 +954,7 @@ elif modo == "Profesor":
                             cursor.execute("""
                                 INSERT INTO clases (fecha, tema, ejercicios_totales, trimestre) 
                                 VALUES (?, ?, ?, ?)
-                            """, (None, tema_new, cant_preguntas, int(trimestre_new)))
+                            """, ("", tema_new, cant_preguntas, int(trimestre_new)))
 
                             # PASO B: Obtener el ID que SQLite acaba de generar
                             id_clase_generado = cursor.lastrowid
@@ -1041,4 +1041,5 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
