@@ -577,53 +577,62 @@ elif modo == "Profesor":
                 # 2. Botón principal: Solo abre el cartel de confirmación
                 st.info(f"Presione el botón para cerrar la **Clase {clase_id_activa}** del curso **{curso_activo}**.")
                 if st.button(f"🔴 EJECUTAR CIERRE DE JORNADA", use_container_width=True):
-                    # --- EN LA FUNCIÓN DE CIERRE DE JORNADA ---
-                    fecha_actual = datetime.date.today().strftime("%d/%m/%Y")
-                    cursor.execute("""
-                        UPDATE clases 
-                        SET fecha = ? 
-                        WHERE id_clase = ?
-                    """, (fecha_actual, clase_id_activa))
                     confirmar_cierre_dialog(clase_id_activa, curso_activo)
-
                 # 3. Lógica que se dispara SOLO si el usuario confirmó en el cartel
                 if st.session_state.get('ejecutar_cierre_real', False):
-                    with sqlite3.connect(ruta) as conn:
-                        cursor = conn.cursor()
-                        
-                        # Buscamos alumnos del curso
-                        cursor.execute("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_activo,))
-                        alumnos_del_curso = cursor.fetchall()
-                        
-                        contador_ausentes = 0
-                        nombres_ausentes = []
-
-                        for id_al, nombre_al in alumnos_del_curso:
-                            # Verificamos si ya tiene nota en esta clase
-                            cursor.execute("SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", 
-                                           (id_al, clase_id_activa))
+                    try:
+                        with sqlite3.connect(ruta) as conn:
+                            cursor = conn.cursor()
                             
-                            if cursor.fetchone()[0] == 0:
-                                # Asignamos el 1.0 automático
-                                cursor.execute("""
-                                    INSERT INTO reportes_diarios 
-                                    (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final)
-                                    VALUES (?, ?, 0, 0, NULL, 1.0)
-                                """, (id_al, clase_id_activa))
-                                contador_ausentes += 1
-                                nombres_ausentes.append(nombre_al)
+                            # --- CORRECCIÓN 1: Registrar la fecha real de hoy en la tabla clases ---
+                            fecha_actual = datetime.date.today().strftime("%d/%m/%Y")
+                            cursor.execute("""
+                                UPDATE clases 
+                                SET fecha = ? 
+                                WHERE id_clase = ?
+                            """, (fecha_actual, clase_id_activa))
+                            
+                            # Buscamos alumnos del curso
+                            cursor.execute("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_activo,))
+                            alumnos_del_curso = cursor.fetchall()
+                            
+                            contador_ausentes = 0
+                            nombres_ausentes = []
+
+                            for id_al, nombre_al in alumnos_del_curso:
+                                # Verificamos si ya tiene nota en esta clase
+                                cursor.execute("SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", 
+                                               (id_al, clase_id_activa))
+                                
+                                if cursor.fetchone()[0] == 0:
+                                    # Asignamos el 1.0 automático (Instrucción del 21-02-2026)
+                                    cursor.execute("""
+                                        INSERT INTO reportes_diarios 
+                                        (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final)
+                                        VALUES (?, ?, 0, 0, NULL, 1.0)
+                                    """, (id_al, clase_id_activa))
+                                    contador_ausentes += 1
+                                    nombres_ausentes.append(nombre_al)
+                            
+                            # Cerramos el acceso al examen
+                            cursor.execute("UPDATE configuracion_clase SET examen_activo = 0 WHERE id = 1")
+                            
+                            # --- CORRECCIÓN 2: Guardar todos los cambios (Fecha + Notas 1.0 + Configuración) ---
+                            conn.commit()
                         
-                        # Cerramos el acceso al examen
-                        cursor.execute("UPDATE configuracion_clase SET examen_activo = 0 WHERE id = 1")
-                        conn.commit()
-                    
-                    # Mostramos resultado y limpiamos la señal de ejecución
-                    st.success(f"✅ ¡Cierre exitoso! Se asignó 1.0 a {contador_ausentes} alumnos.")
-                    if nombres_ausentes:
-                        with st.expander("Ver lista de ausentes calificados"):
-                            for n in nombres_ausentes: st.write(f"• {n}")
-                    
-                    st.session_state.ejecutar_cierre_real = False # IMPORTANTE: Apagamos el interruptor
+                        # Mostramos resultado y limpiamos la señal de ejecución
+                        st.success(f"✅ ¡Cierre exitoso! Clase registrada con fecha: {fecha_actual}")
+                        st.info(f"📍 Se asignó nota 1.0 a {contador_ausentes} alumnos que no completaron el ejercicio.")
+                        
+                        if nombres_ausentes:
+                            with st.expander("Ver lista de ausentes calificados"):
+                                for n in nombres_ausentes: st.write(f"• {n}")
+                        
+                        st.session_state.ejecutar_cierre_real = False # Apagamos el interruptor
+                        st.rerun() # Refrescamos para que desaparezca el botón de cierre
+
+                    except Exception as e:
+                        st.error(f"❌ Error en el proceso de cierre: {e}")
             else:
                 st.warning("⚠️ No hay un curso configurado para cerrar.")
 
@@ -1041,5 +1050,6 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
