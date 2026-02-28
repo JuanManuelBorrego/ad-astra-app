@@ -32,11 +32,11 @@ def menu_principal():
                 
                 # --- NUEVO: Consultamos el estado del feedback en la DB ---
                 try:
-                    conn = sqlite3.connect(ruta)
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT feedback_visible FROM configuracion_clase WHERE id = 1")
+                    # Conexión gestionada
+                    # Cursor gestionado
+                    ejecutar_sql("SELECT feedback_visible FROM configuracion_clase WHERE id = 1")
                     res = cursor.fetchone()
-                    conn.close()
+                    
                     # Si no hay datos, por defecto es 0 (bloqueado)
                     estado_feedback = res[0] if res else 0
                 except:

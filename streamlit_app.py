@@ -211,11 +211,11 @@ if modo == "Estudiantes":
         # ... dentro de if modo == "Estudiantes" ...
         if st.button("Ingresar al Dashboard"):
             try:
-                conn = sqlite3.connect(ruta)
-                cursor = conn.cursor()
-                cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre = ?", (nombre_ingresado,))
+                # Conexión gestionada
+                # Cursor gestionado
+                ejecutar_sql("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre = ?", (nombre_ingresado,))
                 res = cursor.fetchone()
-                conn.close()
+                
                 
                 if res:
                     # res[0]=id, res[1]=nombre, res[2]=curso
@@ -304,8 +304,8 @@ if modo == "Estudiantes":
             if st.session_state.id_clase_hoy:
                 try:
                     with sqlite3.connect(ruta) as conn:
-                        cursor = conn.cursor()
-                        cursor.execute("""
+                        # Cursor gestionado
+                        ejecutar_sql("""
                             SELECT COUNT(*) FROM reportes_diarios 
                             WHERE id_alumno = ? AND id_clase = ?
                         """, (st.session_state.estudiante.id, st.session_state.id_clase_hoy))
@@ -347,12 +347,12 @@ if modo == "Estudiantes":
                 else:
                     # RENDERIZADO DEL FORMULARIO DE PREGUNTAS
                     try:
-                        conn = sqlite3.connect(ruta)
-                        df_preguntas = pd.read_sql_query(
+                        # Conexión gestionada
+                        df_preguntas = ejecutar_sql(
                             "SELECT id_pregunta, enunciado, opc_a, opc_b, opc_c, opc_d, correcta FROM preguntas WHERE id_clase = ?", 
                             conn, params=(st.session_state.id_clase_hoy,)
                         )
-                        conn.close()
+                        
 
                         with st.form("examen_web"):
                             st.subheader(f"📝 Examen Clase {st.session_state.id_clase_hoy}")
@@ -396,7 +396,7 @@ if modo == "Estudiantes":
                 st.subheader("📖 Tu Historial de Aprendizaje")
                 
                 try:
-                    conn = sqlite3.connect(ruta)
+                    # Conexión gestionada
                     id_actual = st.session_state.estudiante.id
                     
                     query = """
@@ -421,8 +421,8 @@ if modo == "Estudiantes":
                         WHERE r.id_alumno = ?
                         ORDER BY c.fecha DESC
                     """
-                    df_repaso = pd.read_sql_query(query, conn, params=(id_actual,))
-                    conn.close()
+                    df_repaso = ejecutar_sql(query, conn, params=(id_actual,))
+                    
 
                     if not df_repaso.empty:
                         # Para las columnas de conteo: 
@@ -513,8 +513,8 @@ elif modo == "Profesor":
         # Consultamos el estado actual para mostrarlo en la lateral
         try:
             with sqlite3.connect(ruta) as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
+                # Cursor gestionado
+                ejecutar_sql("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
                 res = cursor.fetchone()
                 
                 if res:
@@ -562,8 +562,8 @@ elif modo == "Profesor":
 
             if st.button("💾 GUARDAR Y APLICAR CAMBIOS", use_container_width=True):
                 with sqlite3.connect(ruta) as conn:
-                    cursor = conn.cursor()
-                    cursor.execute("""
+                    # Cursor gestionado
+                    ejecutar_sql("""
                         INSERT OR REPLACE INTO configuracion_clase (id, id_clase_actual, curso, feedback_visible, examen_activo) 
                         VALUES (1, ?, ?, ?, ?)
                     """, (id_clase_input, curso_seleccionado, 1 if nuevo_feed else 0, 1 if nuevo_activo else 0))
@@ -577,8 +577,8 @@ elif modo == "Profesor":
         # 1. Obtenemos datos actuales de la configuración para saber qué vamos a cerrar
         try:
             with sqlite3.connect(ruta) as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
+                # Cursor gestionado
+                ejecutar_sql("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
                 config = cursor.fetchone()
 
             if config and config[1]:
@@ -592,18 +592,18 @@ elif modo == "Profesor":
                 if st.session_state.get('ejecutar_cierre_real', False):
                     try:
                         with sqlite3.connect(ruta) as conn:
-                            cursor = conn.cursor()
+                            # Cursor gestionado
                             
                             # --- CORRECCIÓN 1: Registrar la fecha real de hoy en la tabla clases ---
                             fecha_actual = datetime.date.today().strftime("%d/%m/%Y")
-                            cursor.execute("""
+                            ejecutar_sql("""
                                 UPDATE clases 
                                 SET fecha = ? 
                                 WHERE id_clase = ?
                             """, (fecha_actual, clase_id_activa))
                             
                             # Buscamos alumnos del curso
-                            cursor.execute("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_activo,))
+                            ejecutar_sql("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_activo,))
                             alumnos_del_curso = cursor.fetchall()
                             
                             contador_ausentes = 0
@@ -611,12 +611,12 @@ elif modo == "Profesor":
 
                             for id_al, nombre_al in alumnos_del_curso:
                                 # Verificamos si ya tiene nota en esta clase
-                                cursor.execute("SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", 
+                                ejecutar_sql("SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", 
                                                (id_al, clase_id_activa))
                                 
                                 if cursor.fetchone()[0] == 0:
                                     # Aquí grabamos el AUSENTE y el 1.0 inicial
-                                    cursor.execute("""
+                                    ejecutar_sql("""
                                         INSERT INTO reportes_diarios 
                                         (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_final, asistencia)
                                         VALUES (?, ?, 0, 0, 1.0, 'AUSENTE')
@@ -625,7 +625,7 @@ elif modo == "Profesor":
                                     nombres_ausentes.append(nombre_al)
                             
                             # Cerramos el acceso al examen
-                            cursor.execute("UPDATE configuracion_clase SET examen_activo = 0 WHERE id = 1")
+                            ejecutar_sql("UPDATE configuracion_clase SET examen_activo = 0 WHERE id = 1")
                             
                             # --- CORRECCIÓN 2: Guardar todos los cambios (Fecha + Notas 1.0 + Configuración) ---
                             conn.commit()
@@ -663,9 +663,9 @@ elif modo == "Profesor":
             if col_sort_btn.button("🎰 SORTEAR ALUMNO", use_container_width=True):
                 try:
                     with sqlite3.connect(ruta) as conn:
-                        cursor = conn.cursor()
+                        # Cursor gestionado
                         # Buscamos a los alumnos del curso configurado actualmente
-                        cursor.execute("SELECT nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_seleccionado,))
+                        ejecutar_sql("SELECT nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_seleccionado,))
                         lista_alumnos = [fila[0] for fila in cursor.fetchall()]
                         
                         if lista_alumnos:
@@ -695,8 +695,8 @@ elif modo == "Profesor":
             
             with col_al:
                 with sqlite3.connect(ruta) as conn:
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT nombre FROM alumnos WHERE UPPER(TRIM(curso)) = UPPER(TRIM(?)) ORDER BY nombre ASC", (curso_seleccionado,))
+                    # Cursor gestionado
+                    ejecutar_sql("SELECT nombre FROM alumnos WHERE UPPER(TRIM(curso)) = UPPER(TRIM(?)) ORDER BY nombre ASC", (curso_seleccionado,))
                     lista_nombres = [f[0] for f in cursor.fetchall()]
                 
                 alumno_a_calificar = st.selectbox("Seleccionar Alumno", lista_nombres, 
@@ -708,26 +708,26 @@ elif modo == "Profesor":
             if st.button("💾 GUARDAR NOTA ORAL", use_container_width=True):
                 try:
                     with sqlite3.connect(ruta) as conn:
-                        cursor = conn.cursor()
+                        # Cursor gestionado
                         
                         # 1. Obtenemos el ID del alumno
-                        cursor.execute("SELECT id_alumno FROM alumnos WHERE nombre = ?", (alumno_a_calificar,))
+                        ejecutar_sql("SELECT id_alumno FROM alumnos WHERE nombre = ?", (alumno_a_calificar,))
                         res_id = cursor.fetchone()
                         
                         if res_id:
                             id_al = res_id[0]
                             # 2. Verificamos si ya existe el registro para esa clase
-                            cursor.execute("SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", (id_al, id_clase_input))
+                            ejecutar_sql("SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", (id_al, id_clase_input))
                             existe = cursor.fetchone()[0]
                             
                             if existe > 0:
-                                cursor.execute("""
+                                ejecutar_sql("""
                                     UPDATE reportes_diarios 
                                     SET nota_oral = ?, nota_final = ? 
                                     WHERE id_alumno = ? AND id_clase = ?
                                 """, (nota_input, nota_input, id_al, id_clase_input))
                             else:
-                                cursor.execute("""
+                                ejecutar_sql("""
                                     INSERT INTO reportes_diarios 
                                     (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final)
                                     VALUES (?, ?, 0, 0, ?, ?)
@@ -759,8 +759,8 @@ elif modo == "Profesor":
             if busqueda:
                 try:
                     with sqlite3.connect(ruta) as conn:
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE ?", (f"%{busqueda}%",))
+                        # Cursor gestionado
+                        ejecutar_sql("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE ?", (f"%{busqueda}%",))
                         resultados = cursor.fetchall()
                 except Exception as e:
                     st.error(f"Error de búsqueda: {e}")
@@ -776,11 +776,11 @@ elif modo == "Profesor":
                 if st.button("⚠️ JUSTIFICAR Y LIMPIAR NOTAS", use_container_width=True):
                     try:
                         with sqlite3.connect(ruta) as conn:
-                            cursor = conn.cursor()
+                            # Cursor gestionado
                             # CAMBIO CLAVE: UPDATE en lugar de DELETE
                             # Seteamos notas y ejercicios en NULL para que el sistema lo vea como "no rendido"
                             # pero NO tocamos la columna 'asistencia' (que seguirá siendo 'AUSENTE')
-                            cursor.execute("""
+                            ejecutar_sql("""
                                 UPDATE reportes_diarios 
                                 SET ejercicios_completados = NULL, 
                                     ejercicios_correctos = NULL, 
@@ -823,7 +823,7 @@ elif modo == "Profesor":
                     ORDER BY a.nombre ASC
                 """
                 
-                df_mon = pd.read_sql_query(query_monitor, conn, params=(id_clase_input, curso_seleccionado))
+                df_mon = ejecutar_sql(query_monitor, conn, params=(id_clase_input, curso_seleccionado))
                 
                 if not df_mon.empty:
                     # --- FUNCIÓN DE ESTILO PARA RESALTAR AUSENCIAS ---
@@ -856,8 +856,8 @@ elif modo == "Profesor":
 
                     with sqlite3.connect(ruta) as conn:
                         # 1. Traer alumnos del curso activo
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_seleccionado,))
+                        # Cursor gestionado
+                        ejecutar_sql("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_seleccionado,))
                         alumnos = cursor.fetchall()
 
                         if not alumnos:
@@ -877,7 +877,7 @@ elif modo == "Profesor":
                                     JOIN clases c ON r.id_clase = c.id_clase
                                     WHERE r.id_alumno = ? AND c.trimestre = ? AND r.nota_final IS NOT NULL
                                 """
-                                df_hist = pd.read_sql_query(query_hist, conn, params=(id_al, int(trimestre_n)))
+                                df_hist = ejecutar_sql(query_hist, conn, params=(id_al, int(trimestre_n)))
 
                                 if df_hist.empty:
                                     prom_base, adj_esf, adj_efi, nota_f = "---", "---", "---", "---"
@@ -978,11 +978,11 @@ elif modo == "Profesor":
                 else:
                     try:
                         with sqlite3.connect(ruta) as conn:
-                            cursor = conn.cursor()
+                            # Cursor gestionado
 
                             # PASO A: Insertar la clase (SQLite genera el ID solo)
                             # No incluimos 'id_clase' en la lista de columnas
-                            cursor.execute("""
+                            ejecutar_sql("""
                                 INSERT INTO clases (fecha, tema, ejercicios_totales, trimestre) 
                                 VALUES (?, ?, ?, ?)
                             """, ("", tema_new, cant_preguntas, int(trimestre_new)))
@@ -1019,7 +1019,7 @@ elif modo == "Profesor":
             with sqlite3.connect(ruta) as conn:
                 # 1. Traer todas las clases registradas
                 query_clases = "SELECT * FROM clases ORDER BY id_clase DESC"
-                df_clases = pd.read_sql_query(query_clases, conn)
+                df_clases = ejecutar_sql(query_clases, conn)
 
             if df_clases.empty:
                 st.info("Aún no hay clases registradas en la base de datos.")
@@ -1045,7 +1045,7 @@ elif modo == "Profesor":
                             FROM preguntas 
                             WHERE id_clase = ?
                         """
-                        df_preguntas = pd.read_sql_query(query_preg, conn, params=(id_seleccionado,))
+                        df_preguntas = ejecutar_sql(query_preg, conn, params=(id_seleccionado,))
 
                     if df_preguntas.empty:
                         st.warning("Esta clase no tiene preguntas vinculadas.")

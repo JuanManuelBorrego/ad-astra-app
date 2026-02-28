@@ -27,8 +27,8 @@ class Alumno:
         """Consulta si el profesor mantiene el examen habilitado."""
         try:
             with sqlite3.connect(ruta) as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT examen_activo FROM configuracion_clase WHERE id = 1")
+                # Cursor gestionado
+                ejecutar_sql("SELECT examen_activo FROM configuracion_clase WHERE id = 1")
                 resultado = cursor.fetchone()
                 return resultado[0] == 1 if resultado else False
         except:
@@ -39,10 +39,10 @@ class Alumno:
         
         # 1. CONTAR REALIDAD Y ACTUALIZAR MAESTRO
         with sqlite3.connect(ruta) as conn:
-            cursor = conn.cursor()
+            # Cursor gestionado
             
             # Contamos cuántas preguntas existen realmente para esta clase
-            cursor.execute("SELECT COUNT(*) FROM preguntas WHERE id_clase = ?", (id_clase,))
+            ejecutar_sql("SELECT COUNT(*) FROM preguntas WHERE id_clase = ?", (id_clase,))
             totales_reales = cursor.fetchone()[0]
             
             if totales_reales == 0:
@@ -50,7 +50,7 @@ class Alumno:
                 return None
             
             # Sincronizamos la tabla 'clases' para que el número manual no estorbe
-            cursor.execute("UPDATE clases SET ejercicios_totales = ? WHERE id_clase = ?", 
+            ejecutar_sql("UPDATE clases SET ejercicios_totales = ? WHERE id_clase = ?", 
                            (totales_reales, id_clase))
             conn.commit()
             
@@ -72,8 +72,8 @@ class Alumno:
                 }
                 # Guardamos directamente y salimos del método
                 with sqlite3.connect(ruta) as conn:
-                    cursor = conn.cursor()
-                    cursor.execute("""
+                    # Cursor gestionado
+                    ejecutar_sql("""
                         INSERT INTO reportes_diarios (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final)
                         VALUES (?, ?, 0, 0, NULL, 1.0)
                     """, (self.id, id_clase))
@@ -95,14 +95,14 @@ class Alumno:
         
 
         # 5. ENVIAR A LA BASE DE DATOS (Código integrado, ya no llama a la de afuera)
-        conn = sqlite3.connect(ruta)
-        cursor = conn.cursor()
-        cursor.execute("""
+        # Conexión gestionada
+        # Cursor gestionado
+        ejecutar_sql("""
             INSERT INTO reportes_diarios (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (self.id, id_clase, completados, correctos, nota_oral, nota_final))
         conn.commit()
-        conn.close()
+        
 
         # 6. RECIÉN ACÁ DEVOLVEMOS EL VALOR PORQUE SI PONÍAMOS EL RETURN ANTES, EL SCRIPT FINALIZA EN ESE MOMENTO Y SE SALTABA TODOS LOS OTROS PASOS DEL MÉTODO registrar_clase
         return nota_final
@@ -112,8 +112,8 @@ class Alumno:
  
     def sincronizar_historial(self):
         #Busca en la DB los registros previos y los carga en el objeto
-        conn = sqlite3.connect(ruta)
-        cursor = conn.cursor()
+        # Conexión gestionada
+        # Cursor gestionado
         # Usamos JOIN para traer el total de la clase y calcular el relativo
         query = """
             SELECT r.id_clase, r.ejercicios_completados, r.ejercicios_correctos, 
@@ -122,7 +122,7 @@ class Alumno:
             JOIN clases c ON r.id_clase = c.id_clase
             WHERE r.id_alumno = ?
         """
-        cursor.execute(query, (self.id,))
+        ejecutar_sql(query, (self.id,))
         filas = cursor.fetchall()
 
         for f in filas:
@@ -150,7 +150,7 @@ class Alumno:
             }
         
         # ESPERAMOS QUE EL BUCLE TERMINE Y LUEGO EL CIERRE DE LO QUE SE ABRIÓ EN ESTE MÉTODO VA ACÁ:
-        conn.close()
+        
     #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #MÉTODO OBTENER EL PROMEDIO DE TODAS LAS NOTAS FINALES DE TODAS LAS CLASES AL MOMENTO (SI EL TRIMESTRE CERRASE EN ESE MOMENTO, ESA SERÍA LA NOTA)
     def promedio(self):    
@@ -266,8 +266,8 @@ class Alumno:
     def sincronizar_historial_por_trimestre(self, trimestre):
         self.historial = {}
         try:
-            conn = sqlite3.connect(ruta)
-            cursor = conn.cursor()
+            # Conexión gestionada
+            # Cursor gestionado
             
             # 🔄 Agregamos c.ejercicios_totales a la consulta
             query = """
@@ -277,7 +277,7 @@ class Alumno:
                 JOIN clases c ON r.id_clase = c.id_clase
                 WHERE r.id_alumno = ? AND c.trimestre = ?
             """
-            cursor.execute(query, (self.id, trimestre))
+            ejecutar_sql(query, (self.id, trimestre))
             filas = cursor.fetchall()
             
             for f in filas:
@@ -297,7 +297,7 @@ class Alumno:
                     'eficacia': val_eficacia,
                     'nota_final': float(nota) if nota is not None else 0.0
                 }
-            conn.close()
+            
         except Exception as e:
             print(f"❌ Error al sincronizar historial trimestral: {e}")
             

@@ -21,25 +21,25 @@ def sorteador_orales():
     print("\n🎯 SORTEO DE EXAMEN ORAL")
     
     try:
-        conn = sqlite3.connect(ruta)
-        cursor = conn.cursor()
+        # Conexión gestionada
+        # Cursor gestionado
         
         # 1. Leemos el curso que está configurado como activo ahora
-        cursor.execute("SELECT curso FROM configuracion_clase WHERE id = 1")
+        ejecutar_sql("SELECT curso FROM configuracion_clase WHERE id = 1")
         config = cursor.fetchone()
         
         if not config:
             print("⚠️ No hay un curso configurado en la tabla de registro único.")
-            conn.close()
+            
             return
             
         curso_activo = config[0]
         print(f"🎲 Sorteando alumno de: {curso_activo}...")
 
         # 2. Buscamos a los alumnos de ese curso
-        cursor.execute("SELECT nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_activo,))
+        ejecutar_sql("SELECT nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_activo,))
         estudiantes = cursor.fetchall()
-        conn.close()
+        
 
         if not estudiantes:
             print(f"⚠️ No se encontraron alumnos para el curso {curso_activo}.")
@@ -64,16 +64,16 @@ def cargar_nota_oral_manual():
     print("\n" + "🎤" * 3 + " CARGA NOTA ORAL (Búsqueda Flexible) " + "🎤" * 3)
     
     try:
-        conn = sqlite3.connect(ruta)
-        cursor = conn.cursor()
+        # Conexión gestionada
+        # Cursor gestionado
         
         # 1. Detectar automáticamente la clase y el curso activos
-        cursor.execute("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
+        ejecutar_sql("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
         config = cursor.fetchone()
         
         if not config:
             print("❌ Error: No hay una clase configurada actualmente.")
-            conn.close()
+            
             return
             
         id_clase_activa, curso_activo = config
@@ -83,7 +83,7 @@ def cargar_nota_oral_manual():
         if not nombre_buscado: return
 
         # Filtramos por nombre similar Y que pertenezca al curso activo
-        cursor.execute("""
+        ejecutar_sql("""
             SELECT id_alumno, nombre 
             FROM alumnos 
             WHERE nombre LIKE ? AND UPPER(curso) = UPPER(?)
@@ -93,7 +93,7 @@ def cargar_nota_oral_manual():
 
         if not resultados:
             print(f"❌ No se encontró a '{nombre_buscado}' en el curso {curso_activo}.")
-            conn.close()
+            
             return
 
         # 3. Selección en caso de homónimos
@@ -107,7 +107,7 @@ def cargar_nota_oral_manual():
                 alumno_elegido = resultados[opcion]
             except (ValueError, IndexError):
                 print("❌ Selección inválida.")
-                conn.close()
+                
                 return
         else:
             alumno_elegido = resultados[0]
@@ -119,11 +119,11 @@ def cargar_nota_oral_manual():
             nota = float(input(f"📝 Nota oral para {nombre_completo}: "))
         except ValueError:
             print("❌ Error: La nota debe ser un número (ej: 8 o 7.5).")
-            conn.close()
+            
             return
 
         # 5. Verificamos si ya existe el registro en reportes_diarios
-        cursor.execute("""
+        ejecutar_sql("""
             SELECT id_reporte FROM reportes_diarios 
             WHERE id_alumno = ? AND id_clase = ?
         """, (id_al, id_clase_activa))
@@ -131,7 +131,7 @@ def cargar_nota_oral_manual():
 
         if registro_previo:
             # Si ya existe (quizás ya tiene nota del examen), actualizamos oral y final
-            cursor.execute("""
+            ejecutar_sql("""
                 UPDATE reportes_diarios 
                 SET nota_oral = ?, nota_final = ? 
                 WHERE id_alumno = ? AND id_clase = ?
@@ -139,14 +139,14 @@ def cargar_nota_oral_manual():
             print(f"🔄 Registro actualizado: {nombre_completo} ahora tiene un {nota}.")
         else:
             # Si no existe (faltó o todavía no abrió el examen), creamos la fila
-            cursor.execute("""
+            ejecutar_sql("""
                 INSERT INTO reportes_diarios (id_alumno, id_clase, nota_oral, nota_final, ejercicios_completados, ejercicios_correctos)
                 VALUES (?, ?, ?, ?, 0, 0)
             """, (id_al, id_clase_activa, nota, nota))
             print(f"✅ Nuevo registro creado para {nombre_completo} con nota {nota}.")
 
         conn.commit()
-        conn.close()
+        
         
     except Exception as e:
         print(f"❌ Error técnico: {e}")
@@ -191,18 +191,18 @@ def menu_profesor_cargar_examen():
 
     # 3. GUARDADO EN BASE DE DATOS
     try:
-        conn = sqlite3.connect(ruta)
-        cursor = conn.cursor()
+        # Conexión gestionada
+        # Cursor gestionado
 
         # PASO A: Crear o Actualizar la clase maestra (INCLUYENDO TRIMESTRE)
         # Agregamos 'trimestre' a la lista de columnas y al VALUES
-        cursor.execute("""
+        ejecutar_sql("""
             INSERT OR REPLACE INTO clases (id_clase, fecha, tema, ejercicios_totales, trimestre) 
             VALUES (?, ?, ?, ?, ?)
         """, (id_clase, None, tema, cant, int(trimestre)))
 
         # PASO B: LIMPIEZA DE PREGUNTAS PREVIAS
-        cursor.execute("DELETE FROM preguntas WHERE id_clase = ?", (id_clase,))
+        ejecutar_sql("DELETE FROM preguntas WHERE id_clase = ?", (id_clase,))
 
         # PASO C: Insertar las preguntas nuevas
         cursor.executemany("""
@@ -211,7 +211,7 @@ def menu_profesor_cargar_examen():
         """, preguntas_para_db)
         
         conn.commit()
-        conn.close()
+        
         
         print(f"\n" + "✨" * 10)
         print(f"✅ ¡ÉXITO TOTAL!")
@@ -248,14 +248,14 @@ def login_alumno():
 
         # 2. Consulta a la Base de Datos
         try:
-            conn = sqlite3.connect(ruta)
-            cursor = conn.cursor()
+            # Conexión gestionada
+            # Cursor gestionado
             
             # Buscamos los datos básicos para crear al alumno
             query = "SELECT id_alumno, nombre, curso FROM alumnos WHERE id_alumno = ?"
-            cursor.execute(query, (int(id_ingresado),))
+            ejecutar_sql(query, (int(id_ingresado),))
             resultado = cursor.fetchone()
-            conn.close()
+            
 
             if resultado:
                 # 3. INSTANCIACIÓN: Creamos el objeto Alumno
@@ -442,12 +442,12 @@ def mostrar_dashboard(alumno, id_clase_hoy, visible):
 
 def obtener_clase_activa(curso_alumno):
     try:
-        conn = sqlite3.connect(ruta)
-        cursor = conn.cursor()
+        # Conexión gestionada
+        # Cursor gestionado
         # Leemos el "semáforo" del profesor
-        cursor.execute("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
+        ejecutar_sql("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
         config = cursor.fetchone()
-        conn.close()
+        
         
         if config:
             id_clase_db, curso_db = config
@@ -472,11 +472,11 @@ def ejecutar_examen(estudiante, id_clase_objetivo):
     if confirmar != 'S': return
 
     # 2. Traer preguntas
-    conn = sqlite3.connect(ruta)
-    cursor = conn.cursor()
-    cursor.execute("SELECT enunciado, opc_a, opc_b, opc_c, opc_d, correcta FROM preguntas WHERE id_clase = ?", (id_clase_objetivo,))
+    # Conexión gestionada
+    # Cursor gestionado
+    ejecutar_sql("SELECT enunciado, opc_a, opc_b, opc_c, opc_d, correcta FROM preguntas WHERE id_clase = ?", (id_clase_objetivo,))
     preguntas = cursor.fetchall()
-    conn.close()
+    
 
     if not preguntas:
         print("\n⚠️ No hay preguntas para esta clase.")
@@ -563,11 +563,11 @@ def registrar_nuevo_alumno():
         return
 
     try:
-        conn = sqlite3.connect(ruta)
-        cursor = conn.cursor()
+        # Conexión gestionada
+        # Cursor gestionado
         
         # Al pasar NULL en id_alumno, SQLite activa el AUTOINCREMENT
-        cursor.execute("""
+        ejecutar_sql("""
             INSERT INTO alumnos (id_alumno, nombre, curso) 
             VALUES (NULL, ?, ?)
         """, (nombre, curso))
@@ -576,7 +576,7 @@ def registrar_nuevo_alumno():
         nuevo_id = cursor.lastrowid
         
         conn.commit()
-        conn.close()
+        
 
         print(f"\n" + "✅" * 10)
         print(f" ¡ESTUDIANTE REGISTRADO!")
@@ -600,16 +600,16 @@ from config import ejecutar_sql
 def ver_reporte_curso():
     # Eliminamos el input. Ahora el sistema es proactivo.
     try:
-        conn = sqlite3.connect(ruta)
-        cursor = conn.cursor()
+        # Conexión gestionada
+        # Cursor gestionado
         
         # 1. Leemos la configuración de la fila única
-        cursor.execute("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
+        ejecutar_sql("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
         config = cursor.fetchone()
         
         if not config:
             print("⚠️ No hay ninguna clase activa configurada actualmente.")
-            conn.close()
+            
             return
             
         id_clase_activa, curso_activo = config
@@ -626,8 +626,8 @@ def ver_reporte_curso():
             WHERE UPPER(a.curso) = UPPER(?)
         """
         
-        df = pd.read_sql_query(query, conn, params=(id_clase_activa, curso_activo))
-        conn.close()
+        df = ejecutar_sql(query, conn, params=(id_clase_activa, curso_activo))
+        
 
         # 3. Visualización prolija
         print(f"\n" + "📈" * 5 + f" MONITOR ACTIVO: {curso_activo} " + "📈" * 5)
@@ -655,14 +655,14 @@ def ver_reporte_trimestral():
     
     # 1. Obtenemos curso de la configuración y preguntamos el trimestre
     try:
-        conn = sqlite3.connect(ruta)
-        cursor = conn.cursor()
-        cursor.execute("SELECT curso FROM configuracion_clase WHERE id = 1")
+        # Conexión gestionada
+        # Cursor gestionado
+        ejecutar_sql("SELECT curso FROM configuracion_clase WHERE id = 1")
         config = cursor.fetchone()
         
         if not config:
             print("❌ Error: Configure primero un curso en el panel.")
-            conn.close()
+            
             return
             
         curso_ver = config[0]
@@ -670,13 +670,13 @@ def ver_reporte_trimestral():
         
         if trimestre_n not in ['1', '2', '3']:
             print("❌ Trimestre inválido.")
-            conn.close()
+            
             return
 
         # 2. Traemos la lista de alumnos de ese curso
-        cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_ver,))
+        ejecutar_sql("SELECT id_alumno, nombre, curso FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_ver,))
         lista_alumnos = cursor.fetchall()
-        conn.close()
+        
 
         if not lista_alumnos:
             print(f"❌ No se encontraron alumnos para {curso_ver}.")
@@ -751,16 +751,16 @@ def completar_inasistencias_con_uno():
     print("\n--- 🔐 CIERRE DE PLANILLA DIARIA ---")
     
     try:
-        conn = sqlite3.connect(ruta)
-        cursor = conn.cursor()
+        # Conexión gestionada
+        # Cursor gestionado
         
         # 1. Obtenemos la configuración actual
-        cursor.execute("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
+        ejecutar_sql("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
         config = cursor.fetchone()
         
         if not config:
             print("❌ Error: No se encontró una clase activa en la configuración.")
-            conn.close()
+            
             return
             
         id_clase_activa, curso_activo = config
@@ -778,7 +778,7 @@ def completar_inasistencias_con_uno():
             fecha_cierre = datetime.date.today().strftime("%d/%m/%Y")
             
             # 2. ACTUALIZAMOS LA FECHA EN LA TABLA CLASES
-            cursor.execute("""
+            ejecutar_sql("""
                 UPDATE clases 
                 SET fecha = ? 
                 WHERE id_clase = ?
@@ -794,7 +794,7 @@ def completar_inasistencias_con_uno():
                     SELECT id_alumno FROM reportes_diarios WHERE id_clase = ?
                 )
             """
-            cursor.execute(query, (id_clase_activa, curso_activo, id_clase_activa))
+            ejecutar_sql(query, (id_clase_activa, curso_activo, id_clase_activa))
             filas_afectadas = cursor.rowcount
             conn.commit()
             
@@ -803,7 +803,7 @@ def completar_inasistencias_con_uno():
         else:
             print("\n🛑 Operación cancelada. No se modificó ninguna nota.")
             
-        conn.close()
+        
         
     except Exception as e:
         print(f"❌ Error en la base de datos: {e}")
@@ -814,11 +814,11 @@ def justificar_inasistencia_manual():
     print("\n--- 🏥 JUSTIFICAR INASISTENCIA (Borrar nota 1.0) ---")
     
     try:
-        conn = sqlite3.connect(ruta)
-        cursor = conn.cursor()
+        # Conexión gestionada
+        # Cursor gestionado
         
         # 1. Detectamos la clase activa para facilitar el trámite
-        cursor.execute("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
+        ejecutar_sql("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
         config = cursor.fetchone()
         id_sugerido = config[0] if config else None
         
@@ -826,7 +826,7 @@ def justificar_inasistencia_manual():
         nombre_buscado = input("Nombre o Apellido del alumno: ").strip()
         
         # 3. Buscamos coincidencias
-        cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE ?", (f"%{nombre_buscado}%",))
+        ejecutar_sql("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE ?", (f"%{nombre_buscado}%",))
         resultados = cursor.fetchall()
 
         if not resultados:
@@ -853,11 +853,11 @@ def justificar_inasistencia_manual():
         confirmar = input(f"⚠️ ¿Confirmás borrar la nota de {nombre_al} en la clase {id_clase}? (S/N): ").upper()
         
         if confirmar == 'S':
-            cursor.execute("DELETE FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", (id_al, id_clase))
+            ejecutar_sql("DELETE FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", (id_al, id_clase))
             conn.commit()
             print(f"✅ ¡Listo! Registro borrado para {nombre_al}.")
         
-        conn.close()
+        
         
     except Exception as e:
         print(f"❌ Error: {e}")
@@ -874,16 +874,16 @@ def ver_progreso_individual_trimestral():
         return
     
     try:
-        conn = sqlite3.connect(ruta)
-        cursor = conn.cursor()
+        # Conexión gestionada
+        # Cursor gestionado
         
         # Búsqueda flexible
-        cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE ?", (f"%{nombre_buscado}%",))
+        ejecutar_sql("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE ?", (f"%{nombre_buscado}%",))
         resultados = cursor.fetchall()
         
         if not resultados:
             print(f"❌ No se encontró a '{nombre_buscado}'.")
-            conn.close()
+            
             return
             
         # Selección de alumno
@@ -912,8 +912,8 @@ def ver_progreso_individual_trimestral():
             ORDER BY c.id_clase ASC
         """
         
-        df = pd.read_sql_query(query, conn, params=(id_al, trimestre_n))
-        conn.close()
+        df = ejecutar_sql(query, conn, params=(id_al, trimestre_n))
+        
 
         print(f"\n" + "=" * 50)
         print(f"📄 INFORME: {nombre_al} | {curso_al}")
@@ -944,22 +944,22 @@ def panel_profesor():
         return None
 
     # Variables de estado locales (se sincronizan con la DB al entrar)
-    conn = sqlite3.connect(ruta)
-    cursor = conn.cursor()
-    cursor.execute("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
+    # Conexión gestionada
+    # Cursor gestionado
+    ejecutar_sql("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
     config = cursor.fetchone()
-    conn.close()
+    
 
     id_clase = config[0] if config else "---"
     curso_objetivo = config[1] if config else "---"
 
     while True:
         # Consulta de refresco para estados dinámicos
-        conn = sqlite3.connect(ruta)
-        cursor = conn.cursor()
-        cursor.execute("SELECT feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
+        # Conexión gestionada
+        # Cursor gestionado
+        ejecutar_sql("SELECT feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
         res = cursor.fetchone()
-        conn.close()
+        
         
         visible = res[0] if res else 0
         estado_actual = res[1] if res else 0
@@ -1007,11 +1007,11 @@ def panel_profesor():
         if opcion == "1":
             nueva_clase = input("📌 Ingrese el ID de la clase: ")
             nuevo_curso = input("🎓 Curso (Ej: 5TO A): ").strip().upper()
-            conn = sqlite3.connect(ruta)
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM clases WHERE id_clase = ?", (nueva_clase,))
+            # Conexión gestionada
+            # Cursor gestionado
+            ejecutar_sql("SELECT * FROM clases WHERE id_clase = ?", (nueva_clase,))
             if cursor.fetchone():
-                cursor.execute("""
+                ejecutar_sql("""
                     UPDATE configuracion_clase 
                     SET id_clase_actual = ?, curso = ?, examen_activo = 1
                     WHERE id = 1
@@ -1021,24 +1021,24 @@ def panel_profesor():
                 print(f"\n✅ Aula sincronizada: {nuevo_curso} ahora rinde Clase {nueva_clase}.")
             else:
                 print(f"❌ Error: La clase {nueva_clase} no existe. Cargala primero en la opción [6].")
-            conn.close()
+            
 
         elif opcion == "2":
             nuevo_fb = 0 if visible == 1 else 1
-            conn = sqlite3.connect(ruta)
-            cursor = conn.cursor()
-            cursor.execute("UPDATE configuracion_clase SET feedback_visible = ? WHERE id = 1", (nuevo_fb,))
+            # Conexión gestionada
+            # Cursor gestionado
+            ejecutar_sql("UPDATE configuracion_clase SET feedback_visible = ? WHERE id = 1", (nuevo_fb,))
             conn.commit()
-            conn.close()
+            
             print(f"\n📢 FEEDBACK: {'HABILITADO' if nuevo_fb == 1 else 'DESHABILITADO'}")
 
         elif opcion == "3":
             nuevo_estado = 0 if estado_actual == 1 else 1
-            conn = sqlite3.connect(ruta)
-            cursor = conn.cursor()
-            cursor.execute("UPDATE configuracion_clase SET examen_activo = ? WHERE id = 1", (nuevo_estado,))
+            # Conexión gestionada
+            # Cursor gestionado
+            ejecutar_sql("UPDATE configuracion_clase SET examen_activo = ? WHERE id = 1", (nuevo_estado,))
             conn.commit()
-            conn.close()
+            
             print(f"\n📢 ACCESO EXAMEN: {'CERRADO' if nuevo_estado == 0 else 'ABIERTO'}")
 
         elif opcion == "4":
@@ -1098,20 +1098,20 @@ def ver_repaso_examen(alumno):
 
     # 2. Consultar la DB para ver el detalle
     try:
-        conn = sqlite3.connect(ruta)
-        cursor = conn.cursor()
+        # Conexión gestionada
+        # Cursor gestionado
         
         # Unimos las preguntas con la respuesta que dio el alumno (si la guardaste)
         # NOTA: Para esto necesitamos que tu tabla 'respuestas_detalladas' exista.
         # Si no la tenés, te muestro cómo traer las preguntas de esa clase:
-        cursor.execute("""
+        ejecutar_sql("""
             SELECT enunciado, opc_a, opc_b, opc_c, opc_d, correcta 
             FROM preguntas 
             WHERE id_clase = ?
         """, (clase_elegida,))
         
         preguntas = cursor.fetchall()
-        conn.close()
+        
 
         print(f"\n--- REPASO CLASE {clase_elegida} ---")
         for i, p in enumerate(preguntas, 1):
