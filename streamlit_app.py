@@ -399,6 +399,7 @@ if modo == "Estudiantes":
                         SELECT 
                             c.fecha as 'Fecha', 
                             c.tema as 'Tema', 
+                            r.asistencia as 'Asistencia',
                             CAST(c.ejercicios_totales AS INTEGER) as 'Ejercicios del día',
                             CAST(r.ejercicios_completados AS INTEGER) as 'Total resueltos',
                             CAST(r.ejercicios_correctos AS INTEGER) as 'Total correctos',
@@ -406,6 +407,7 @@ if modo == "Estudiantes":
                             ROUND(
                                 CASE 
                                     WHEN r.nota_oral > 0 THEN r.nota_oral
+                                    WHEN r.ejercicios_completados IS NULL THEN NULL
                                     ELSE ((CAST(r.ejercicios_completados AS REAL) / c.ejercicios_totales) + 
                                           (CAST(r.ejercicios_correctos AS REAL) / c.ejercicios_totales)) / 2 * 10
                                 END, 2
@@ -419,18 +421,22 @@ if modo == "Estudiantes":
                     conn.close()
 
                     if not df_repaso.empty:
-                        # Forzamos a Pandas a mostrar las columnas de conteo como enteros puros
+                        # Para las columnas de conteo: 
+                        # Si es NULL (justificado), lo dejamos vacío para no confundir con un "0" real
                         cols_enteros = ['Ejercicios del día', 'Total resueltos', 'Total correctos']
-                        df_repaso[cols_enteros] = df_repaso[cols_enteros].fillna(0).astype(int)
-
+                        
+                        # Aplicamos formato y estilo
                         st.dataframe(
-                            df_repaso.style.background_gradient(
+                            df_repaso.style.applymap(
+                                lambda x: 'color: #FF4B4B; font-weight: bold' if x == 'AUSENTE' else 'color: #28a745',
+                                subset=['Asistencia']
+                            ).background_gradient(
                                 subset=['Nota final de la clase'], 
                                 cmap='RdYlGn', vmin=1, vmax=10
                             ).format({
                                 "Nota examen Oral": "{:.1f}", 
-                                "Nota final de la clase": "{:.1f}"
-                            }),
+                                "Nota final de la clase": lambda x: f"{x:.1f}" if pd.notnull(x) else "-"
+                            }, na_rep="-"), # na_rep pone un guion en los NULLs
                             use_container_width=True,
                             hide_index=True
                         )
@@ -578,45 +584,61 @@ elif modo == "Profesor":
                 st.info(f"Presione el botón para cerrar la **Clase {clase_id_activa}** del curso **{curso_activo}**.")
                 if st.button(f"🔴 EJECUTAR CIERRE DE JORNADA", use_container_width=True):
                     confirmar_cierre_dialog(clase_id_activa, curso_activo)
-
                 # 3. Lógica que se dispara SOLO si el usuario confirmó en el cartel
                 if st.session_state.get('ejecutar_cierre_real', False):
-                    with sqlite3.connect(ruta) as conn:
-                        cursor = conn.cursor()
-                        
-                        # Buscamos alumnos del curso
-                        cursor.execute("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_activo,))
-                        alumnos_del_curso = cursor.fetchall()
-                        
-                        contador_ausentes = 0
-                        nombres_ausentes = []
-
-                        for id_al, nombre_al in alumnos_del_curso:
-                            # Verificamos si ya tiene nota en esta clase
-                            cursor.execute("SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", 
-                                           (id_al, clase_id_activa))
+                    try:
+                        with sqlite3.connect(ruta) as conn:
+                            cursor = conn.cursor()
                             
-                            if cursor.fetchone()[0] == 0:
-                                # Asignamos el 1.0 automático
-                                cursor.execute("""
-                                    INSERT INTO reportes_diarios 
-                                    (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final)
-                                    VALUES (?, ?, 0, 0, NULL, 1.0)
-                                """, (id_al, clase_id_activa))
-                                contador_ausentes += 1
-                                nombres_ausentes.append(nombre_al)
+                            # --- CORRECCIÓN 1: Registrar la fecha real de hoy en la tabla clases ---
+                            fecha_actual = datetime.date.today().strftime("%d/%m/%Y")
+                            cursor.execute("""
+                                UPDATE clases 
+                                SET fecha = ? 
+                                WHERE id_clase = ?
+                            """, (fecha_actual, clase_id_activa))
+                            
+                            # Buscamos alumnos del curso
+                            cursor.execute("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_activo,))
+                            alumnos_del_curso = cursor.fetchall()
+                            
+                            contador_ausentes = 0
+                            nombres_ausentes = []
+
+                            for id_al, nombre_al in alumnos_del_curso:
+                                # Verificamos si ya tiene nota en esta clase
+                                cursor.execute("SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", 
+                                               (id_al, clase_id_activa))
+                                
+                                if cursor.fetchone()[0] == 0:
+                                    # Aquí grabamos el AUSENTE y el 1.0 inicial
+                                    cursor.execute("""
+                                        INSERT INTO reportes_diarios 
+                                        (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_final, asistencia)
+                                        VALUES (?, ?, 0, 0, 1.0, 'AUSENTE')
+                                    """, (id_al, clase_id_activa))
+                                    contador_ausentes += 1
+                                    nombres_ausentes.append(nombre_al)
+                            
+                            # Cerramos el acceso al examen
+                            cursor.execute("UPDATE configuracion_clase SET examen_activo = 0 WHERE id = 1")
+                            
+                            # --- CORRECCIÓN 2: Guardar todos los cambios (Fecha + Notas 1.0 + Configuración) ---
+                            conn.commit()
                         
-                        # Cerramos el acceso al examen
-                        cursor.execute("UPDATE configuracion_clase SET examen_activo = 0 WHERE id = 1")
-                        conn.commit()
-                    
-                    # Mostramos resultado y limpiamos la señal de ejecución
-                    st.success(f"✅ ¡Cierre exitoso! Se asignó 1.0 a {contador_ausentes} alumnos.")
-                    if nombres_ausentes:
-                        with st.expander("Ver lista de ausentes calificados"):
-                            for n in nombres_ausentes: st.write(f"• {n}")
-                    
-                    st.session_state.ejecutar_cierre_real = False # IMPORTANTE: Apagamos el interruptor
+                        # Mostramos resultado y limpiamos la señal de ejecución
+                        st.success(f"✅ ¡Cierre exitoso! Clase registrada con fecha: {fecha_actual}")
+                        st.info(f"📍 Se asignó nota 1.0 a {contador_ausentes} alumnos que no completaron el ejercicio.")
+                        
+                        if nombres_ausentes:
+                            with st.expander("Ver lista de ausentes calificados"):
+                                for n in nombres_ausentes: st.write(f"• {n}")
+                        
+                        st.session_state.ejecutar_cierre_real = False # Apagamos el interruptor
+                        st.rerun() # Refrescamos para que desaparezca el botón de cierre
+
+                    except Exception as e:
+                        st.error(f"❌ Error en el proceso de cierre: {e}")
             else:
                 st.warning("⚠️ No hay un curso configurado para cerrar.")
 
@@ -720,16 +742,14 @@ elif modo == "Profesor":
                 except Exception as e:
                     st.error(f"Error al guardar nota: {e}")
                     
-        # --- 6. JUSTIFICAR INASISTENCIA (Versión Estable) ---
+        # --- 6. JUSTIFICAR INASISTENCIA (Versión con Registro de Ausencia Permanente) ---
         st.divider()
         st.subheader("🏥 Justificar Inasistencia")
         
         with st.expander("Abrir panel de justificación"):
-            st.info("Esta acción eliminará el registro (el 1.0) para que el alumno pueda ser calificado de nuevo.")
+            st.info("Esta acción mantendrá el registro de 'AUSENTE' pero eliminará la nota 1.0 para que el alumno pueda rendir.")
             
             busqueda = st.text_input("Buscar alumno por nombre o apellido:", key="input_justificar")
-            
-            # Inicializamos variables para evitar el error de "not defined"
             resultados = []
             
             if busqueda:
@@ -746,30 +766,35 @@ elif modo == "Profesor":
                 seleccion = st.selectbox("Seleccioná el alumno correcto:", opciones_alumnos.keys())
                 id_al_elegido = opciones_alumnos[seleccion]
                 
-                id_clase_justificar = st.number_input("ID de Clase a limpiar:", value=id_clase_input, key="nro_clase_just")
+                # Asumimos que id_clase_input viene de la configuración de arriba
+                id_clase_justificar = st.number_input("ID de Clase a justificar:", value=id_clase_input, key="nro_clase_just")
                 
-                if st.button("⚠️ ELIMINAR REGISTRO Y JUSTIFICAR", use_container_width=True):
+                if st.button("⚠️ JUSTIFICAR Y LIMPIAR NOTAS", use_container_width=True):
                     try:
                         with sqlite3.connect(ruta) as conn:
                             cursor = conn.cursor()
+                            # CAMBIO CLAVE: UPDATE en lugar de DELETE
+                            # Seteamos notas y ejercicios en NULL para que el sistema lo vea como "no rendido"
+                            # pero NO tocamos la columna 'asistencia' (que seguirá siendo 'AUSENTE')
                             cursor.execute("""
-                                DELETE FROM reportes_diarios 
+                                UPDATE reportes_diarios 
+                                SET ejercicios_completados = NULL, 
+                                    ejercicios_correctos = NULL, 
+                                    nota_final = NULL 
                                 WHERE id_alumno = ? AND id_clase = ?
                             """, (id_al_elegido, id_clase_justificar))
                             conn.commit()
                         
-                        st.session_state.msg_justificar = f"✅ Registro eliminado para {seleccion}."
+                        st.session_state.msg_justificar = f"✅ Inasistencia justificada para {seleccion}. Registro histórico mantenido."
                         st.rerun()
                     except Exception as e:
-                        st.error(f"Error al borrar: {e}")
+                        st.error(f"Error al justificar: {e}")
             elif busqueda:
                 st.warning("No se encontraron coincidencias.")
 
-        # Mostrar el mensaje persistente FUERA del expander para que se vea bien
         if 'msg_justificar' in st.session_state:
             st.success(st.session_state.msg_justificar)
             del st.session_state.msg_justificar
-                
         
         # --- 7. MONITOR EN TIEMPO REAL (LECTURA DIRECTA DE DB) ---
         st.divider()
@@ -777,10 +802,11 @@ elif modo == "Profesor":
 
         try:
             with sqlite3.connect(ruta) as conn:
-                # La consulta solo trae registros que existen en ambas tablas (Filtro doble)
+                # Actualizamos la consulta para incluir 'asistencia'
                 query_monitor = """
                     SELECT 
                         a.nombre AS 'Alumno', 
+                        r.asistencia AS 'Asistencia',
                         r.ejercicios_completados AS 'Hechos', 
                         r.ejercicios_correctos AS 'Correctos', 
                         r.nota_oral AS 'Nota Oral',
@@ -792,11 +818,18 @@ elif modo == "Profesor":
                     ORDER BY a.nombre ASC
                 """
                 
-                # Ejecutamos con los dos parámetros de filtro
                 df_mon = pd.read_sql_query(query_monitor, conn, params=(id_clase_input, curso_seleccionado))
                 
                 if not df_mon.empty:
-                    st.dataframe(df_mon, use_container_width=True, hide_index=True)
+                    # --- FUNCIÓN DE ESTILO PARA RESALTAR AUSENCIAS ---
+                    def resaltar_ausencia(val):
+                        color = '#FF4B4B' if val == 'AUSENTE' else '#28a745'
+                        return f'color: {color}; font-weight: bold'
+
+                    # Aplicamos el estilo a la columna Asistencia
+                    df_estilado = df_mon.style.applymap(resaltar_ausencia, subset=['Asistencia'])
+
+                    st.dataframe(df_estilado, use_container_width=True, hide_index=True)
                     st.caption(f"✅ Mostrando {len(df_mon)} registros encontrados en la tabla reportes_diarios.")
                 else:
                     st.info(f"Empty Set: No hay registros grabados en la base de datos para el curso {curso_seleccionado} en la clase {id_clase_input}.")
@@ -901,7 +934,7 @@ elif modo == "Profesor":
         st.divider()
         st.subheader("🍎 Creador de Exámenes")
 
-        with st.expander("Configurar Nueva Clase/Examen", expanded=True):
+        with st.expander("Configurar Nueva Clase/Examen", expanded=False):
             # 1. Datos Maestros (Sin pedir ID, SQLite lo hace solo)
             col_tri, col_preg = st.columns(2)
             trimestre_new = col_tri.selectbox("📅 Trimestre:", ["1", "2", "3"], key="tri_new_auto")
@@ -939,9 +972,6 @@ elif modo == "Profesor":
                     st.error("Por favor, ingresa un tema para la clase.")
                 else:
                     try:
-                        import datetime
-                        fecha_hoy = datetime.date.today().strftime("%d/%m/%Y")
-                        
                         with sqlite3.connect(ruta) as conn:
                             cursor = conn.cursor()
 
@@ -950,7 +980,7 @@ elif modo == "Profesor":
                             cursor.execute("""
                                 INSERT INTO clases (fecha, tema, ejercicios_totales, trimestre) 
                                 VALUES (?, ?, ?, ?)
-                            """, (fecha_hoy, tema_new, cant_preguntas, int(trimestre_new)))
+                            """, ("", tema_new, cant_preguntas, int(trimestre_new)))
 
                             # PASO B: Obtener el ID que SQLite acaba de generar
                             id_clase_generado = cursor.lastrowid
