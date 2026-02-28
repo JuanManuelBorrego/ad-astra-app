@@ -1,13 +1,17 @@
 import streamlit as st
-import sqlite3
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
 import numpy as np
 import random
-from config import ruta
+
 from clases import Alumno
 from funciones import login_alumno, obtener_clase_activa
+
+#esta linea fue creada al conectar la db a supabase (y se borraron las líneas import de sqlite y from config import ruta)
+from config import ejecutar_sql
+# Y listo. Ya no necesitás ni sqlite3 ni crear conexiones manuales.
 
 # --- 1. CONFIGURACIÓN DE PÁGINA (SIEMPRE PRIMERO) ---
 import streamlit as st
@@ -1068,6 +1072,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
