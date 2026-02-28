@@ -4,7 +4,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt # Ya que lo usás en la clase Alumno
-import sqlite3
+from config import ejecutar_sql
 import random
 import getpass # Para ocultar la clave al escribir
 import datetime # Asegurate de tener este import arriba
@@ -595,7 +595,7 @@ def registrar_nuevo_alumno():
 #FUNCIÓN PARA VER LA TABLA DE NOTAS POR CURSOS
 
 import pandas as pd
-import sqlite3
+from config import ejecutar_sql
 
 def ver_reporte_curso():
     # Eliminamos el input. Ahora el sistema es proactivo.

@@ -1,5 +1,5 @@
 # main.py
-import sqlite3
+from config import ejecutar_sql
 import pandas as pd
 from config import ruta # <-- IMPORTANTE: Trae la ruta única
 from clases import Alumno

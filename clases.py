@@ -4,7 +4,7 @@
 #CON ESTO, SE BUSCA EN LA BASE DE DATOS PARA REVIVIR Y RECARGAR LA CLASE ALUMNO EN TODAS SUS INSTANCIAS, ES DECIR, NACEN NUEVAMENTE TODOS LOS OBJETOS DE ESA CLASE 
 #LO PRIMERO, PONGO LA FUNCIÓN db_cargar_rendimiento PORQUE LUEGO LA VOY A LLAMAR EN LA CLASE Alumno (EN EL PUNTO 5 DEL MÉTODO registrar_clase)
 
-import sqlite3
+from config import ejecutar_sql
 import matplotlib.pyplot as plt
 import numpy as np
 from config import ruta # <-- IMPORTANTE: Trae la ruta única
