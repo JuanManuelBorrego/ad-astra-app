@@ -231,53 +231,30 @@ def menu_profesor_cargar_examen():
 #FASE 1: EL LOGIN DEL ALUMNO!!! UEUEUEUEUEUEUEUE ===DDD
 
 def login_alumno():
-    #Fase 1: Identificación, Validación e Instanciación.
-    print("\n" + "="*30)
-    print("   ACCESO DE ESTUDIANTES")
-    print("="*30)
+    st.markdown("### 🎓 Acceso Estudiantes")
+    id_ingresado = st.number_input("Ingresá tu ID de Alumno", min_value=1, step=1, key="login_id")
     
-    intentos = 0
-    while intentos < 3:
-        id_ingresado = input("\nPor favor, ingresá tu ID de Alumno: ")
+    if st.button("Ingresar", use_container_width=True):
+        # Buscamos usando el nombre real de la columna en Supabase: id_alumno
+        query = "SELECT * FROM alumnos WHERE id_alumno = ?"
+        resultado = ejecutar_sql(query, (id_ingresado,))
         
-        # 1. Validación de tipo (que no rompa el script si ponen letras)
-        if not id_ingresado.isdigit():
-            print("❌ Error: El ID debe ser un número.")
-            intentos += 1
-            continue
-
-        # 2. Consulta a la Base de Datos
-        try:
-            # Conexión gestionada
-            # Cursor gestionado
+        if not resultado.empty:
+            # resultado es un DataFrame, tomamos la primera fila
+            datos = resultado.iloc[0]
             
-            # Buscamos los datos básicos para crear al alumno
-            query = "SELECT id_alumno, nombre, curso FROM alumnos WHERE id_alumno = ?"
-            ejecutar_sql(query, (int(id_ingresado),))
-            resultado = cursor.fetchone()
+            # Usamos los nombres exactos de tus columnas de Supabase
+            estudiante = Alumno(
+                id_alumno=int(datos['id_alumno']), 
+                nombre=datos['nombre'], 
+                curso=datos['curso']
+            )
             
-
-            if resultado:
-                # 3. INSTANCIACIÓN: Creamos el objeto Alumno
-                id_db, nombre_db, curso_db = resultado
-                nuevo_alumno = Alumno(id_db, nombre_db, curso_db)
-                
-                # 4. SINCRONIZACIÓN: Cargamos su pasado
-                nuevo_alumno.sincronizar_historial()
-                
-                print(f"\n✅ ¡Bienvenido/a, {nuevo_alumno.nombre}!",nuevo_alumno.curso)
-                return nuevo_alumno # Devolvemos el objeto "vivo" al main
-            else:
-                print("❌ ID no encontrado en la base de datos.")
-                intentos += 1
-
-        except sqlite3.Error as e:
-            print(f"⚠️ Error de conexión a la base de datos: {e}")
-            return None
-
-    print("\n⚠️ Demasiados intentos fallidos. Volviendo al menú inicial.")
-    return None
-
+            st.session_state.usuario = estudiante
+            st.success(f"✅ ¡Hola {datos['nombre']}! Ingresando...")
+            st.rerun()
+        else:
+            st.error("❌ ID no encontrado. Verificá con el profesor.")
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # FASE 2: Dashboard Permanente (Modo Consulta)
@@ -1126,6 +1103,7 @@ def ver_repaso_examen(alumno):
     except Exception as e:
 
         print(f"❌ Error al cargar el repaso: {e}")
+
 
 
 
