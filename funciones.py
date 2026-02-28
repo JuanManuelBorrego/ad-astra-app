@@ -22,11 +22,11 @@ def sorteador_orales():
     
     try:
         # Conexión gestionada
-        # Cursor gestionado
+        #  gestionado
         
         # 1. Leemos el curso que está configurado como activo ahora
         ejecutar_sql("SELECT curso FROM configuracion_clase WHERE id = 1")
-        config = cursor.fetchone()
+        config = .fetchone()
         
         if not config:
             print("⚠️ No hay un curso configurado en la tabla de registro único.")
@@ -38,7 +38,7 @@ def sorteador_orales():
 
         # 2. Buscamos a los alumnos de ese curso
         ejecutar_sql("SELECT nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_activo,))
-        estudiantes = cursor.fetchall()
+        estudiantes = .fetchall()
         
 
         if not estudiantes:
@@ -65,11 +65,11 @@ def cargar_nota_oral_manual():
     
     try:
         # Conexión gestionada
-        # Cursor gestionado
+        #  gestionado
         
         # 1. Detectar automáticamente la clase y el curso activos
         ejecutar_sql("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
-        config = cursor.fetchone()
+        config = .fetchone()
         
         if not config:
             print("❌ Error: No hay una clase configurada actualmente.")
@@ -89,7 +89,7 @@ def cargar_nota_oral_manual():
             WHERE nombre LIKE ? AND UPPER(curso) = UPPER(?)
         """, (f"%{nombre_buscado}%", curso_activo))
         
-        resultados = cursor.fetchall()
+        resultados = .fetchall()
 
         if not resultados:
             print(f"❌ No se encontró a '{nombre_buscado}' en el curso {curso_activo}.")
@@ -127,7 +127,7 @@ def cargar_nota_oral_manual():
             SELECT id_reporte FROM reportes_diarios 
             WHERE id_alumno = ? AND id_clase = ?
         """, (id_al, id_clase_activa))
-        registro_previo = cursor.fetchone()
+        registro_previo = .fetchone()
 
         if registro_previo:
             # Si ya existe (quizás ya tiene nota del examen), actualizamos oral y final
@@ -192,7 +192,7 @@ def menu_profesor_cargar_examen():
     # 3. GUARDADO EN BASE DE DATOS
     try:
         # Conexión gestionada
-        # Cursor gestionado
+        #  gestionado
 
         # PASO A: Crear o Actualizar la clase maestra (INCLUYENDO TRIMESTRE)
         # Agregamos 'trimestre' a la lista de columnas y al VALUES
@@ -205,7 +205,7 @@ def menu_profesor_cargar_examen():
         ejecutar_sql("DELETE FROM preguntas WHERE id_clase = ?", (id_clase,))
 
         # PASO C: Insertar las preguntas nuevas
-        cursor.executemany("""
+        .executemany("""
             INSERT INTO preguntas (id_clase, enunciado, opc_a, opc_b, opc_c, opc_d, correcta)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, preguntas_para_db)
@@ -425,10 +425,10 @@ def mostrar_dashboard(alumno, id_clase_hoy, visible):
 def obtener_clase_activa(curso_alumno):
     try:
         # Conexión gestionada
-        # Cursor gestionado
+        #  gestionado
         # Leemos el "semáforo" del profesor
         ejecutar_sql("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
-        config = cursor.fetchone()
+        config = .fetchone()
         
         
         if config:
@@ -455,9 +455,9 @@ def ejecutar_examen(estudiante, id_clase_objetivo):
 
     # 2. Traer preguntas
     # Conexión gestionada
-    # Cursor gestionado
+    #  gestionado
     ejecutar_sql("SELECT enunciado, opc_a, opc_b, opc_c, opc_d, correcta FROM preguntas WHERE id_clase = ?", (id_clase_objetivo,))
-    preguntas = cursor.fetchall()
+    preguntas = .fetchall()
     
 
     if not preguntas:
@@ -546,7 +546,7 @@ def registrar_nuevo_alumno():
 
     try:
         # Conexión gestionada
-        # Cursor gestionado
+        #  gestionado
         
         # Al pasar NULL en id_alumno, SQLite activa el AUTOINCREMENT
         ejecutar_sql("""
@@ -555,7 +555,7 @@ def registrar_nuevo_alumno():
         """, (nombre, curso))
         
         # Recuperamos el ID que la base de datos asignó automáticamente
-        nuevo_id = cursor.lastrowid
+        nuevo_id = .lastrowid
         
         conn.commit()
         
@@ -583,11 +583,11 @@ def ver_reporte_curso():
     # Eliminamos el input. Ahora el sistema es proactivo.
     try:
         # Conexión gestionada
-        # Cursor gestionado
+        #  gestionado
         
         # 1. Leemos la configuración de la fila única
         ejecutar_sql("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
-        config = cursor.fetchone()
+        config = .fetchone()
         
         if not config:
             print("⚠️ No hay ninguna clase activa configurada actualmente.")
@@ -638,9 +638,9 @@ def ver_reporte_trimestral():
     # 1. Obtenemos curso de la configuración y preguntamos el trimestre
     try:
         # Conexión gestionada
-        # Cursor gestionado
+        #  gestionado
         ejecutar_sql("SELECT curso FROM configuracion_clase WHERE id = 1")
-        config = cursor.fetchone()
+        config = .fetchone()
         
         if not config:
             print("❌ Error: Configure primero un curso en el panel.")
@@ -657,7 +657,7 @@ def ver_reporte_trimestral():
 
         # 2. Traemos la lista de alumnos de ese curso
         ejecutar_sql("SELECT id_alumno, nombre, curso FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_ver,))
-        lista_alumnos = cursor.fetchall()
+        lista_alumnos = .fetchall()
         
 
         if not lista_alumnos:
@@ -734,11 +734,11 @@ def completar_inasistencias_con_uno():
     
     try:
         # Conexión gestionada
-        # Cursor gestionado
+        #  gestionado
         
         # 1. Obtenemos la configuración actual
         ejecutar_sql("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
-        config = cursor.fetchone()
+        config = .fetchone()
         
         if not config:
             print("❌ Error: No se encontró una clase activa en la configuración.")
@@ -777,7 +777,7 @@ def completar_inasistencias_con_uno():
                 )
             """
             ejecutar_sql(query, (id_clase_activa, curso_activo, id_clase_activa))
-            filas_afectadas = cursor.rowcount
+            filas_afectadas = .rowcount
             conn.commit()
             
             print(f"\n✅ Planilla cerrada con fecha {fecha_cierre}. Se registraron {filas_afectadas} ausentes.")
@@ -797,11 +797,11 @@ def justificar_inasistencia_manual():
     
     try:
         # Conexión gestionada
-        # Cursor gestionado
+        #  gestionado
         
         # 1. Detectamos la clase activa para facilitar el trámite
         ejecutar_sql("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
-        config = cursor.fetchone()
+        config = .fetchone()
         id_sugerido = config[0] if config else None
         
         # 2. Pedimos los datos
@@ -809,7 +809,7 @@ def justificar_inasistencia_manual():
         
         # 3. Buscamos coincidencias
         ejecutar_sql("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE ?", (f"%{nombre_buscado}%",))
-        resultados = cursor.fetchall()
+        resultados = .fetchall()
 
         if not resultados:
             print("❌ No se encontró ningún alumno.")
@@ -857,11 +857,11 @@ def ver_progreso_individual_trimestral():
     
     try:
         # Conexión gestionada
-        # Cursor gestionado
+        #  gestionado
         
         # Búsqueda flexible
         ejecutar_sql("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE ?", (f"%{nombre_buscado}%",))
-        resultados = cursor.fetchall()
+        resultados = .fetchall()
         
         if not resultados:
             print(f"❌ No se encontró a '{nombre_buscado}'.")
@@ -927,9 +927,9 @@ def panel_profesor():
 
     # Variables de estado locales (se sincronizan con la DB al entrar)
     # Conexión gestionada
-    # Cursor gestionado
+    #  gestionado
     ejecutar_sql("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
-    config = cursor.fetchone()
+    config = .fetchone()
     
 
     id_clase = config[0] if config else "---"
@@ -938,9 +938,9 @@ def panel_profesor():
     while True:
         # Consulta de refresco para estados dinámicos
         # Conexión gestionada
-        # Cursor gestionado
+        #  gestionado
         ejecutar_sql("SELECT feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
-        res = cursor.fetchone()
+        res = .fetchone()
         
         
         visible = res[0] if res else 0
@@ -990,9 +990,9 @@ def panel_profesor():
             nueva_clase = input("📌 Ingrese el ID de la clase: ")
             nuevo_curso = input("🎓 Curso (Ej: 5TO A): ").strip().upper()
             # Conexión gestionada
-            # Cursor gestionado
+            #  gestionado
             ejecutar_sql("SELECT * FROM clases WHERE id_clase = ?", (nueva_clase,))
-            if cursor.fetchone():
+            if .fetchone():
                 ejecutar_sql("""
                     UPDATE configuracion_clase 
                     SET id_clase_actual = ?, curso = ?, examen_activo = 1
@@ -1008,7 +1008,7 @@ def panel_profesor():
         elif opcion == "2":
             nuevo_fb = 0 if visible == 1 else 1
             # Conexión gestionada
-            # Cursor gestionado
+            #  gestionado
             ejecutar_sql("UPDATE configuracion_clase SET feedback_visible = ? WHERE id = 1", (nuevo_fb,))
             conn.commit()
             
@@ -1017,7 +1017,7 @@ def panel_profesor():
         elif opcion == "3":
             nuevo_estado = 0 if estado_actual == 1 else 1
             # Conexión gestionada
-            # Cursor gestionado
+            #  gestionado
             ejecutar_sql("UPDATE configuracion_clase SET examen_activo = ? WHERE id = 1", (nuevo_estado,))
             conn.commit()
             
@@ -1081,7 +1081,7 @@ def ver_repaso_examen(alumno):
     # 2. Consultar la DB para ver el detalle
     try:
         # Conexión gestionada
-        # Cursor gestionado
+        #  gestionado
         
         # Unimos las preguntas con la respuesta que dio el alumno (si la guardaste)
         # NOTA: Para esto necesitamos que tu tabla 'respuestas_detalladas' exista.
@@ -1092,7 +1092,7 @@ def ver_repaso_examen(alumno):
             WHERE id_clase = ?
         """, (clase_elegida,))
         
-        preguntas = cursor.fetchall()
+        preguntas = .fetchall()
         
 
         print(f"\n--- REPASO CLASE {clase_elegida} ---")

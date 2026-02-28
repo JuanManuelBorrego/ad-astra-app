@@ -212,9 +212,9 @@ if modo == "Estudiantes":
         if st.button("Ingresar al Dashboard"):
             try:
                 # Conexión gestionada
-                # Cursor gestionado
+                #  gestionado
                 ejecutar_sql("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre = ?", (nombre_ingresado,))
-                res = cursor.fetchone()
+                res = .fetchone()
                 
                 
                 if res:
@@ -303,13 +303,13 @@ if modo == "Estudiantes":
             ya_rindio = False
             if st.session_state.id_clase_hoy:
                 try:
-                    with sqlite3.connect(ruta) as conn:
-                        # Cursor gestionado
+                    # Conexión Supabase activa
+                        #  gestionado
                         ejecutar_sql("""
                             SELECT COUNT(*) FROM reportes_diarios 
                             WHERE id_alumno = ? AND id_clase = ?
                         """, (st.session_state.estudiante.id, st.session_state.id_clase_hoy))
-                        if cursor.fetchone()[0] > 0:
+                        if .fetchone()[0] > 0:
                             ya_rindio = True
                 except Exception as e:
                     st.error(f"Error de validación: {e}")
@@ -512,10 +512,10 @@ elif modo == "Profesor":
         
         # Consultamos el estado actual para mostrarlo en la lateral
         try:
-            with sqlite3.connect(ruta) as conn:
-                # Cursor gestionado
+            # Conexión Supabase activa
+                #  gestionado
                 ejecutar_sql("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
-                res = cursor.fetchone()
+                res = .fetchone()
                 
                 if res:
                     id_c, cur_c, feed_c, act_c = res
@@ -561,8 +561,8 @@ elif modo == "Profesor":
             nuevo_activo = col_status.toggle("Abrir Acceso al Examen", value=(activo_val == 1))
 
             if st.button("💾 GUARDAR Y APLICAR CAMBIOS", use_container_width=True):
-                with sqlite3.connect(ruta) as conn:
-                    # Cursor gestionado
+                # Conexión Supabase activa
+                    #  gestionado
                     ejecutar_sql("""
                         INSERT OR REPLACE INTO configuracion_clase (id, id_clase_actual, curso, feedback_visible, examen_activo) 
                         VALUES (1, ?, ?, ?, ?)
@@ -576,10 +576,10 @@ elif modo == "Profesor":
 
         # 1. Obtenemos datos actuales de la configuración para saber qué vamos a cerrar
         try:
-            with sqlite3.connect(ruta) as conn:
-                # Cursor gestionado
+            # Conexión Supabase activa
+                #  gestionado
                 ejecutar_sql("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
-                config = cursor.fetchone()
+                config = .fetchone()
 
             if config and config[1]:
                 clase_id_activa, curso_activo = config[0], config[1]
@@ -591,8 +591,8 @@ elif modo == "Profesor":
                 # 3. Lógica que se dispara SOLO si el usuario confirmó en el cartel
                 if st.session_state.get('ejecutar_cierre_real', False):
                     try:
-                        with sqlite3.connect(ruta) as conn:
-                            # Cursor gestionado
+                        # Conexión Supabase activa
+                            #  gestionado
                             
                             # --- CORRECCIÓN 1: Registrar la fecha real de hoy en la tabla clases ---
                             fecha_actual = datetime.date.today().strftime("%d/%m/%Y")
@@ -604,7 +604,7 @@ elif modo == "Profesor":
                             
                             # Buscamos alumnos del curso
                             ejecutar_sql("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_activo,))
-                            alumnos_del_curso = cursor.fetchall()
+                            alumnos_del_curso = .fetchall()
                             
                             contador_ausentes = 0
                             nombres_ausentes = []
@@ -614,7 +614,7 @@ elif modo == "Profesor":
                                 ejecutar_sql("SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", 
                                                (id_al, clase_id_activa))
                                 
-                                if cursor.fetchone()[0] == 0:
+                                if .fetchone()[0] == 0:
                                     # Aquí grabamos el AUSENTE y el 1.0 inicial
                                     ejecutar_sql("""
                                         INSERT INTO reportes_diarios 
@@ -662,11 +662,11 @@ elif modo == "Profesor":
             
             if col_sort_btn.button("🎰 SORTEAR ALUMNO", use_container_width=True):
                 try:
-                    with sqlite3.connect(ruta) as conn:
-                        # Cursor gestionado
+                    # Conexión Supabase activa
+                        #  gestionado
                         # Buscamos a los alumnos del curso configurado actualmente
                         ejecutar_sql("SELECT nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_seleccionado,))
-                        lista_alumnos = [fila[0] for fila in cursor.fetchall()]
+                        lista_alumnos = [fila[0] for fila in .fetchall()]
                         
                         if lista_alumnos:
                             st.session_state.ganador = random.choice(lista_alumnos)
@@ -694,10 +694,10 @@ elif modo == "Profesor":
             col_al, col_nota = st.columns([2, 1])
             
             with col_al:
-                with sqlite3.connect(ruta) as conn:
-                    # Cursor gestionado
+                # Conexión Supabase activa
+                    #  gestionado
                     ejecutar_sql("SELECT nombre FROM alumnos WHERE UPPER(TRIM(curso)) = UPPER(TRIM(?)) ORDER BY nombre ASC", (curso_seleccionado,))
-                    lista_nombres = [f[0] for f in cursor.fetchall()]
+                    lista_nombres = [f[0] for f in .fetchall()]
                 
                 alumno_a_calificar = st.selectbox("Seleccionar Alumno", lista_nombres, 
                     index=lista_nombres.index(nombre_por_defecto) if nombre_por_defecto in lista_nombres else 0)
@@ -707,18 +707,18 @@ elif modo == "Profesor":
 
             if st.button("💾 GUARDAR NOTA ORAL", use_container_width=True):
                 try:
-                    with sqlite3.connect(ruta) as conn:
-                        # Cursor gestionado
+                    # Conexión Supabase activa
+                        #  gestionado
                         
                         # 1. Obtenemos el ID del alumno
                         ejecutar_sql("SELECT id_alumno FROM alumnos WHERE nombre = ?", (alumno_a_calificar,))
-                        res_id = cursor.fetchone()
+                        res_id = .fetchone()
                         
                         if res_id:
                             id_al = res_id[0]
                             # 2. Verificamos si ya existe el registro para esa clase
                             ejecutar_sql("SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", (id_al, id_clase_input))
-                            existe = cursor.fetchone()[0]
+                            existe = .fetchone()[0]
                             
                             if existe > 0:
                                 ejecutar_sql("""
@@ -758,10 +758,10 @@ elif modo == "Profesor":
             
             if busqueda:
                 try:
-                    with sqlite3.connect(ruta) as conn:
-                        # Cursor gestionado
+                    # Conexión Supabase activa
+                        #  gestionado
                         ejecutar_sql("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE ?", (f"%{busqueda}%",))
-                        resultados = cursor.fetchall()
+                        resultados = .fetchall()
                 except Exception as e:
                     st.error(f"Error de búsqueda: {e}")
 
@@ -775,8 +775,8 @@ elif modo == "Profesor":
                 
                 if st.button("⚠️ JUSTIFICAR Y LIMPIAR NOTAS", use_container_width=True):
                     try:
-                        with sqlite3.connect(ruta) as conn:
-                            # Cursor gestionado
+                        # Conexión Supabase activa
+                            #  gestionado
                             # CAMBIO CLAVE: UPDATE en lugar de DELETE
                             # Seteamos notas y ejercicios en NULL para que el sistema lo vea como "no rendido"
                             # pero NO tocamos la columna 'asistencia' (que seguirá siendo 'AUSENTE')
@@ -806,7 +806,7 @@ elif modo == "Profesor":
         st.subheader(f"📈 Reportes en DB: {curso_seleccionado} - Clase № {id_clase_input}")
 
         try:
-            with sqlite3.connect(ruta) as conn:
+            # Conexión Supabase activa
                 # Actualizamos la consulta para incluir 'asistencia'
                 query_monitor = """
                     SELECT 
@@ -854,11 +854,11 @@ elif modo == "Profesor":
                     import numpy as np
                     import pandas as pd
 
-                    with sqlite3.connect(ruta) as conn:
+                    # Conexión Supabase activa
                         # 1. Traer alumnos del curso activo
-                        # Cursor gestionado
+                        #  gestionado
                         ejecutar_sql("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_seleccionado,))
-                        alumnos = cursor.fetchall()
+                        alumnos = .fetchall()
 
                         if not alumnos:
                             st.warning("No hay alumnos en este curso.")
@@ -977,8 +977,8 @@ elif modo == "Profesor":
                     st.error("Por favor, ingresa un tema para la clase.")
                 else:
                     try:
-                        with sqlite3.connect(ruta) as conn:
-                            # Cursor gestionado
+                        # Conexión Supabase activa
+                            #  gestionado
 
                             # PASO A: Insertar la clase (SQLite genera el ID solo)
                             # No incluimos 'id_clase' en la lista de columnas
@@ -988,7 +988,7 @@ elif modo == "Profesor":
                             """, ("", tema_new, cant_preguntas, int(trimestre_new)))
 
                             # PASO B: Obtener el ID que SQLite acaba de generar
-                            id_clase_generado = cursor.lastrowid
+                            id_clase_generado = .lastrowid
 
                             # PASO C: Preparar preguntas con el ID recién obtenido
                             preguntas_finales = []
@@ -997,7 +997,7 @@ elif modo == "Profesor":
                                 preguntas_finales.append((id_clase_generado, *p))
 
                             # PASO D: Insertar las preguntas vinculadas a ese ID
-                            cursor.executemany("""
+                            .executemany("""
                                 INSERT INTO preguntas (id_clase, enunciado, opc_a, opc_b, opc_c, opc_d, correcta)
                                 VALUES (?, ?, ?, ?, ?, ?, ?)
                             """, preguntas_finales)
@@ -1016,10 +1016,10 @@ elif modo == "Profesor":
         st.subheader("📂 Explorador de Clases y Exámenes")
 
         try:
-            with sqlite3.connect(ruta) as conn:
+            # Conexión Supabase activa
                 # 1. Traer todas las clases registradas
                 query_clases = "SELECT * FROM clases ORDER BY id_clase DESC"
-                df_clases = ejecutar_sql(query_clases, conn)
+                df_clases = ejecutar_sql(query_clases)
 
             if df_clases.empty:
                 st.info("Aún no hay clases registradas en la base de datos.")
@@ -1038,7 +1038,7 @@ elif modo == "Profesor":
                 if clase_a_ver:
                     id_seleccionado = opciones_clases[clase_a_ver]
                     
-                    with sqlite3.connect(ruta) as conn:
+                    # Conexión Supabase activa
                         # 2. Traer las preguntas de la clase seleccionada
                         query_preg = """
                             SELECT enunciado, opc_a, opc_b, opc_c, opc_d, correcta 
