@@ -27,7 +27,7 @@ st.set_page_config(
     layout="centered", 
     page_icon="✨" 
 )
-
+st.write("Intentando conectar...")
 def aplicar_interfaz_cientifica():
     # 1. DISEÑO VISUAL (CSS) - ASTRA FINAL REINFORCED
     st.markdown("""
@@ -1077,4 +1077,5 @@ elif modo == "Profesor":
             st.session_state["logout_confirmado"] = True
             st.rerun()
 
+st.write("Conectado")
 
