@@ -212,7 +212,7 @@ if modo == "Estudiantes":
             try:
                 conn = sqlite3.connect(ruta)
                 cursor = conn.cursor()
-                cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre = ?", (nombre_ingresado,))
+                cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre = %s", (nombre_ingresado,))
                 res = cursor.fetchone()
                 conn.close()
                 
@@ -306,7 +306,7 @@ if modo == "Estudiantes":
                         cursor = conn.cursor()
                         cursor.execute("""
                             SELECT COUNT(*) FROM reportes_diarios 
-                            WHERE id_alumno = ? AND id_clase = ?
+                            WHERE id_alumno = %s AND id_clase = %s
                         """, (st.session_state.estudiante.id, st.session_state.id_clase_hoy))
                         if cursor.fetchone()[0] > 0:
                             ya_rindio = True
@@ -348,7 +348,7 @@ if modo == "Estudiantes":
                     try:
                         conn = sqlite3.connect(ruta)
                         df_preguntas = pd.read_sql_query(
-                            "SELECT id_pregunta, enunciado, opc_a, opc_b, opc_c, opc_d, correcta FROM preguntas WHERE id_clase = ?", 
+                            "SELECT id_pregunta, enunciado, opc_a, opc_b, opc_c, opc_d, correcta FROM preguntas WHERE id_clase = %s", 
                             conn, params=(st.session_state.id_clase_hoy,)
                         )
                         conn.close()
@@ -417,7 +417,7 @@ if modo == "Estudiantes":
                             ) as 'Nota final de la clase'
                         FROM reportes_diarios r
                         JOIN clases c ON r.id_clase = c.id_clase
-                        WHERE r.id_alumno = ?
+                        WHERE r.id_alumno = %s
                         ORDER BY c.fecha DESC
                     """
                     df_repaso = pd.read_sql_query(query, conn, params=(id_actual,))
@@ -564,7 +564,7 @@ elif modo == "Profesor":
                     cursor = conn.cursor()
                     cursor.execute("""
                         INSERT OR REPLACE INTO configuracion_clase (id, id_clase_actual, curso, feedback_visible, examen_activo) 
-                        VALUES (1, ?, ?, ?, ?)
+                        VALUES (1, %s, %s, %s, %s)
                     """, (id_clase_input, curso_seleccionado, 1 if nuevo_feed else 0, 1 if nuevo_activo else 0))
                 st.success("✅ ¡Configuración actualizada en todo el sistema!")
                 st.rerun()
@@ -597,12 +597,12 @@ elif modo == "Profesor":
                             fecha_actual = datetime.date.today().strftime("%d/%m/%Y")
                             cursor.execute("""
                                 UPDATE clases 
-                                SET fecha = ? 
-                                WHERE id_clase = ?
+                                SET fecha = %s 
+                                WHERE id_clase = %s
                             """, (fecha_actual, clase_id_activa))
                             
                             # Buscamos alumnos del curso
-                            cursor.execute("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_activo,))
+                            cursor.execute("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(%s)", (curso_activo,))
                             alumnos_del_curso = cursor.fetchall()
                             
                             contador_ausentes = 0
@@ -610,7 +610,7 @@ elif modo == "Profesor":
 
                             for id_al, nombre_al in alumnos_del_curso:
                                 # Verificamos si ya tiene nota en esta clase
-                                cursor.execute("SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", 
+                                cursor.execute("SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = %s AND id_clase = %s", 
                                                (id_al, clase_id_activa))
                                 
                                 if cursor.fetchone()[0] == 0:
@@ -618,7 +618,7 @@ elif modo == "Profesor":
                                     cursor.execute("""
                                         INSERT INTO reportes_diarios 
                                         (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_final, asistencia)
-                                        VALUES (?, ?, 0, 0, 1.0, 'AUSENTE')
+                                        VALUES (%s, %s, 0, 0, 1.0, 'AUSENTE')
                                     """, (id_al, clase_id_activa))
                                     contador_ausentes += 1
                                     nombres_ausentes.append(nombre_al)
@@ -664,7 +664,7 @@ elif modo == "Profesor":
                     with sqlite3.connect(ruta) as conn:
                         cursor = conn.cursor()
                         # Buscamos a los alumnos del curso configurado actualmente
-                        cursor.execute("SELECT nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_seleccionado,))
+                        cursor.execute("SELECT nombre FROM alumnos WHERE UPPER(curso) = UPPER(%s)", (curso_seleccionado,))
                         lista_alumnos = [fila[0] for fila in cursor.fetchall()]
                         
                         if lista_alumnos:
@@ -695,7 +695,7 @@ elif modo == "Profesor":
             with col_al:
                 with sqlite3.connect(ruta) as conn:
                     cursor = conn.cursor()
-                    cursor.execute("SELECT nombre FROM alumnos WHERE UPPER(TRIM(curso)) = UPPER(TRIM(?)) ORDER BY nombre ASC", (curso_seleccionado,))
+                    cursor.execute("SELECT nombre FROM alumnos WHERE UPPER(TRIM(curso)) = UPPER(TRIM(%s)) ORDER BY nombre ASC", (curso_seleccionado,))
                     lista_nombres = [f[0] for f in cursor.fetchall()]
                 
                 alumno_a_calificar = st.selectbox("Seleccionar Alumno", lista_nombres, 
@@ -710,26 +710,26 @@ elif modo == "Profesor":
                         cursor = conn.cursor()
                         
                         # 1. Obtenemos el ID del alumno
-                        cursor.execute("SELECT id_alumno FROM alumnos WHERE nombre = ?", (alumno_a_calificar,))
+                        cursor.execute("SELECT id_alumno FROM alumnos WHERE nombre = %s", (alumno_a_calificar,))
                         res_id = cursor.fetchone()
                         
                         if res_id:
                             id_al = res_id[0]
                             # 2. Verificamos si ya existe el registro para esa clase
-                            cursor.execute("SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", (id_al, id_clase_input))
+                            cursor.execute("SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = %s AND id_clase = %s", (id_al, id_clase_input))
                             existe = cursor.fetchone()[0]
                             
                             if existe > 0:
                                 cursor.execute("""
                                     UPDATE reportes_diarios 
-                                    SET nota_oral = ?, nota_final = ? 
-                                    WHERE id_alumno = ? AND id_clase = ?
+                                    SET nota_oral = %s, nota_final = %s 
+                                    WHERE id_alumno = %s AND id_clase = %s
                                 """, (nota_input, nota_input, id_al, id_clase_input))
                             else:
                                 cursor.execute("""
                                     INSERT INTO reportes_diarios 
                                     (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final)
-                                    VALUES (?, ?, 0, 0, ?, ?)
+                                    VALUES (%s, %s, 0, 0, %s, %s)
                                 """, (id_al, id_clase_input, nota_input, nota_input))
                             
                             conn.commit()
@@ -759,7 +759,7 @@ elif modo == "Profesor":
                 try:
                     with sqlite3.connect(ruta) as conn:
                         cursor = conn.cursor()
-                        cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE ?", (f"%{busqueda}%",))
+                        cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE %s", (f"%{busqueda}%",))
                         resultados = cursor.fetchall()
                 except Exception as e:
                     st.error(f"Error de búsqueda: {e}")
@@ -784,7 +784,7 @@ elif modo == "Profesor":
                                 SET ejercicios_completados = NULL, 
                                     ejercicios_correctos = NULL, 
                                     nota_final = NULL 
-                                WHERE id_alumno = ? AND id_clase = ?
+                                WHERE id_alumno = %s AND id_clase = %s
                             """, (id_al_elegido, id_clase_justificar))
                             conn.commit()
                         
@@ -816,8 +816,8 @@ elif modo == "Profesor":
                         r.nota_final AS 'Nota Final'
                     FROM reportes_diarios r
                     INNER JOIN alumnos a ON r.id_alumno = a.id_alumno
-                    WHERE r.id_clase = ? 
-                    AND UPPER(TRIM(a.curso)) = UPPER(TRIM(?))
+                    WHERE r.id_clase = %s 
+                    AND UPPER(TRIM(a.curso)) = UPPER(TRIM(%s))
                     ORDER BY a.nombre ASC
                 """
                 
@@ -855,7 +855,7 @@ elif modo == "Profesor":
                     with sqlite3.connect(ruta) as conn:
                         # 1. Traer alumnos del curso activo
                         cursor = conn.cursor()
-                        cursor.execute("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_seleccionado,))
+                        cursor.execute("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(%s)", (curso_seleccionado,))
                         alumnos = cursor.fetchall()
 
                         if not alumnos:
@@ -873,7 +873,7 @@ elif modo == "Profesor":
                                     SELECT r.ejercicios_completados as esfuerzo, r.ejercicios_correctos as eficacia, r.nota_final 
                                     FROM reportes_diarios r
                                     JOIN clases c ON r.id_clase = c.id_clase
-                                    WHERE r.id_alumno = ? AND c.trimestre = ? AND r.nota_final IS NOT NULL
+                                    WHERE r.id_alumno = %s AND c.trimestre = %s AND r.nota_final IS NOT NULL
                                 """
                                 df_hist = pd.read_sql_query(query_hist, conn, params=(id_al, int(trimestre_n)))
 
@@ -982,7 +982,7 @@ elif modo == "Profesor":
                             # No incluimos 'id_clase' en la lista de columnas
                             cursor.execute("""
                                 INSERT INTO clases (fecha, tema, ejercicios_totales, trimestre) 
-                                VALUES (?, ?, ?, ?)
+                                VALUES (%s, %s, %s, %s)
                             """, ("", tema_new, cant_preguntas, int(trimestre_new)))
 
                             # PASO B: Obtener el ID que SQLite acaba de generar
@@ -997,7 +997,7 @@ elif modo == "Profesor":
                             # PASO D: Insertar las preguntas vinculadas a ese ID
                             cursor.executemany("""
                                 INSERT INTO preguntas (id_clase, enunciado, opc_a, opc_b, opc_c, opc_d, correcta)
-                                VALUES (?, ?, ?, ?, ?, ?, ?)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s)
                             """, preguntas_finales)
                             
                             conn.commit()
@@ -1041,7 +1041,7 @@ elif modo == "Profesor":
                         query_preg = """
                             SELECT enunciado, opc_a, opc_b, opc_c, opc_d, correcta 
                             FROM preguntas 
-                            WHERE id_clase = ?
+                            WHERE id_clase = %s
                         """
                         df_preguntas = pd.read_sql_query(query_preg, conn, params=(id_seleccionado,))
 

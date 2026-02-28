@@ -11,17 +11,17 @@ def get_connection():
 def ejecutar_sql(query, params=None):
     """
     TRADUCTOR AUTOMÁTICO: 
-    Recibe queries con '?' (estilo SQLite) y las convierte 
+    Recibe queries con '%s' (estilo SQLite) y las convierte 
     al formato ':p1' (estilo PostgreSQL/Supabase).
     """
     conn = get_connection()
     
     if params:
-        # 1. Convertimos los '?' en ':p1', ':p2', etc.
+        # 1. Convertimos los '%s' en ':p1', ':p2', etc.
         count = 1
         new_query = query
-        while '?' in new_query:
-            new_query = new_query.replace('?', f':p{count}', 1)
+        while '%s' in new_query:
+            new_query = new_query.replace('%s', f':p{count}', 1)
             count += 1
         
         # 2. Convertimos la tupla de parámetros en un diccionario

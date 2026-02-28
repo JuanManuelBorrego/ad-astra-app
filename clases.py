@@ -42,7 +42,7 @@ class Alumno:
             cursor = conn.cursor()
             
             # Contamos cuántas preguntas existen realmente para esta clase
-            cursor.execute("SELECT COUNT(*) FROM preguntas WHERE id_clase = ?", (id_clase,))
+            cursor.execute("SELECT COUNT(*) FROM preguntas WHERE id_clase = %s", (id_clase,))
             totales_reales = cursor.fetchone()[0]
             
             if totales_reales == 0:
@@ -50,7 +50,7 @@ class Alumno:
                 return None
             
             # Sincronizamos la tabla 'clases' para que el número manual no estorbe
-            cursor.execute("UPDATE clases SET ejercicios_totales = ? WHERE id_clase = ?", 
+            cursor.execute("UPDATE clases SET ejercicios_totales = %s WHERE id_clase = %s", 
                            (totales_reales, id_clase))
             conn.commit()
             
@@ -75,7 +75,7 @@ class Alumno:
                     cursor = conn.cursor()
                     cursor.execute("""
                         INSERT INTO reportes_diarios (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final)
-                        VALUES (?, ?, 0, 0, NULL, 1.0)
+                        VALUES (%s, %s, 0, 0, NULL, 1.0)
                     """, (self.id, id_clase))
                 return 1.0
         
@@ -99,7 +99,7 @@ class Alumno:
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO reportes_diarios (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final)
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """, (self.id, id_clase, completados, correctos, nota_oral, nota_final))
         conn.commit()
         conn.close()
@@ -120,7 +120,7 @@ class Alumno:
                    r.nota_final, r.nota_oral, c.ejercicios_totales
             FROM reportes_diarios r
             JOIN clases c ON r.id_clase = c.id_clase
-            WHERE r.id_alumno = ?
+            WHERE r.id_alumno = %s
         """
         cursor.execute(query, (self.id,))
         filas = cursor.fetchall()
@@ -275,7 +275,7 @@ class Alumno:
                        r.nota_final, c.ejercicios_totales
                 FROM reportes_diarios r
                 JOIN clases c ON r.id_clase = c.id_clase
-                WHERE r.id_alumno = ? AND c.trimestre = ?
+                WHERE r.id_alumno = %s AND c.trimestre = %s
             """
             cursor.execute(query, (self.id, trimestre))
             filas = cursor.fetchall()

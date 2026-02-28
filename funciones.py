@@ -37,7 +37,7 @@ def sorteador_orales():
         print(f"🎲 Sorteando alumno de: {curso_activo}...")
 
         # 2. Buscamos a los alumnos de ese curso
-        cursor.execute("SELECT nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_activo,))
+        cursor.execute("SELECT nombre FROM alumnos WHERE UPPER(curso) = UPPER(%s)", (curso_activo,))
         estudiantes = cursor.fetchall()
         conn.close()
 
@@ -86,7 +86,7 @@ def cargar_nota_oral_manual():
         cursor.execute("""
             SELECT id_alumno, nombre 
             FROM alumnos 
-            WHERE nombre LIKE ? AND UPPER(curso) = UPPER(?)
+            WHERE nombre LIKE %s AND UPPER(curso) = UPPER(%s)
         """, (f"%{nombre_buscado}%", curso_activo))
         
         resultados = cursor.fetchall()
@@ -125,7 +125,7 @@ def cargar_nota_oral_manual():
         # 5. Verificamos si ya existe el registro en reportes_diarios
         cursor.execute("""
             SELECT id_reporte FROM reportes_diarios 
-            WHERE id_alumno = ? AND id_clase = ?
+            WHERE id_alumno = %s AND id_clase = %s
         """, (id_al, id_clase_activa))
         registro_previo = cursor.fetchone()
 
@@ -133,15 +133,15 @@ def cargar_nota_oral_manual():
             # Si ya existe (quizás ya tiene nota del examen), actualizamos oral y final
             cursor.execute("""
                 UPDATE reportes_diarios 
-                SET nota_oral = ?, nota_final = ? 
-                WHERE id_alumno = ? AND id_clase = ?
+                SET nota_oral = %s, nota_final = %s 
+                WHERE id_alumno = %s AND id_clase = %s
             """, (nota, nota, id_al, id_clase_activa))
             print(f"🔄 Registro actualizado: {nombre_completo} ahora tiene un {nota}.")
         else:
             # Si no existe (faltó o todavía no abrió el examen), creamos la fila
             cursor.execute("""
                 INSERT INTO reportes_diarios (id_alumno, id_clase, nota_oral, nota_final, ejercicios_completados, ejercicios_correctos)
-                VALUES (?, ?, ?, ?, 0, 0)
+                VALUES (%s, %s, %s, %s, 0, 0)
             """, (id_al, id_clase_activa, nota, nota))
             print(f"✅ Nuevo registro creado para {nombre_completo} con nota {nota}.")
 
@@ -198,16 +198,16 @@ def menu_profesor_cargar_examen():
         # Agregamos 'trimestre' a la lista de columnas y al VALUES
         cursor.execute("""
             INSERT OR REPLACE INTO clases (id_clase, fecha, tema, ejercicios_totales, trimestre) 
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s)
         """, (id_clase, None, tema, cant, int(trimestre)))
 
         # PASO B: LIMPIEZA DE PREGUNTAS PREVIAS
-        cursor.execute("DELETE FROM preguntas WHERE id_clase = ?", (id_clase,))
+        cursor.execute("DELETE FROM preguntas WHERE id_clase = %s", (id_clase,))
 
         # PASO C: Insertar las preguntas nuevas
         cursor.executemany("""
             INSERT INTO preguntas (id_clase, enunciado, opc_a, opc_b, opc_c, opc_d, correcta)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, preguntas_para_db)
         
         conn.commit()
@@ -252,7 +252,7 @@ def login_alumno():
             cursor = conn.cursor()
             
             # Buscamos los datos básicos para crear al alumno
-            query = "SELECT id_alumno, nombre, curso FROM alumnos WHERE id_alumno = ?"
+            query = "SELECT id_alumno, nombre, curso FROM alumnos WHERE id_alumno = %s"
             cursor.execute(query, (int(id_ingresado),))
             resultado = cursor.fetchone()
             conn.close()
@@ -474,7 +474,7 @@ def ejecutar_examen(estudiante, id_clase_objetivo):
     # 2. Traer preguntas
     conn = sqlite3.connect(ruta)
     cursor = conn.cursor()
-    cursor.execute("SELECT enunciado, opc_a, opc_b, opc_c, opc_d, correcta FROM preguntas WHERE id_clase = ?", (id_clase_objetivo,))
+    cursor.execute("SELECT enunciado, opc_a, opc_b, opc_c, opc_d, correcta FROM preguntas WHERE id_clase = %s", (id_clase_objetivo,))
     preguntas = cursor.fetchall()
     conn.close()
 
@@ -569,7 +569,7 @@ def registrar_nuevo_alumno():
         # Al pasar NULL en id_alumno, SQLite activa el AUTOINCREMENT
         cursor.execute("""
             INSERT INTO alumnos (id_alumno, nombre, curso) 
-            VALUES (NULL, ?, ?)
+            VALUES (NULL, %s, %s)
         """, (nombre, curso))
         
         # Recuperamos el ID que la base de datos asignó automáticamente
@@ -622,8 +622,8 @@ def ver_reporte_curso():
                 r.ejercicios_correctos AS "Correctos", 
                 r.nota_final AS "Nota"
             FROM alumnos a
-            LEFT JOIN reportes_diarios r ON a.id_alumno = r.id_alumno AND r.id_clase = ?
-            WHERE UPPER(a.curso) = UPPER(?)
+            LEFT JOIN reportes_diarios r ON a.id_alumno = r.id_alumno AND r.id_clase = %s
+            WHERE UPPER(a.curso) = UPPER(%s)
         """
         
         df = pd.read_sql_query(query, conn, params=(id_clase_activa, curso_activo))
@@ -674,7 +674,7 @@ def ver_reporte_trimestral():
             return
 
         # 2. Traemos la lista de alumnos de ese curso
-        cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_ver,))
+        cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE UPPER(curso) = UPPER(%s)", (curso_ver,))
         lista_alumnos = cursor.fetchall()
         conn.close()
 
@@ -780,18 +780,18 @@ def completar_inasistencias_con_uno():
             # 2. ACTUALIZAMOS LA FECHA EN LA TABLA CLASES
             cursor.execute("""
                 UPDATE clases 
-                SET fecha = ? 
-                WHERE id_clase = ?
+                SET fecha = %s 
+                WHERE id_clase = %s
             """, (fecha_cierre, id_clase_activa))
                 
             # 3. Ejecución de la carga masiva
             query = """
                 INSERT INTO reportes_diarios (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_final)
-                SELECT id_alumno, ?, 0, 0, 1.0
+                SELECT id_alumno, %s, 0, 0, 1.0
                 FROM alumnos
-                WHERE UPPER(curso) = UPPER(?) 
+                WHERE UPPER(curso) = UPPER(%s) 
                 AND id_alumno NOT IN (
-                    SELECT id_alumno FROM reportes_diarios WHERE id_clase = ?
+                    SELECT id_alumno FROM reportes_diarios WHERE id_clase = %s
                 )
             """
             cursor.execute(query, (id_clase_activa, curso_activo, id_clase_activa))
@@ -826,7 +826,7 @@ def justificar_inasistencia_manual():
         nombre_buscado = input("Nombre o Apellido del alumno: ").strip()
         
         # 3. Buscamos coincidencias
-        cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE ?", (f"%{nombre_buscado}%",))
+        cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE %s", (f"%{nombre_buscado}%",))
         resultados = cursor.fetchall()
 
         if not resultados:
@@ -850,10 +850,10 @@ def justificar_inasistencia_manual():
         id_clase = input(f"ID de clase para {nombre_al} [Default {id_sugerido}]: ").strip()
         if not id_clase: id_clase = id_sugerido
 
-        confirmar = input(f"⚠️ ¿Confirmás borrar la nota de {nombre_al} en la clase {id_clase}? (S/N): ").upper()
+        confirmar = input(f"⚠️ ¿Confirmás borrar la nota de {nombre_al} en la clase {id_clase}%s (S/N): ").upper()
         
         if confirmar == 'S':
-            cursor.execute("DELETE FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", (id_al, id_clase))
+            cursor.execute("DELETE FROM reportes_diarios WHERE id_alumno = %s AND id_clase = %s", (id_al, id_clase))
             conn.commit()
             print(f"✅ ¡Listo! Registro borrado para {nombre_al}.")
         
@@ -878,7 +878,7 @@ def ver_progreso_individual_trimestral():
         cursor = conn.cursor()
         
         # Búsqueda flexible
-        cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE ?", (f"%{nombre_buscado}%",))
+        cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE %s", (f"%{nombre_buscado}%",))
         resultados = cursor.fetchall()
         
         if not resultados:
@@ -908,7 +908,7 @@ def ver_progreso_individual_trimestral():
                 r.nota_final AS "Nota"
             FROM reportes_diarios r
             JOIN clases c ON r.id_clase = c.id_clase
-            WHERE r.id_alumno = ? AND c.trimestre = ?
+            WHERE r.id_alumno = %s AND c.trimestre = %s
             ORDER BY c.id_clase ASC
         """
         
@@ -1009,11 +1009,11 @@ def panel_profesor():
             nuevo_curso = input("🎓 Curso (Ej: 5TO A): ").strip().upper()
             conn = sqlite3.connect(ruta)
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM clases WHERE id_clase = ?", (nueva_clase,))
+            cursor.execute("SELECT * FROM clases WHERE id_clase = %s", (nueva_clase,))
             if cursor.fetchone():
                 cursor.execute("""
                     UPDATE configuracion_clase 
-                    SET id_clase_actual = ?, curso = ?, examen_activo = 1
+                    SET id_clase_actual = %s, curso = %s, examen_activo = 1
                     WHERE id = 1
                 """, (nueva_clase, nuevo_curso))
                 conn.commit()
@@ -1027,7 +1027,7 @@ def panel_profesor():
             nuevo_fb = 0 if visible == 1 else 1
             conn = sqlite3.connect(ruta)
             cursor = conn.cursor()
-            cursor.execute("UPDATE configuracion_clase SET feedback_visible = ? WHERE id = 1", (nuevo_fb,))
+            cursor.execute("UPDATE configuracion_clase SET feedback_visible = %s WHERE id = 1", (nuevo_fb,))
             conn.commit()
             conn.close()
             print(f"\n📢 FEEDBACK: {'HABILITADO' if nuevo_fb == 1 else 'DESHABILITADO'}")
@@ -1036,7 +1036,7 @@ def panel_profesor():
             nuevo_estado = 0 if estado_actual == 1 else 1
             conn = sqlite3.connect(ruta)
             cursor = conn.cursor()
-            cursor.execute("UPDATE configuracion_clase SET examen_activo = ? WHERE id = 1", (nuevo_estado,))
+            cursor.execute("UPDATE configuracion_clase SET examen_activo = %s WHERE id = 1", (nuevo_estado,))
             conn.commit()
             conn.close()
             print(f"\n📢 ACCESO EXAMEN: {'CERRADO' if nuevo_estado == 0 else 'ABIERTO'}")
@@ -1107,7 +1107,7 @@ def ver_repaso_examen(alumno):
         cursor.execute("""
             SELECT enunciado, opc_a, opc_b, opc_c, opc_d, correcta 
             FROM preguntas 
-            WHERE id_clase = ?
+            WHERE id_clase = %s
         """, (clase_elegida,))
         
         preguntas = cursor.fetchall()
