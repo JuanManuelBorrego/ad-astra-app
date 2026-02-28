@@ -111,50 +111,49 @@ class Alumno:
     # MÉTODO SINCRONIZAR HISTORIAL: COMO LOS OBJETOS SE GUARDAN SÓLO EN LA RAM, CON ESTE MÉTODO APUNTAMOS SIEMPRE A LA BASE DE DATOS PARA RECONSTRUIR EL OBJETO
  
     def sincronizar_historial(self):
-        # 1. Importamos la función desde config para que esté disponible
+        # 1. Importamos la herramienta de conexión (asegurate que esté en tu config.py)
         from config import ejecutar_sql
-        
+        import pandas as pd # Necesario para procesar los datos de Supabase
+
+        # 2. Tu consulta SQL con JOIN (tal cual la tenías)
         query = """
             SELECT r.id_clase, r.ejercicios_completados, r.ejercicios_correctos, 
                    r.nota_final, r.nota_oral, c.ejercicios_totales
             FROM reportes_diarios r
             JOIN clases c ON r.id_clase = c.id_clase
-            WHERE r.id_alumno = ?
+            WHERE r.id_alumno = %s
         """
         
-        # 2. ejecutar_sql nos devuelve un DataFrame (una tabla)
+        # 3. Ejecutamos y guardamos en un DataFrame (una tabla de datos)
+        # Cambiamos el ? por %s si usas el driver de PostgreSQL directamente
         df_historial = ejecutar_sql(query, (self.id,))
 
-        # 3. Recorremos el DataFrame fila por fila
+        # 4. Procesamos los datos fila por fila
         if not df_historial.empty:
             for _, f in df_historial.iterrows():
                 id_clase_f = int(f['id_clase'])
                 
-                # Manejo de Nones (tu lógica original con Pandas)
+                # Tu lógica de limpieza de datos (None -> 0)
                 completados_f = f['ejercicios_completados'] if pd.notnull(f['ejercicios_completados']) else 0
                 correctos_f = f['ejercicios_correctos'] if pd.notnull(f['ejercicios_correctos']) else 0
                 totales_f = f['ejercicios_totales']
             
-                # Cálculo de Esfuerzo (Cantidad) en porcentaje
-                # Evitamos división por cero por las dudas
+                # Cálculo de porcentajes para tus gráficos
                 val_esfuerzo = (completados_f / totales_f * 100) if totales_f > 0 else 0
                 
-                # Cálculo de Eficacia (Calidad sobre lo hecho) en porcentaje
                 if completados_f > 0:
                     val_eficacia = (correctos_f / completados_f) * 100
                 else:
                     val_eficacia = 0
                     
-                # Llenamos el diccionario del objeto
+                # Guardamos en el historial del objeto alumno
                 self.historial[id_clase_f] = {
                     "esfuerzo": val_esfuerzo, 
                     "eficacia": val_eficacia,
                     "nota_final": f['nota_final'],
                     "nota_oral": f['nota_oral']
                 }
-        
-        # Ya no hace falta cerrar nada, pandas y ejecutar_sql se encargan.
-        
+        # ¡LISTO! Ya no hay más 'cursor.fetchall()' ni cierres manuales.
     #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #MÉTODO OBTENER EL PROMEDIO DE TODAS LAS NOTAS FINALES DE TODAS LAS CLASES AL MOMENTO (SI EL TRIMESTRE CERRASE EN ESE MOMENTO, ESA SERÍA LA NOTA)
     def promedio(self):    
@@ -364,4 +363,5 @@ class Alumno:
 #FIN DE LA CLASE ALUMNO
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
