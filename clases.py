@@ -281,7 +281,7 @@ class Alumno:
                 WHERE r.id_alumno = ? AND c.trimestre = ?
             """
             ejecutar_sql(query, (self.id, trimestre))
-            filas = cursor.fetchall()
+            if not resultado.empty:
             
             for f in filas:
                 id_clase, comp, corr, nota, totales = f
