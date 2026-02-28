@@ -211,10 +211,25 @@ if modo == "Estudiantes":
         # ... dentro de if modo == "Estudiantes" ...
         if st.button("Ingresar al Dashboard"):
             try:
-                # Conexión gestionada
-                #  gestionado
-                ejecutar_sql("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre = ?", (nombre_ingresado,))
-                res = .fetchone()
+                # 1. Ejecutamos la consulta y guardamos el resultado en una variable
+                # Cambiamos el ? por %s para que Supabase lo entienda
+                resultado_db = ejecutar_sql("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre = %s", (nombre_ingresado,))
+                
+                # 2. En lugar de .fetchone(), nos fijamos si la tabla no está vacía
+                if not resultado_db.empty:
+                    # Sacamos la primera fila (eso es el iloc[0])
+                    res = resultado_db.iloc[0]
+                    
+                    # 3. Ahora creamos al alumno con los datos de esa fila
+                    st.session_state.estudiante = Alumno(
+                        id_alumno=int(res['id_alumno']), 
+                        nombre=res['nombre'], 
+                        curso=res['curso']
+                    )
+                    st.success(f"Bienvenido {res['nombre']}")
+                    st.rerun()
+                else:
+                    st.error("No se encontró un alumno con ese nombre.")
                 
                 
                 if res:
@@ -1072,6 +1087,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
