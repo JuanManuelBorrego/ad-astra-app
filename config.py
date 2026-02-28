@@ -1,5 +1,11 @@
-import os
+import streamlit as st
 
-# Buscamos la carpeta donde vive este archivo y le sumamos el nombre de la DB
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ruta = os.path.join(BASE_DIR, 'App_V.0.1.db')
+# Mantenemos la variable ruta por compatibilidad, aunque sea un texto muerto
+ruta = "App_V.0.1.db"
+
+def get_connection():
+    """
+    Crea y devuelve la conexión a Supabase usando los Secrets de Streamlit.
+    """
+    # 'sql' es el motor de SQLAlchemy que entiende PostgreSQL
+    return st.connection("postgresql", type="sql")
