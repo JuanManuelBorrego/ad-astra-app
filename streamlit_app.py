@@ -1,5 +1,8 @@
 import streamlit as st
-import sqlite3
+import psycopg2
+import streamlit as st
+
+conn = psycopg2.connect(st.secrets["DATABASE_URL"])
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
@@ -1067,3 +1070,4 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
