@@ -235,21 +235,26 @@ def login_alumno():
     id_ingresado = st.number_input("Ingresá tu ID de Alumno", min_value=1, step=1, key="login_id")
     
     if st.button("Ingresar", use_container_width=True):
-        # Buscamos usando el nombre real de la columna en Supabase: id_alumno
+        # 1. Buscamos en Supabase usando nuestra función mágica
         query = "SELECT * FROM alumnos WHERE id_alumno = ?"
         resultado = ejecutar_sql(query, (id_ingresado,))
         
+        # 2. 'resultado' es un DataFrame (una tabla de Pandas)
         if not resultado.empty:
-            # resultado es un DataFrame, tomamos la primera fila
+            # Sacamos la primera fila de la tabla
             datos = resultado.iloc[0]
             
-            # Usamos los nombres exactos de tus columnas de Supabase
+            # 3. Creamos al Alumno con los datos de Supabase
             estudiante = Alumno(
                 id_alumno=int(datos['id_alumno']), 
                 nombre=datos['nombre'], 
                 curso=datos['curso']
             )
             
+            # 4. Sincronizamos su historial (sus notas viejas)
+            estudiante.sincronizar_historial()
+            
+            # 5. Guardamos en la sesión y entramos
             st.session_state.usuario = estudiante
             st.success(f"✅ ¡Hola {datos['nombre']}! Ingresando...")
             st.rerun()
@@ -1103,6 +1108,7 @@ def ver_repaso_examen(alumno):
     except Exception as e:
 
         print(f"❌ Error al cargar el repaso: {e}")
+
 
 
 
