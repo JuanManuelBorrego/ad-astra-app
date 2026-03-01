@@ -342,65 +342,65 @@ if modo == "Estudiantes":
                         st.rerun()
                 else:
                     # RENDERIZADO DEL FORMULARIO DE PREGUNTAS
-try:
-    conn = sqlite3.connect(ruta)
-    df_preguntas = pd.read_sql_query(
-        "SELECT id_pregunta, enunciado, opc_a, opc_b, opc_c, opc_d, correcta FROM preguntas WHERE id_clase = ?", 
-        conn, params=(st.session_state.id_clase_hoy,)
-    )
-    conn.close()
-
-    with st.form("examen_web"):
-        st.subheader(f"📝 Examen Clase {st.session_state.id_clase_hoy}")
-        
-        for idx, fila in df_preguntas.iterrows():
-            # AGREGAMOS LA OPCIÓN NEUTRAL
-            opciones = [fila['opc_a'], fila['opc_b'], fila['opc_c'], fila['opc_d'], "⚪ No lo sé / No responder"]
-            
-            # El mapeo ahora incluye la opción 'N' (Nula/Ninguna)
-            mapeo = {
-                fila['opc_a']:'A', 
-                fila['opc_b']:'B', 
-                fila['opc_c']:'C', 
-                fila['opc_d']:'D', 
-                "⚪ No lo sé / No responder":'N'
-            }
-            
-            # index=4 hace que aparezca seleccionada por defecto la opción "No lo sé"
-            sel = st.radio(f"{idx+1}. {fila['enunciado']}", opciones, index=4, key=f"pregunta_{fila['id_pregunta']}")
-            st.session_state.respuestas_temporales[fila['id_pregunta']] = mapeo[sel]
-
-        if st.form_submit_button("Finalizar y Entregar"):
-            aciertos = 0
-            completados = 0  # <--- NUEVA VARIABLE
-            
-            for _, f in df_preguntas.iterrows():
-                rta = st.session_state.respuestas_temporales.get(f['id_pregunta'])
-                
-                # REGLA: Solo cuenta como completado si la respuesta NO es 'N'
-                if rta != 'N':
-                    completados += 1
-                    if rta == f['correcta']:
-                        aciertos += 1
-            
-            # Ahora enviamos 'completados' en lugar de 'len(df_preguntas)'
-            nota = st.session_state.estudiante.registrar_clase(
-                st.session_state.id_clase_hoy, completados, aciertos
-            )
-
-            # --- EFECTOS NATIVOS ---
-            st.balloons() 
-            st.success(f"✅ ¡Entregado! Nota: {nota}")
-            
-            import time
-            time.sleep(2)
-            
-            st.session_state.en_examen = False
-            st.session_state.respuestas_temporales = {}
-            st.rerun()
-
-except Exception as e:
-    st.error(f"Error al cargar examen: {e}")
+                    try:
+                        conn = sqlite3.connect(ruta)
+                        df_preguntas = pd.read_sql_query(
+                            "SELECT id_pregunta, enunciado, opc_a, opc_b, opc_c, opc_d, correcta FROM preguntas WHERE id_clase = ?", 
+                            conn, params=(st.session_state.id_clase_hoy,)
+                        )
+                        conn.close()
+                    
+                        with st.form("examen_web"):
+                            st.subheader(f"📝 Examen Clase {st.session_state.id_clase_hoy}")
+                            
+                            for idx, fila in df_preguntas.iterrows():
+                                # AGREGAMOS LA OPCIÓN NEUTRAL
+                                opciones = [fila['opc_a'], fila['opc_b'], fila['opc_c'], fila['opc_d'], "⚪ No lo sé / No responder"]
+                                
+                                # El mapeo ahora incluye la opción 'N' (Nula/Ninguna)
+                                mapeo = {
+                                    fila['opc_a']:'A', 
+                                    fila['opc_b']:'B', 
+                                    fila['opc_c']:'C', 
+                                    fila['opc_d']:'D', 
+                                    "⚪ No lo sé / No responder":'N'
+                                }
+                                
+                                # index=4 hace que aparezca seleccionada por defecto la opción "No lo sé"
+                                sel = st.radio(f"{idx+1}. {fila['enunciado']}", opciones, index=4, key=f"pregunta_{fila['id_pregunta']}")
+                                st.session_state.respuestas_temporales[fila['id_pregunta']] = mapeo[sel]
+                    
+                            if st.form_submit_button("Finalizar y Entregar"):
+                                aciertos = 0
+                                completados = 0  # <--- NUEVA VARIABLE
+                                
+                                for _, f in df_preguntas.iterrows():
+                                    rta = st.session_state.respuestas_temporales.get(f['id_pregunta'])
+                                    
+                                    # REGLA: Solo cuenta como completado si la respuesta NO es 'N'
+                                    if rta != 'N':
+                                        completados += 1
+                                        if rta == f['correcta']:
+                                            aciertos += 1
+                                
+                                # Ahora enviamos 'completados' en lugar de 'len(df_preguntas)'
+                                nota = st.session_state.estudiante.registrar_clase(
+                                    st.session_state.id_clase_hoy, completados, aciertos
+                                )
+                    
+                                # --- EFECTOS NATIVOS ---
+                                st.balloons() 
+                                st.success(f"✅ ¡Entregado! Nota: {nota}")
+                                
+                                import time
+                                time.sleep(2)
+                                
+                                st.session_state.en_examen = False
+                                st.session_state.respuestas_temporales = {}
+                                st.rerun()
+                    
+                    except Exception as e:
+                        st.error(f"Error al cargar examen: {e}")
         with c2:
             if st.button("📚 REPASAR CLASES"):
                 st.session_state.ver_historial = not st.session_state.get('ver_historial', False)
@@ -1085,4 +1085,5 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
