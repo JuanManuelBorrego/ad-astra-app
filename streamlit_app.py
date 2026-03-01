@@ -413,6 +413,7 @@ if modo == "Estudiantes":
                     conn = sqlite3.connect(ruta)
                     id_actual = st.session_state.estudiante.id
                     
+                    # 1. Definimos la Query con la Opción B y el redondeo
                     query = """
                         SELECT 
                             c.fecha as 'Fecha', 
@@ -440,51 +441,13 @@ if modo == "Estudiantes":
                     df_repaso = pd.read_sql_query(query, conn, params=(id_actual,))
                     conn.close()
 
-                    # ... código anterior ...
-            if st.session_state.get('ver_historial', False):
-                st.markdown("---")
-                st.subheader("📖 Tu Historial de Aprendizaje")
-                
-                try:
-                    conn = sqlite3.connect(ruta)
-                    id_actual = st.session_state.estudiante.id
-                    
-                    # 1. Aquí va la Query SQL (asegurate de usar la versión con ROUND)
-                    query = """
-                        SELECT 
-                            c.fecha as 'Fecha', 
-                            c.tema as 'Tema', 
-                            r.asistencia as 'Asistencia',
-                            CAST(c.ejercicios_totales AS INTEGER) as 'Ejercicios del día',
-                            CAST(r.ejercicios_completados AS INTEGER) as 'Total resueltos',
-                            CAST(r.ejercicios_correctos AS INTEGER) as 'Total correctos',
-                            r.nota_oral as 'Nota examen Oral',
-                            ROUND(
-                                CASE 
-                                    WHEN r.nota_oral > 0 THEN r.nota_oral
-                                    WHEN r.ejercicios_completados = 0 THEN 1.0
-                                    ELSE (
-                                        (CAST(r.ejercicios_completados AS REAL) / c.ejercicios_totales) + 
-                                        (CAST(r.ejercicios_correctos AS REAL) / r.ejercicios_completados)
-                                    ) / 2 * 10
-                                END, 2
-                            ) as 'Nota final de la clase'
-                        FROM reportes_diarios r
-                        JOIN clases c ON r.id_clase = c.id_clase
-                        WHERE r.id_alumno = ?
-                        ORDER BY c.fecha DESC
-                    """
-                    df_repaso = pd.read_sql_query(query, conn, params=(id_actual,))
-                    conn.close()
-
-                    # 2. AQUÍ ES DONDE PEGAS EL BLOQUE QUE ME MOSTRASTE:
+                    # 2. Procesamos y mostramos la tabla
                     if not df_repaso.empty:
-                        # Convertimos a entero las columnas de conteo para quitar el .0
+                        # Forzamos los enteros para que no aparezca el .0
                         cols_int = ['Ejercicios del día', 'Total resueltos', 'Total correctos']
                         for col in cols_int:
                             df_repaso[col] = pd.to_numeric(df_repaso[col], errors='coerce').fillna(0).astype(int)
 
-                        # Renderizado de la tabla con el diseño profesional
                         st.dataframe(
                             df_repaso.style.applymap(
                                 lambda x: 'color: #FF4B4B; font-weight: bold' if x == 'AUSENTE' else 'color: #28a745',
@@ -1129,6 +1092,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
