@@ -425,7 +425,7 @@ if modo == "Estudiantes":
                             ROUND(
                                 CASE 
                                     WHEN r.nota_oral > 0 THEN r.nota_oral
-                                    WHEN r.ejercicios_completados = 0 THEN 1.0 -- Regla del 21/02
+                                    WHEN r.ejercicios_completados = 0 THEN 1.0
                                     ELSE (
                                         (CAST(r.ejercicios_completados AS REAL) / c.ejercicios_totales) + 
                                         (CAST(r.ejercicios_correctos AS REAL) / r.ejercicios_completados)
@@ -1087,6 +1087,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
