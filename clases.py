@@ -40,8 +40,6 @@ class Alumno:
         # 1. CONTAR REALIDAD Y ACTUALIZAR MAESTRO
         with sqlite3.connect(ruta) as conn:
             cursor = conn.cursor()
-            
-            # Contamos cuántas preguntas existen realmente para esta clase
             cursor.execute("SELECT COUNT(*) FROM preguntas WHERE id_clase = ?", (id_clase,))
             totales_reales = cursor.fetchone()[0]
             
@@ -49,64 +47,56 @@ class Alumno:
                 print(f"❌ Error: No se encontraron preguntas para la clase {id_clase}.")
                 return None
             
-            # Sincronizamos la tabla 'clases' para que el número manual no estorbe
             cursor.execute("UPDATE clases SET ejercicios_totales = ? WHERE id_clase = ?", 
                            (totales_reales, id_clase))
             conn.commit()
             
-        totales = totales_reales # Usamos la verdad absoluta de la tabla preguntas
-    
-        #2 CALCULAMOS LOS DOS PILARES
-        #A) ESFUERZO
+        totales = totales_reales 
+
+        # 2. CALCULAMOS LOS DOS PILARES
+        # A) ESFUERZO: Ahora basado en lo que el alumno REALMENTE intentó contestar
         esfuerzo = completados / totales
 
-        # B) EFICACIA Y REGLA DEL 1 POR INASISTENCIA/FALTA DE TRABAJO
+        # B) EFICACIA
         if completados > 0:
             eficacia = correctos / completados
         else:
             eficacia = 0
-            # Si no hizo nada (completados == 0), forzamos la nota final a 1.0
-            if nota_oral is None: 
-                self.historial[id_clase] = {
-                    "esfuerzo": 0, "eficacia": 0, "nota_oral": None, "nota_final": 1.0
-                }
-                # Guardamos directamente y salimos del método
-                with sqlite3.connect(ruta) as conn:
-                    cursor = conn.cursor()
-                    cursor.execute("""
-                        INSERT INTO reportes_diarios (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final)
-                        VALUES (?, ?, 0, 0, NULL, 1.0)
-                    """, (self.id, id_clase))
-                return 1.0
+            # IMPORTANTE: Si vino pero no hizo nada, la nota es 1.0
+            # Pero NO salimos del método todavía, dejamos que siga para registrar la ASISTENCIA
         
-        #3. LÓGICA DE NOTA FINAL (PRIORIDAD ORAL)
+        # 3. LÓGICA DE NOTA FINAL (Piso de 1.0 por la regla del 21/02)
         if nota_oral is not None:
             nota_final = float(nota_oral)
         else:
-            nota_final = round(((esfuerzo + eficacia) / 2) * 10, 2)
+            if completados == 0:
+                nota_final = 1.0
+            else:
+                nota_final = round(((esfuerzo + eficacia) / 2) * 10, 2)
+                # Garantizamos que la nota nunca sea 0 si entregó el examen
+                nota_final = max(1.0, nota_final)
         
-        #4. GUARDAR EN EL OBJETO (MEMORIA)
+        # 4. GUARDAR EN EL OBJETO (MEMORIA)
         self.historial[id_clase] = {
             "esfuerzo": esfuerzo,
             "eficacia": eficacia,
             "nota_oral": nota_oral,
             "nota_final": nota_final
         }
-        
 
-        # 5. ENVIAR A LA BASE DE DATOS (Código integrado, ya no llama a la de afuera)
-        conn = sqlite3.connect(ruta)
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO reportes_diarios (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (self.id, id_clase, completados, correctos, nota_oral, nota_final))
-        conn.commit()
-        conn.close()
+        # 5. ENVIAR A LA BASE DE DATOS
+        # Nota: He añadido 'asistencia' para diferenciar del ausente total
+        with sqlite3.connect(ruta) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO reportes_diarios 
+                (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final, asistencia)
+                VALUES (?, ?, ?, ?, ?, ?, 'PRESENTE')
+            """, (self.id, id_clase, completados, correctos, nota_oral, nota_final))
+            conn.commit()
 
-        # 6. RECIÉN ACÁ DEVOLVEMOS EL VALOR PORQUE SI PONÍAMOS EL RETURN ANTES, EL SCRIPT FINALIZA EN ESE MOMENTO Y SE SALTABA TODOS LOS OTROS PASOS DEL MÉTODO registrar_clase
+        # 6. RETORNO FINAL
         return nota_final
-
    #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------     
     # MÉTODO SINCRONIZAR HISTORIAL: COMO LOS OBJETOS SE GUARDAN SÓLO EN LA RAM, CON ESTE MÉTODO APUNTAMOS SIEMPRE A LA BASE DE DATOS PARA RECONSTRUIR EL OBJETO
  
@@ -360,3 +350,4 @@ class Alumno:
 #FIN DE LA CLASE ALUMNO
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
