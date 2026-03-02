@@ -572,10 +572,10 @@ elif modo == "Profesor":
         
 # --- REFRESCO DE DATOS DESDE TURSO ---
 conn = conectar() 
-# Ejecutamos directamente sobre el objeto 'conn'
-res_ejecucion = conn.execute("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
-res = res_ejecucion.fetchone() 
-# No cerramos inmediatamente si vamos a usar 'res' después, o asegúrate de que se guarde en la variable
+cursor = conn.cursor() # <--- Con 'libsql' esto SI existe y es necesario
+cursor.execute("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
+res = cursor.fetchone()
+conn.close()
 
 # --- CUERPO DEL EXPANDER ---
 with st.expander("⚙️ Configurar Clase y Curso Actual", expanded=True):
@@ -1115,6 +1115,7 @@ with st.expander("⚙️ Configurar Clase y Curso Actual", expanded=True):
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
