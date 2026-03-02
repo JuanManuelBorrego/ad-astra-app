@@ -15,10 +15,13 @@ import os
 import streamlit as st
 import os
 
-from migrar_a_turso import migrar
-if st.button("🚀 INICIAR MIGRACIÓN A TURSO AHORA"):
-    migrar()
-    st.success("¡Datos migrados!")
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#CON ESTA FUNCIÓN MIGRÉ LOS DATOS DEL ARCHIVO "TRANSITORIO" QUE LO VOY A DEJAR SOLAMENTE PARA QUE SEPA CÓMO LO HICE, LO MISMO QUE ESTA FUNCIÓN (tanto el archivo como esta función en realidad deberían ser borrados después de que se cumplió ese traspaso a Turso)
+#from migrar_a_turso import migrar
+#if st.button("🚀 INICIAR MIGRACIÓN A TURSO AHORA"):
+#    migrar()
+#    st.success("¡Datos migrados!")
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 st.set_page_config(
     page_title="ASTRA", 
@@ -1102,6 +1105,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
