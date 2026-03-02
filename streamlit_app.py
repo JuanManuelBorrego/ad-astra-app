@@ -570,16 +570,12 @@ elif modo == "Profesor":
         # --- CUERPO PRINCIPAL: GESTIÓN DE CLASE ---
         st.title("Gestión Académica")
         
-        # --- REFRESCO DE DATOS DESDE TURSO ANTES DE MOSTRAR EL PANEL ---
-# --- REFRESCO DE DATOS DESDE TURSO ---
 # --- REFRESCO DE DATOS DESDE TURSO ---
 conn = conectar() 
-# En Turso Sync, ejecutamos directamente sobre la conexión
+# Ejecutamos directamente sobre el objeto 'conn'
 res_ejecucion = conn.execute("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
-
-# Obtenemos la fila directamente
 res = res_ejecucion.fetchone() 
-conn.close()
+# No cerramos inmediatamente si vamos a usar 'res' después, o asegúrate de que se guarde en la variable
 
 # --- CUERPO DEL EXPANDER ---
 with st.expander("⚙️ Configurar Clase y Curso Actual", expanded=True):
@@ -1119,6 +1115,7 @@ with st.expander("⚙️ Configurar Clase y Curso Actual", expanded=True):
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
