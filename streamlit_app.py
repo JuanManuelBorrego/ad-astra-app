@@ -1,30 +1,15 @@
 import streamlit as st
-from db import query, execute
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
 import numpy as np
 import random
-
-from clases import Alumno
-from funciones import login_alumno, obtener_clase_activa
 import os
-from libsql_client import create_client
+
 from db import query, execute
-url = os.environ["TURSO_DATABASE_URL"]
-auth_token = os.environ["TURSO_AUTH_TOKEN"]
-
-client = create_client(
-    url=url,
-    auth_token=auth_token
-)
-
-result = client.execute("SELECT 1;")
-st.write(result.rows)
+from clases import Alumno
 
 # --- 1. CONFIGURACIÓN DE PÁGINA (SIEMPRE PRIMERO) ---
-import streamlit as st
-import os
 
 st.set_page_config(
     page_title="ASTRA", 
@@ -220,15 +205,14 @@ if modo == "Estudiantes":
         # ... dentro de if modo == "Estudiantes" ...
         if st.button("Ingresar al Dashboard"):
             try:
-                conn = sqlite3.connect(ruta)
-                cursor = conn.cursor()
-                cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre = ?", (nombre_ingresado,))
-                res = cursor.fetchone()
-                conn.close()
-                
+                res = query(
+                    "SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre = ?",
+                    (nombre_ingresado,)
+                )
+
                 if res:
-                    # res[0]=id, res[1]=nombre, res[2]=curso
-                    st.session_state.estudiante = Alumno(res[0], res[1], res[2])
+                    fila = res[0]
+                    st.session_state.estudiante = Alumno(fila[0], fila[1], fila[2])
                     
                     # ¡IMPORTANTE!: Buscamos la clase activa para el curso de ESTE alumno
                     clase_hoy = obtener_clase_activa(res[2]) 
@@ -359,12 +343,22 @@ if modo == "Estudiantes":
                 else:
                     # RENDERIZADO DEL FORMULARIO DE PREGUNTAS
                     try:
-                        conn = sqlite3.connect(ruta)
-                        df_preguntas = pd.read_sql_query(
-                            "SELECT id_pregunta, enunciado, opc_a, opc_b, opc_c, opc_d, correcta FROM preguntas WHERE id_clase = ?", 
-                            conn, params=(st.session_state.id_clase_hoy,)
+                        filas = query(
+                            """
+                            SELECT id_pregunta, enunciado, opc_a, opc_b, opc_c, opc_d, correcta 
+                            FROM preguntas 
+                            WHERE id_clase = ?
+                            """,
+                            (st.session_state.id_clase_hoy,)
                         )
-                        conn.close()
+
+                        df_preguntas = pd.DataFrame(
+                            filas,
+                            columns=[
+                                "id_pregunta", "enunciado", 
+                                "opc_a", "opc_b", "opc_c", "opc_d", "correcta"
+                            ]
+                        )
                     
                         with st.form("examen_web"):
                             st.subheader(f"📝 Examen Clase {st.session_state.id_clase_hoy}")
@@ -426,11 +420,10 @@ if modo == "Estudiantes":
                 st.subheader("📖 Tu Historial de Aprendizaje")
                 
                 try:
-                    conn = sqlite3.connect(ruta)
                     id_actual = st.session_state.estudiante.id
                     
                     # 1. Definimos la Query con la Opción B y el redondeo
-                    query = """
+                    sql_repaso= """
                         SELECT 
                             c.fecha as 'Fecha', 
                             c.tema as 'Tema', 
@@ -454,9 +447,21 @@ if modo == "Estudiantes":
                         WHERE r.id_alumno = ?
                         ORDER BY c.fecha DESC
                     """
-                    df_repaso = pd.read_sql_query(query, conn, params=(id_actual,))
-                    conn.close()
 
+                    filas = query(sql_repaso, (id_actual,))
+                    df_repaso = pd.DataFrame(
+                        filas,
+                        columns=[
+                            "Fecha",
+                            "Tema",
+                            "Asistencia",
+                            "Ejercicios del día",
+                            "Total resueltos",
+                            "Total correctos",
+                            "Nota examen Oral",
+                            "Nota final de la clase"
+                        ]
+                    )
                     # 2. Procesamos y mostramos la tabla
                     if not df_repaso.empty:
                         # Forzamos los enteros para que no aparezca el .0
