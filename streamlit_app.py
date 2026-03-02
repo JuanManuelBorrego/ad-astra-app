@@ -9,18 +9,7 @@ from config import ruta
 from clases import Alumno
 from funciones import login_alumno, obtener_clase_activa
 import os
-from libsql_client import create_client
 
-url = os.environ["TURSO_DATABASE_URL"]
-auth_token = os.environ["TURSO_AUTH_TOKEN"]
-
-client = create_client(
-    url=url,
-    auth_token=auth_token
-)
-
-result = client.execute("SELECT 1;")
-st.write(result.rows)
 
 # --- 1. CONFIGURACIÓN DE PÁGINA (SIEMPRE PRIMERO) ---
 import streamlit as st
@@ -1108,6 +1097,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
