@@ -1,11 +1,11 @@
 import streamlit as st
-import sqlite3
+from db import query, execute
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
 import numpy as np
 import random
-from config import ruta
+
 from clases import Alumno
 from funciones import login_alumno, obtener_clase_activa
 import os

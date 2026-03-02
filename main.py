@@ -1,7 +1,7 @@
 # main.py
-import sqlite3
+from db import query, execute
 import pandas as pd
-from config import ruta # <-- IMPORTANTE: Trae la ruta única
+
 from clases import Alumno
 from funciones import (
     login_alumno, 
