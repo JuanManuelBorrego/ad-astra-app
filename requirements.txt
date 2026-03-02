@@ -4,7 +4,8 @@ psycopg2-binary
 pandas
 matplotlib
 numpy
-libsql-client
+libsql
+
 
 
 
