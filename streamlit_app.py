@@ -570,56 +570,56 @@ elif modo == "Profesor":
         # --- CUERPO PRINCIPAL: GESTIÓN DE CLASE ---
         st.title("Gestión Académica")
         
-# --- REFRESCO DE DATOS DESDE TURSO ---
-try:
-    conn = conectar() 
-    # Con libsql.connect, ejecutamos directamente
-    res_query = conn.execute("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
-    fila = res_query.fetchone()
-    
-    if fila:
-        res = fila
-    else:
-        # Si la tabla está vacía, creamos la configuración inicial
-        conn.execute("INSERT INTO configuracion_clase (id, id_clase_actual, curso, feedback_visible, examen_activo) VALUES (1, 1, '5TO A', 0, 0)")
-        res = [1, "5TO A", 0, 0]
-except Exception as e:
-    st.error(f"Error de conexión: {e}")
-    res = [1, "5TO A", 0, 0] # Valores de respaldo para evitar el AttributeError
-    
-# --- CUERPO DEL EXPANDER ---
-with st.expander("⚙️ Configurar Clase y Curso Actual", expanded=True):
-    # Usamos los valores obtenidos de la consulta de arriba
-    clase_act_val = res[0] if res else 1
-    curso_act_val = res[1] if res else "5TO A"
-    feedback_val = res[2] if res else 0
-    activo_val = res[3] if res else 0
-
-    col_id, col_cur = st.columns(2)
-    id_clase_input = col_id.number_input("ID de Clase a dictar:", min_value=1, value=clase_act_val)
-    
-    opciones_cursos = ["4TO A", "4TO C", "5TO A", "5TO C", "5TO A NATURALES"]
-    idx = opciones_cursos.index(curso_act_val) if curso_act_val in opciones_cursos else 0
-    curso_seleccionado = col_cur.selectbox("Curso que rinde hoy:", opciones_cursos, index=idx)
-    
-    st.divider()
-    col_feed, col_status = st.columns(2)
-
-    # Toggles dinámicos
-    nuevo_feed = col_feed.toggle("Habilitar Ver Respuestas", value=(feedback_val == 1))
-    nuevo_activo = col_status.toggle("Abrir Acceso al Examen", value=(activo_val == 1))
-
-    # Actualizado use_container_width por width='stretch' según sugerencia de Streamlit
-    if st.button("💾 GUARDAR Y APLICAR CAMBIOS", width='stretch'):
-        with conectar() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT OR REPLACE INTO configuracion_clase (id, id_clase_actual, curso, feedback_visible, examen_activo) 
-                VALUES (1, ?, ?, ?, ?)
-            """, (id_clase_input, curso_seleccionado, 1 if nuevo_feed else 0, 1 if nuevo_activo else 0))
-            conn.commit() # Aseguramos el guardado en la nube
-        st.success("✅ ¡Configuración actualizada en todo el sistema!")
-        st.rerun()
+        # --- REFRESCO DE DATOS DESDE TURSO ---
+        try:
+            conn = conectar() 
+            # Con libsql.connect, ejecutamos directamente
+            res_query = conn.execute("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
+            fila = res_query.fetchone()
+            
+            if fila:
+                res = fila
+            else:
+                # Si la tabla está vacía, creamos la configuración inicial
+                conn.execute("INSERT INTO configuracion_clase (id, id_clase_actual, curso, feedback_visible, examen_activo) VALUES (1, 1, '5TO A', 0, 0)")
+                res = [1, "5TO A", 0, 0]
+        except Exception as e:
+            st.error(f"Error de conexión: {e}")
+            res = [1, "5TO A", 0, 0] # Valores de respaldo para evitar el AttributeError
+            
+        # --- CUERPO DEL EXPANDER ---
+        with st.expander("⚙️ Configurar Clase y Curso Actual", expanded=True):
+            # Usamos los valores obtenidos de la consulta de arriba
+            clase_act_val = res[0] if res else 1
+            curso_act_val = res[1] if res else "5TO A"
+            feedback_val = res[2] if res else 0
+            activo_val = res[3] if res else 0
+        
+            col_id, col_cur = st.columns(2)
+            id_clase_input = col_id.number_input("ID de Clase a dictar:", min_value=1, value=clase_act_val)
+            
+            opciones_cursos = ["4TO A", "4TO C", "5TO A", "5TO C", "5TO A NATURALES"]
+            idx = opciones_cursos.index(curso_act_val) if curso_act_val in opciones_cursos else 0
+            curso_seleccionado = col_cur.selectbox("Curso que rinde hoy:", opciones_cursos, index=idx)
+            
+            st.divider()
+            col_feed, col_status = st.columns(2)
+        
+            # Toggles dinámicos
+            nuevo_feed = col_feed.toggle("Habilitar Ver Respuestas", value=(feedback_val == 1))
+            nuevo_activo = col_status.toggle("Abrir Acceso al Examen", value=(activo_val == 1))
+        
+            # Actualizado use_container_width por width='stretch' según sugerencia de Streamlit
+            if st.button("💾 GUARDAR Y APLICAR CAMBIOS", width='stretch'):
+                with conectar() as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        INSERT OR REPLACE INTO configuracion_clase (id, id_clase_actual, curso, feedback_visible, examen_activo) 
+                        VALUES (1, ?, ?, ?, ?)
+                    """, (id_clase_input, curso_seleccionado, 1 if nuevo_feed else 0, 1 if nuevo_activo else 0))
+                    conn.commit() # Aseguramos el guardado en la nube
+                st.success("✅ ¡Configuración actualizada en todo el sistema!")
+                st.rerun()
         
         # --- 3. CIERRE DE JORNADA (REEMPLAZO TOTAL) ---
         st.divider()
@@ -1125,6 +1125,7 @@ with st.expander("⚙️ Configurar Clase y Curso Actual", expanded=True):
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
