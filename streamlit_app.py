@@ -572,10 +572,13 @@ elif modo == "Profesor":
         
         # --- REFRESCO DE DATOS DESDE TURSO ANTES DE MOSTRAR EL PANEL ---
 # --- REFRESCO DE DATOS DESDE TURSO ---
+# --- REFRESCO DE DATOS DESDE TURSO ---
 conn = conectar() 
-cursor = conn.cursor()
-cursor.execute("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
-res = cursor.fetchone()
+# En Turso Sync, ejecutamos directamente sobre la conexión
+res_ejecucion = conn.execute("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
+
+# Obtenemos la fila directamente
+res = res_ejecucion.fetchone() 
 conn.close()
 
 # --- CUERPO DEL EXPANDER ---
@@ -1116,6 +1119,7 @@ with st.expander("⚙️ Configurar Clase y Curso Actual", expanded=True):
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
