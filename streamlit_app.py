@@ -15,6 +15,11 @@ import os
 import streamlit as st
 import os
 
+from migrar_a_turso import migrar
+if st.button("🚀 INICIAR MIGRACIÓN A TURSO AHORA"):
+    migrar()
+    st.success("¡Datos migrados!")
+
 st.set_page_config(
     page_title="ASTRA", 
     layout="centered", 
@@ -1097,6 +1102,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
