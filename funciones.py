@@ -9,7 +9,7 @@ import random
 import getpass # Para ocultar la clave al escribir
 import datetime # Asegurate de tener este import arriba
 from clases import Alumno # <-- IMPORTANTE: Trae la clase para poder instanciar
-from config import ruta # <-- IMPORTANTE: Trae la ruta única
+from config import conectar # <-- IMPORTANTE: Trae la ruta única
 
 #DEFINO PRIMERO DOS FUNCIONES QUE LUEGO VAN A ESTAR DENTRO DE panel_profesor() Y LAS DEBO COLOCAR ANTES YA QUE SE INCLUYEN LUEGO
 

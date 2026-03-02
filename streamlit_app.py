@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import datetime
 import numpy as np
 import random
-from config import ruta
+from config import conectar
 from clases import Alumno
 from funciones import login_alumno, obtener_clase_activa
 import os
