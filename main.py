@@ -32,7 +32,7 @@ def menu_principal():
                 
                 # --- NUEVO: Consultamos el estado del feedback en la DB ---
                 try:
-                    conn = sqlite3.connect(ruta)
+                    conn = conectar()
                     cursor = conn.cursor()
                     cursor.execute("SELECT feedback_visible FROM configuracion_clase WHERE id = 1")
                     res = cursor.fetchone()

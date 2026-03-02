@@ -26,7 +26,7 @@ class Alumno:
     def clase_esta_activa(self):
         """Consulta si el profesor mantiene el examen habilitado."""
         try:
-            with sqlite3.connect(ruta) as conn:
+            with conectar() as conn:
                 cursor = conn.cursor()
                 cursor.execute("SELECT examen_activo FROM configuracion_clase WHERE id = 1")
                 resultado = cursor.fetchone()
@@ -38,7 +38,7 @@ class Alumno:
     def registrar_clase(self, id_clase, completados, correctos, nota_oral=None):
         
         # 1. CONTAR REALIDAD Y ACTUALIZAR MAESTRO
-        with sqlite3.connect(ruta) as conn:
+        with conectar() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT COUNT(*) FROM preguntas WHERE id_clase = ?", (id_clase,))
             totales_reales = cursor.fetchone()[0]
@@ -86,7 +86,7 @@ class Alumno:
 
         # 5. ENVIAR A LA BASE DE DATOS
         # Nota: He añadido 'asistencia' para diferenciar del ausente total
-        with sqlite3.connect(ruta) as conn:
+        with conectar() as conn:
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO reportes_diarios 
@@ -102,7 +102,7 @@ class Alumno:
  
     def sincronizar_historial(self):
         #Busca en la DB los registros previos y los carga en el objeto
-        conn = sqlite3.connect(ruta)
+        conn = conectar()
         cursor = conn.cursor()
         # Usamos JOIN para traer el total de la clase y calcular el relativo
         query = """
@@ -256,7 +256,7 @@ class Alumno:
     def sincronizar_historial_por_trimestre(self, trimestre):
         self.historial = {}
         try:
-            conn = sqlite3.connect(ruta)
+            conn = conectar()
             cursor = conn.cursor()
             
             # 🔄 Agregamos c.ejercicios_totales a la consulta

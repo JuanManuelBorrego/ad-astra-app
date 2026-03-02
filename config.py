@@ -8,7 +8,7 @@ TURSO_URL = "libsql://tu-base-de-datos.turso.io"
 TURSO_TOKEN = "tu-token-seguro"
 
 def conectar():
-    # Esta función reemplaza a sqlite3.connect(ruta)
+    # Esta función reemplaza a conectar()
     # Devuelve un objeto compatible con todos tus .execute(), .commit() y .close()
     return libsql_client.create_client_sync(
         url=TURSO_URL, 

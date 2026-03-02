@@ -21,7 +21,7 @@ def sorteador_orales():
     print("\n🎯 SORTEO DE EXAMEN ORAL")
     
     try:
-        conn = sqlite3.connect(ruta)
+        conn = conectar()
         cursor = conn.cursor()
         
         # 1. Leemos el curso que está configurado como activo ahora
@@ -64,7 +64,7 @@ def cargar_nota_oral_manual():
     print("\n" + "🎤" * 3 + " CARGA NOTA ORAL (Búsqueda Flexible) " + "🎤" * 3)
     
     try:
-        conn = sqlite3.connect(ruta)
+        conn = conectar()
         cursor = conn.cursor()
         
         # 1. Detectar automáticamente la clase y el curso activos
@@ -191,7 +191,7 @@ def menu_profesor_cargar_examen():
 
     # 3. GUARDADO EN BASE DE DATOS
     try:
-        conn = sqlite3.connect(ruta)
+        conn = conectar()
         cursor = conn.cursor()
 
         # PASO A: Crear o Actualizar la clase maestra (INCLUYENDO TRIMESTRE)
@@ -248,7 +248,7 @@ def login_alumno():
 
         # 2. Consulta a la Base de Datos
         try:
-            conn = sqlite3.connect(ruta)
+            conn = conectar()
             cursor = conn.cursor()
             
             # Buscamos los datos básicos para crear al alumno
@@ -442,7 +442,7 @@ def mostrar_dashboard(alumno, id_clase_hoy, visible):
 
 def obtener_clase_activa(curso_alumno):
     try:
-        conn = sqlite3.connect(ruta)
+        conn = conectar()
         cursor = conn.cursor()
         # Leemos el "semáforo" del profesor
         cursor.execute("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
@@ -472,7 +472,7 @@ def ejecutar_examen(estudiante, id_clase_objetivo):
     if confirmar != 'S': return
 
     # 2. Traer preguntas
-    conn = sqlite3.connect(ruta)
+    conn = conectar()
     cursor = conn.cursor()
     cursor.execute("SELECT enunciado, opc_a, opc_b, opc_c, opc_d, correcta FROM preguntas WHERE id_clase = ?", (id_clase_objetivo,))
     preguntas = cursor.fetchall()
@@ -563,7 +563,7 @@ def registrar_nuevo_alumno():
         return
 
     try:
-        conn = sqlite3.connect(ruta)
+        conn = conectar()
         cursor = conn.cursor()
         
         # Al pasar NULL en id_alumno, SQLite activa el AUTOINCREMENT
@@ -600,7 +600,7 @@ import sqlite3
 def ver_reporte_curso():
     # Eliminamos el input. Ahora el sistema es proactivo.
     try:
-        conn = sqlite3.connect(ruta)
+        conn = conectar()
         cursor = conn.cursor()
         
         # 1. Leemos la configuración de la fila única
@@ -655,7 +655,7 @@ def ver_reporte_trimestral():
     
     # 1. Obtenemos curso de la configuración y preguntamos el trimestre
     try:
-        conn = sqlite3.connect(ruta)
+        conn = conectar()
         cursor = conn.cursor()
         cursor.execute("SELECT curso FROM configuracion_clase WHERE id = 1")
         config = cursor.fetchone()
@@ -751,7 +751,7 @@ def completar_inasistencias_con_uno():
     print("\n--- 🔐 CIERRE DE PLANILLA DIARIA ---")
     
     try:
-        conn = sqlite3.connect(ruta)
+        conn = conectar()
         cursor = conn.cursor()
         
         # 1. Obtenemos la configuración actual
@@ -814,7 +814,7 @@ def justificar_inasistencia_manual():
     print("\n--- 🏥 JUSTIFICAR INASISTENCIA (Borrar nota 1.0) ---")
     
     try:
-        conn = sqlite3.connect(ruta)
+        conn = conectar()
         cursor = conn.cursor()
         
         # 1. Detectamos la clase activa para facilitar el trámite
@@ -874,7 +874,7 @@ def ver_progreso_individual_trimestral():
         return
     
     try:
-        conn = sqlite3.connect(ruta)
+        conn = conectar()
         cursor = conn.cursor()
         
         # Búsqueda flexible
@@ -944,7 +944,7 @@ def panel_profesor():
         return None
 
     # Variables de estado locales (se sincronizan con la DB al entrar)
-    conn = sqlite3.connect(ruta)
+    conn = conectar()
     cursor = conn.cursor()
     cursor.execute("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
     config = cursor.fetchone()
@@ -955,7 +955,7 @@ def panel_profesor():
 
     while True:
         # Consulta de refresco para estados dinámicos
-        conn = sqlite3.connect(ruta)
+        conn = conectar()
         cursor = conn.cursor()
         cursor.execute("SELECT feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
         res = cursor.fetchone()
@@ -1007,7 +1007,7 @@ def panel_profesor():
         if opcion == "1":
             nueva_clase = input("📌 Ingrese el ID de la clase: ")
             nuevo_curso = input("🎓 Curso (Ej: 5TO A): ").strip().upper()
-            conn = sqlite3.connect(ruta)
+            conn = conectar()
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM clases WHERE id_clase = ?", (nueva_clase,))
             if cursor.fetchone():
@@ -1025,7 +1025,7 @@ def panel_profesor():
 
         elif opcion == "2":
             nuevo_fb = 0 if visible == 1 else 1
-            conn = sqlite3.connect(ruta)
+            conn = conectar()
             cursor = conn.cursor()
             cursor.execute("UPDATE configuracion_clase SET feedback_visible = ? WHERE id = 1", (nuevo_fb,))
             conn.commit()
@@ -1034,7 +1034,7 @@ def panel_profesor():
 
         elif opcion == "3":
             nuevo_estado = 0 if estado_actual == 1 else 1
-            conn = sqlite3.connect(ruta)
+            conn = conectar()
             cursor = conn.cursor()
             cursor.execute("UPDATE configuracion_clase SET examen_activo = ? WHERE id = 1", (nuevo_estado,))
             conn.commit()
@@ -1098,7 +1098,7 @@ def ver_repaso_examen(alumno):
 
     # 2. Consultar la DB para ver el detalle
     try:
-        conn = sqlite3.connect(ruta)
+        conn = conectar()
         cursor = conn.cursor()
         
         # Unimos las preguntas con la respuesta que dio el alumno (si la guardaste)
