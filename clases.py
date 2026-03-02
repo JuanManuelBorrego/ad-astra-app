@@ -103,46 +103,37 @@ class Alumno:
     # MÉTODO SINCRONIZAR HISTORIAL: COMO LOS OBJETOS SE GUARDAN SÓLO EN LA RAM, CON ESTE MÉTODO APUNTAMOS SIEMPRE A LA BASE DE DATOS PARA RECONSTRUIR EL OBJETO
  
     def sincronizar_historial(self):
-        #Busca en la DB los registros previos y los carga en el objeto
-        conn = sqlite3.connect(ruta)
-        cursor = conn.cursor()
-        # Usamos JOIN para traer el total de la clase y calcular el relativo
-        query = """
-            SELECT r.id_clase, r.ejercicios_completados, r.ejercicios_correctos, 
-                   r.nota_final, r.nota_oral, c.ejercicios_totales
-            FROM reportes_diarios r
-            JOIN clases c ON r.id_clase = c.id_clase
-            WHERE r.id_alumno = ?
-        """
-        cursor.execute(query, (self.id,))
-        filas = cursor.fetchall()
+        try:
+            filas = query("""
+                SELECT r.id_clase, r.ejercicios_completados, r.ejercicios_correctos, 
+                    r.nota_final, r.nota_oral, c.ejercicios_totales
+                FROM reportes_diarios r
+                JOIN clases c ON r.id_clase = c.id_clase
+                WHERE r.id_alumno = ?
+            """, (self.id,))
 
-        for f in filas:
-            id_clase_f = f[0]
-            # Usamos un "if" corto para que si es None, lo convierta en 0 (si hay registros cargados solamente con nota oral, estos dejan la celda de "completados" y los "correctos" de la base de datos vacía y esto da error cuando se carga este valor en el script)
-            completados_f = f[1] if f[1] is not None else 0
-            correctos_f = f[2] if f[2] is not None else 0
-            totales_f = f[5]
-        
-            # Cálculo de Esfuerzo (Cantidad) en porcentaje
-            val_esfuerzo = (completados_f / totales_f)*100
-            
-            # Cálculo de Eficacia (Calidad sobre lo hecho) en porcentaje
-            if completados_f > 0:
-                val_eficacia = (correctos_f / completados_f)*100
-            else:
-                val_eficacia = 0
-                
-            # Llenamos el diccionario del objeto con lo que había en el disco
-            self.historial[id_clase_f] = {
-                "esfuerzo": val_esfuerzo, 
-                "eficacia": val_eficacia,
-                "nota_final": f[3],
-                "nota_oral": f[4]
-            }
-        
-        # ESPERAMOS QUE EL BUCLE TERMINE Y LUEGO EL CIERRE DE LO QUE SE ABRIÓ EN ESTE MÉTODO VA ACÁ:
-        conn.close()
+            for f in filas:
+                id_clase_f = f[0]
+                completados_f = f[1] if f[1] is not None else 0
+                correctos_f = f[2] if f[2] is not None else 0
+                totales_f = f[5] if f[5] and f[5] > 0 else 1
+
+                val_esfuerzo = (completados_f / totales_f) * 100
+
+                if completados_f > 0:
+                    val_eficacia = (correctos_f / completados_f) * 100
+                else:
+                    val_eficacia = 0
+
+                self.historial[id_clase_f] = {
+                    "esfuerzo": val_esfuerzo,
+                    "eficacia": val_eficacia,
+                    "nota_final": f[3],
+                    "nota_oral": f[4]
+                }
+
+        except Exception as e:
+            print(f"❌ Error al sincronizar historial: {e}")
     #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #MÉTODO OBTENER EL PROMEDIO DE TODAS LAS NOTAS FINALES DE TODAS LAS CLASES AL MOMENTO (SI EL TRIMESTRE CERRASE EN ESE MOMENTO, ESA SERÍA LA NOTA)
     def promedio(self):    
@@ -257,39 +248,32 @@ class Alumno:
     # CÁRGA DE NOTAS POR TRIMESTRES
     def sincronizar_historial_por_trimestre(self, trimestre):
         self.historial = {}
+
         try:
-            conn = sqlite3.connect(ruta)
-            cursor = conn.cursor()
-            
-            # 🔄 Agregamos c.ejercicios_totales a la consulta
-            query = """
+            filas = query("""
                 SELECT r.id_clase, r.ejercicios_completados, r.ejercicios_correctos, 
-                       r.nota_final, c.ejercicios_totales
+                    r.nota_final, c.ejercicios_totales
                 FROM reportes_diarios r
                 JOIN clases c ON r.id_clase = c.id_clase
                 WHERE r.id_alumno = ? AND c.trimestre = ?
-            """
-            cursor.execute(query, (self.id, trimestre))
-            filas = cursor.fetchall()
-            
+            """, (self.id, trimestre))
+
             for f in filas:
                 id_clase, comp, corr, nota, totales = f
-                
-                # 🛡️ Escudos anti-None
+
                 comp = comp if comp is not None else 0
                 corr = corr if corr is not None else 0
-                totales = totales if (totales is not None and totales > 0) else 1 
-                
-                # 📈 CALCULAMOS PORCENTAJES (Para que el gráfico de 0-100 tenga sentido)
+                totales = totales if (totales and totales > 0) else 1
+
                 val_esfuerzo = (comp / totales) * 100
                 val_eficacia = (corr / comp) * 100 if comp > 0 else 0
-                
+
                 self.historial[id_clase] = {
-                    'esfuerzo': val_esfuerzo, 
+                    'esfuerzo': val_esfuerzo,
                     'eficacia': val_eficacia,
                     'nota_final': float(nota) if nota is not None else 0.0
                 }
-            conn.close()
+
         except Exception as e:
             print(f"❌ Error al sincronizar historial trimestral: {e}")
             
