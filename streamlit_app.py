@@ -605,9 +605,14 @@ elif modo == "Profesor":
             if st.button("💾 GUARDAR Y APLICAR CAMBIOS", use_container_width=True):
                 execute(
                     """
-                    INSERT OR REPLACE INTO configuracion_clase 
-                    (id, id_clase_actual, curso, feedback_visible, examen_activo) 
+                    INSERT INTO configuracion_clase 
+                    (id, id_clase_actual, curso, feedback_visible, examen_activo)
                     VALUES (1, ?, ?, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                        id_clase_actual = excluded.id_clase_actual,
+                        curso = excluded.curso,
+                        feedback_visible = excluded.feedback_visible,
+                        examen_activo = excluded.examen_activo
                     """,
                     (
                         id_clase_input,
@@ -1081,13 +1086,16 @@ elif modo == "Profesor":
                 else:
                     try:
                         # PASO A: Insertar la clase
-                        query("""
+                        execute("""
                             INSERT INTO clases (fecha, tema, ejercicios_totales, trimestre) 
                             VALUES (?, ?, ?, ?)
                         """, ("", tema_new, cant_preguntas, int(trimestre_new)))
 
                         # PASO B: Obtener el ID recién generado
-                        id_clase_generado = query("SELECT last_insert_rowid()")[0][0]
+                        id_clase_generado = execute("""
+                            INSERT INTO clases (fecha, tema, ejercicios_totales, trimestre) 
+                            VALUES (?, ?, ?, ?)
+                        """, ("", tema_new, cant_preguntas, int(trimestre_new)))
 
                         # PASO C: Preparar preguntas con el ID obtenido
                         preguntas_finales = []
@@ -1096,7 +1104,7 @@ elif modo == "Profesor":
 
                         # PASO D: Insertar preguntas vinculadas
                         for pregunta in preguntas_finales:
-                            query("""
+                            execute("""
                                 INSERT INTO preguntas 
                                 (id_clase, enunciado, opc_a, opc_b, opc_c, opc_d, correcta)
                                 VALUES (?, ?, ?, ?, ?, ?, ?)
