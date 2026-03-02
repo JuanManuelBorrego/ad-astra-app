@@ -10,7 +10,7 @@ from clases import Alumno
 from funciones import login_alumno, obtener_clase_activa
 import os
 from libsql_client import create_client
-
+from db import query, execute
 url = os.environ["TURSO_DATABASE_URL"]
 auth_token = os.environ["TURSO_AUTH_TOKEN"]
 
@@ -312,16 +312,19 @@ if modo == "Estudiantes":
             ya_rindio = False
             if st.session_state.id_clase_hoy:
                 try:
-                    with sqlite3.connect(ruta) as conn:
-                        cursor = conn.cursor()
-                        cursor.execute("""
-                            SELECT COUNT(*) FROM reportes_diarios 
-                            WHERE id_alumno = ? AND id_clase = ?
-                        """, (st.session_state.estudiante.id, st.session_state.id_clase_hoy))
-                        if cursor.fetchone()[0] > 0:
-                            ya_rindio = True
-                except Exception as e:
-                    st.error(f"Error de validación: {e}")
+                resultado = query(
+                    """
+                    SELECT COUNT(*) FROM reportes_diarios 
+                    WHERE id_alumno = ? AND id_clase = ?
+                    """,
+                    (st.session_state.estudiante.id, st.session_state.id_clase_hoy)
+                )
+
+                if resultado and resultado[0][0] > 0:
+                    ya_rindio = True
+
+            except Exception as e:
+                st.error(f"Error de validación: {e}")
 
             # --- 2. LÓGICA DE ACCESO (EL CORAZÓN DEL CAMBIO) ---
             if ya_rindio:
@@ -546,25 +549,25 @@ elif modo == "Profesor":
         
         # Consultamos el estado actual para mostrarlo en la lateral
         try:
-            with sqlite3.connect(ruta) as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
-                res = cursor.fetchone()
-                
-                if res:
-                    id_c, cur_c, feed_c, act_c = res
-                    
-                    st.sidebar.subheader("📊 Estado de la Clase")
-                    st.sidebar.info(f"**Clase Activa:** № {id_c}\n\n**Curso:** {cur_c}")
-                    
-                    # Indicadores visuales rápidos
-                    status_exam = "🟢 ABIERTO" if act_c == 1 else "🔴 CERRADO"
-                    status_feed = "👁️ VISIBLE" if feed_c == 1 else "🚫 OCULTO"
-                    
-                    st.sidebar.write(f"**Examen:** {status_exam}")
-                    st.sidebar.write(f"**Feedback:** {status_feed}")
-                else:
-                    st.sidebar.warning("⚠️ Sin configuración activa")
+            resultado = query(
+                "SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1"
+            )
+
+            if resultado:
+                id_c, cur_c, feed_c, act_c = resultado[0]
+
+                st.sidebar.subheader("📊 Estado de la Clase")
+                st.sidebar.info(f"**Clase Activa:** № {id_c}\n\n**Curso:** {cur_c}")
+
+                # Indicadores visuales rápidos
+                status_exam = "🟢 ABIERTO" if act_c == 1 else "🔴 CERRADO"
+                status_feed = "👁️ VISIBLE" if feed_c == 1 else "🚫 OCULTO"
+
+                st.sidebar.write(f"**Examen:** {status_exam}")
+                st.sidebar.write(f"**Feedback:** {status_feed}")
+            else:
+                st.sidebar.warning("⚠️ Sin configuración activa")
+
         except:
             st.sidebar.error("Error al cargar estado")
 
@@ -595,12 +598,20 @@ elif modo == "Profesor":
             nuevo_activo = col_status.toggle("Abrir Acceso al Examen", value=(activo_val == 1))
 
             if st.button("💾 GUARDAR Y APLICAR CAMBIOS", use_container_width=True):
-                with sqlite3.connect(ruta) as conn:
-                    cursor = conn.cursor()
-                    cursor.execute("""
-                        INSERT OR REPLACE INTO configuracion_clase (id, id_clase_actual, curso, feedback_visible, examen_activo) 
-                        VALUES (1, ?, ?, ?, ?)
-                    """, (id_clase_input, curso_seleccionado, 1 if nuevo_feed else 0, 1 if nuevo_activo else 0))
+                execute(
+                    """
+                    INSERT OR REPLACE INTO configuracion_clase 
+                    (id, id_clase_actual, curso, feedback_visible, examen_activo) 
+                    VALUES (1, ?, ?, ?, ?)
+                    """,
+                    (
+                        id_clase_input,
+                        curso_seleccionado,
+                        1 if nuevo_feed else 0,
+                        1 if nuevo_activo else 0
+                    )
+                )
+
                 st.success("✅ ¡Configuración actualizada en todo el sistema!")
                 st.rerun()
         
@@ -609,10 +620,11 @@ elif modo == "Profesor":
         st.subheader("🔒 Finalización de Clase")
         
         try:
-            with sqlite3.connect(ruta) as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1")
-                config = cursor.fetchone()
+            resultado = query(
+                "SELECT id_clase_actual, curso FROM configuracion_clase WHERE id = 1"
+            )
+
+            config = resultado[0] if resultado else None
         
             if config and config[1]:
                 clase_id_activa, curso_activo = config[0], config[1]
@@ -627,41 +639,50 @@ elif modo == "Profesor":
                 # Lógica que se dispara SOLO si el usuario confirmó en el cartel emergente
                 if st.session_state.get('ejecutar_cierre_real', False):
                     try:
-                        with sqlite3.connect(ruta) as conn:
-                            cursor = conn.cursor()
-                            
-                            # 1. Registrar la fecha real de hoy en la tabla clases
-                            fecha_actual = datetime.date.today().strftime("%d/%m/%Y")
-                            cursor.execute("""
-                                UPDATE clases SET fecha = ? WHERE id_clase = ?
-                            """, (fecha_actual, clase_id_activa))
-                            
-                            # 2. Buscamos alumnos del curso
-                            cursor.execute("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_activo,))
-                            alumnos_del_curso = cursor.fetchall()
-                            
-                            contador_ausentes = 0
-                            nombres_ausentes = []
-        
-                            for id_al, nombre_al in alumnos_del_curso:
-                                # Verificamos si ya tiene nota registrada (ya sea por examen o nota oral)
-                                cursor.execute("SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", 
-                                               (id_al, clase_id_activa))
-                                
-                                if cursor.fetchone()[0] == 0:
-                                    # REGLA 21/02: Grabamos el AUSENTE y el 1.0 reglamentario
-                                    cursor.execute("""
-                                        INSERT INTO reportes_diarios 
-                                        (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_final, asistencia)
-                                        VALUES (?, ?, 0, 0, 1.0, 'AUSENTE')
-                                    """, (id_al, clase_id_activa))
-                                    contador_ausentes += 1
-                                    nombres_ausentes.append(nombre_al)
-                            
-                            # 3. Cerramos el acceso al examen
-                            cursor.execute("UPDATE configuracion_clase SET examen_activo = 0 WHERE id = 1")
-                            
-                            conn.commit()
+                        # 1. Registrar la fecha real de hoy en la tabla clases
+                        fecha_actual = datetime.date.today().strftime("%d/%m/%Y")
+
+                        execute(
+                            """
+                            UPDATE clases SET fecha = ? WHERE id_clase = ?
+                            """,
+                            (fecha_actual, clase_id_activa)
+                        )
+
+                        # 2. Buscamos alumnos del curso
+                        alumnos_del_curso = query(
+                            "SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)",
+                            (curso_activo,)
+                        )
+
+                        contador_ausentes = 0
+                        nombres_ausentes = []
+
+                        for id_al, nombre_al in alumnos_del_curso:
+                            # Verificamos si ya tiene nota registrada
+                            resultado = query(
+                                "SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?",
+                                (id_al, clase_id_activa)
+                            )
+
+                            if not resultado or resultado[0][0] == 0:
+                                # REGLA 21/02: Grabamos el AUSENTE y el 1.0 reglamentario
+                                execute(
+                                    """
+                                    INSERT INTO reportes_diarios 
+                                    (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_final, asistencia)
+                                    VALUES (?, ?, 0, 0, 1.0, 'AUSENTE')
+                                    """,
+                                    (id_al, clase_id_activa)
+                                )
+
+                                contador_ausentes += 1
+                                nombres_ausentes.append(nombre_al)
+
+                        # 3. Cerramos el acceso al examen
+                        execute(
+                            "UPDATE configuracion_clase SET examen_activo = 0 WHERE id = 1"
+                        )
                         
                         # Feedback visual final
                         st.success(f"✅ ¡Cierre exitoso! Clase registrada con fecha: {fecha_actual}")
@@ -699,16 +720,19 @@ elif modo == "Profesor":
             
             if col_sort_btn.button("🎰 SORTEAR ALUMNO", use_container_width=True):
                 try:
-                    with sqlite3.connect(ruta) as conn:
-                        cursor = conn.cursor()
-                        # Buscamos a los alumnos del curso configurado actualmente
-                        cursor.execute("SELECT nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_seleccionado,))
-                        lista_alumnos = [fila[0] for fila in cursor.fetchall()]
-                        
-                        if lista_alumnos:
-                            st.session_state.ganador = random.choice(lista_alumnos)
-                        else:
-                            st.session_state.ganador = "No hay alumnos en este curso"
+                    # Buscamos a los alumnos del curso configurado actualmente
+                    resultado = query(
+                        "SELECT nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)",
+                        (curso_seleccionado,)
+                    )
+
+                    lista_alumnos = [fila[0] for fila in resultado] if resultado else []
+
+                    if lista_alumnos:
+                        st.session_state.ganador = random.choice(lista_alumnos)
+                    else:
+                        st.session_state.ganador = "No hay alumnos en este curso"
+
                 except Exception as e:
                     st.error(f"Error en el sorteo: {e}")
 
@@ -731,57 +755,70 @@ elif modo == "Profesor":
             col_al, col_nota = st.columns([2, 1])
             
             with col_al:
-                with sqlite3.connect(ruta) as conn:
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT nombre FROM alumnos WHERE UPPER(TRIM(curso)) = UPPER(TRIM(?)) ORDER BY nombre ASC", (curso_seleccionado,))
-                    lista_nombres = [f[0] for f in cursor.fetchall()]
-                
-                alumno_a_calificar = st.selectbox("Seleccionar Alumno", lista_nombres, 
-                    index=lista_nombres.index(nombre_por_defecto) if nombre_por_defecto in lista_nombres else 0)
+                resultado = query(
+                    "SELECT nombre FROM alumnos WHERE UPPER(TRIM(curso)) = UPPER(TRIM(?)) ORDER BY nombre ASC",
+                    (curso_seleccionado,)
+                )
+
+                lista_nombres = [f[0] for f in resultado] if resultado else []
+
+                alumno_a_calificar = st.selectbox(
+                    "Seleccionar Alumno",
+                    lista_nombres,
+                    index=lista_nombres.index(nombre_por_defecto)
+                    if nombre_por_defecto in lista_nombres
+                    else 0
+                )
             
             with col_nota:
                 nota_input = st.number_input("Nota Final", min_value=1.0, max_value=10.0, value=7.0, step=0.5)
 
             if st.button("💾 GUARDAR NOTA ORAL", use_container_width=True):
                 try:
-                    with sqlite3.connect(ruta) as conn:
-                        cursor = conn.cursor()
-                        
-                        # 1. Obtenemos el ID del alumno
-                        cursor.execute("SELECT id_alumno FROM alumnos WHERE nombre = ?", (alumno_a_calificar,))
-                        res_id = cursor.fetchone()
-                        
-                        if res_id:
-                            id_al = res_id[0]
-                            # 2. Verificamos si ya existe el registro para esa clase
-                            cursor.execute("SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?", (id_al, id_clase_input))
-                            existe = cursor.fetchone()[0]
-                            
-                            if existe > 0:
-                                cursor.execute("""
-                                    UPDATE reportes_diarios 
-                                    SET nota_oral = ?, nota_final = ? 
-                                    WHERE id_alumno = ? AND id_clase = ?
-                                """, (nota_input, nota_input, id_al, id_clase_input))
-                            else:
-                                cursor.execute("""
-                                    INSERT INTO reportes_diarios 
-                                    (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final)
-                                    VALUES (?, ?, 0, 0, ?, ?)
-                                """, (id_al, id_clase_input, nota_input, nota_input))
-                            
-                            conn.commit()
-                            
-                            # --- MEJORA: Mensaje que sí se ve ---
-                            st.toast(f"✅ Nota {nota_input} guardada para {alumno_a_calificar}", icon="🔥")
-                            st.success(f"Cambios registrados para {alumno_a_calificar}.")
-                            
-                            # Usamos un pequeño delay o simplemente no refrescamos para ver el success
-                            # st.rerun() # Si lo quitas, el cartel de success se queda fijo.
+                    # 1. Obtenemos el ID del alumno
+                    resultado_id = query(
+                        "SELECT id_alumno FROM alumnos WHERE nombre = ?",
+                        (alumno_a_calificar,)
+                    )
+
+                    if resultado_id:
+                        id_al = resultado_id[0][0]
+
+                        # 2. Verificamos si ya existe el registro para esa clase
+                        resultado_existe = query(
+                            "SELECT COUNT(*) FROM reportes_diarios WHERE id_alumno = ? AND id_clase = ?",
+                            (id_al, id_clase_input)
+                        )
+
+                        existe = resultado_existe[0][0] if resultado_existe else 0
+
+                        if existe > 0:
+                            execute(
+                                """
+                                UPDATE reportes_diarios 
+                                SET nota_oral = ?, nota_final = ? 
+                                WHERE id_alumno = ? AND id_clase = ?
+                                """,
+                                (nota_input, nota_input, id_al, id_clase_input)
+                            )
                         else:
-                            st.error("No se pudo encontrar el ID del alumno.")
+                            execute(
+                                """
+                                INSERT INTO reportes_diarios 
+                                (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final)
+                                VALUES (?, ?, 0, 0, ?, ?)
+                                """,
+                                (id_al, id_clase_input, nota_input, nota_input)
+                            )
+
+                        st.toast(f"✅ Nota {nota_input} guardada para {alumno_a_calificar}", icon="🔥")
+                        st.success(f"Cambios registrados para {alumno_a_calificar}.")
+
+                    else:
+                        st.error("No se pudo encontrar el ID del alumno.")
+
                 except Exception as e:
-                    st.error(f"Error al guardar nota: {e}")
+                    st.error(f"Error al guardar la nota: {e}")
                     
         # --- 6. JUSTIFICAR INASISTENCIA (Versión con Registro de Ausencia Permanente) ---
         st.divider()
@@ -795,12 +832,13 @@ elif modo == "Profesor":
             
             if busqueda:
                 try:
-                    with sqlite3.connect(ruta) as conn:
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE ?", (f"%{busqueda}%",))
-                        resultados = cursor.fetchall()
+                    resultados = query(
+                        "SELECT id_alumno, nombre, curso FROM alumnos WHERE nombre LIKE ?",
+                        (f"%{busqueda}%",)
+                    )
+
                 except Exception as e:
-                    st.error(f"Error de búsqueda: {e}")
+                    st.error(f"Error en la búsqueda: {e}")
 
             if resultados:
                 opciones_alumnos = {f"{r[1]} ({r[2]})": r[0] for r in resultados}
@@ -812,22 +850,23 @@ elif modo == "Profesor":
                 
                 if st.button("⚠️ JUSTIFICAR Y LIMPIAR NOTAS", use_container_width=True):
                     try:
-                        with sqlite3.connect(ruta) as conn:
-                            cursor = conn.cursor()
-                            # CAMBIO CLAVE: UPDATE en lugar de DELETE
-                            # Seteamos notas y ejercicios en NULL para que el sistema lo vea como "no rendido"
-                            # pero NO tocamos la columna 'asistencia' (que seguirá siendo 'AUSENTE')
-                            cursor.execute("""
-                                UPDATE reportes_diarios 
-                                SET ejercicios_completados = NULL, 
-                                    ejercicios_correctos = NULL, 
-                                    nota_final = NULL 
-                                WHERE id_alumno = ? AND id_clase = ?
-                            """, (id_al_elegido, id_clase_justificar))
-                            conn.commit()
-                        
+                        # UPDATE en lugar de DELETE
+                        # Seteamos notas y ejercicios en NULL para que el sistema lo vea como "no rendido"
+                        # pero NO tocamos la columna 'asistencia' (que seguirá siendo 'AUSENTE')
+                        execute(
+                            """
+                            UPDATE reportes_diarios 
+                            SET ejercicios_completados = NULL, 
+                                ejercicios_correctos = NULL, 
+                                nota_final = NULL 
+                            WHERE id_alumno = ? AND id_clase = ?
+                            """,
+                            (id_al_elegido, id_clase_justificar)
+                        )
+
                         st.session_state.msg_justificar = f"✅ Inasistencia justificada para {seleccion}. Registro histórico mantenido."
                         st.rerun()
+
                     except Exception as e:
                         st.error(f"Error al justificar: {e}")
             elif busqueda:
@@ -842,42 +881,54 @@ elif modo == "Profesor":
         st.subheader(f"📈 Reportes en DB: {curso_seleccionado} - Clase № {id_clase_input}")
 
         try:
-            with sqlite3.connect(ruta) as conn:
-                # Actualizamos la consulta para incluir 'asistencia'
-                query_monitor = """
-                    SELECT 
-                        a.nombre AS 'Alumno', 
-                        r.asistencia AS 'Asistencia',
-                        r.ejercicios_completados AS 'Hechos', 
-                        r.ejercicios_correctos AS 'Correctos', 
-                        r.nota_oral AS 'Nota Oral',
-                        r.nota_final AS 'Nota Final'
-                    FROM reportes_diarios r
-                    INNER JOIN alumnos a ON r.id_alumno = a.id_alumno
-                    WHERE r.id_clase = ? 
-                    AND UPPER(TRIM(a.curso)) = UPPER(TRIM(?))
-                    ORDER BY a.nombre ASC
-                """
-                
-                df_mon = pd.read_sql_query(query_monitor, conn, params=(id_clase_input, curso_seleccionado))
-                
-                if not df_mon.empty:
-                    # --- FUNCIÓN DE ESTILO PARA RESALTAR AUSENCIAS ---
-                    def resaltar_ausencia(val):
-                        color = '#FF4B4B' if val == 'AUSENTE' else '#28a745'
-                        return f'color: {color}; font-weight: bold'
+            # Consulta adaptada a Turso
+            query_monitor = """
+                SELECT 
+                    a.nombre AS Alumno, 
+                    r.asistencia AS Asistencia,
+                    r.ejercicios_completados AS Hechos, 
+                    r.ejercicios_correctos AS Correctos, 
+                    r.nota_oral AS Nota_Oral,
+                    r.nota_final AS Nota_Final
+                FROM reportes_diarios r
+                INNER JOIN alumnos a ON r.id_alumno = a.id_alumno
+                WHERE r.id_clase = ? 
+                AND UPPER(TRIM(a.curso)) = UPPER(TRIM(?))
+                ORDER BY a.nombre ASC
+            """
 
-                    # Aplicamos el estilo a la columna Asistencia
-                    df_estilado = df_mon.style.applymap(resaltar_ausencia, subset=['Asistencia'])
+            resultados = query(query_monitor, (id_clase_input, curso_seleccionado))
 
-                    st.dataframe(df_estilado, use_container_width=True, hide_index=True)
-                    st.caption(f"✅ Mostrando {len(df_mon)} registros encontrados en la tabla reportes_diarios.")
-                else:
-                    st.info(f"Empty Set: No hay registros grabados en la base de datos para el curso {curso_seleccionado} en la clase {id_clase_input}.")
+            if resultados:
+                columnas = [
+                    "Alumno",
+                    "Asistencia",
+                    "Hechos",
+                    "Correctos",
+                    "Nota Oral",
+                    "Nota Final"
+                ]
+
+                df_mon = pd.DataFrame(resultados, columns=columnas)
+
+                # --- FUNCIÓN DE ESTILO PARA RESALTAR AUSENCIAS ---
+                def resaltar_ausencia(val):
+                    color = '#FF4B4B' if val == 'AUSENTE' else '#28a745'
+                    return f'color: {color}; font-weight: bold'
+
+                df_estilado = df_mon.style.applymap(resaltar_ausencia, subset=['Asistencia'])
+
+                st.dataframe(df_estilado, use_container_width=True, hide_index=True)
+                st.caption(f"✅ Mostrando {len(df_mon)} registros encontrados en la tabla reportes_diarios.")
+
+            else:
+                st.info(
+                    f"Empty Set: No hay registros grabados en la base de datos para el curso {curso_seleccionado} en la clase {id_clase_input}."
+                )
 
         except Exception as e:
-            st.error(f"❌ Error al consultar la base de datos: {e}")
-                
+            st.error(f"Error al consultar la base de datos: {e}")
+
         # --- 8. REPORTE TRIMESTRAL (Cálculo de Tendencias y Notas) ---
         st.divider()
         st.subheader("📊 Generador de Notas Trimestrales")
@@ -890,86 +941,97 @@ elif modo == "Profesor":
                     import numpy as np
                     import pandas as pd
 
-                    with sqlite3.connect(ruta) as conn:
-                        # 1. Traer alumnos del curso activo
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_seleccionado,))
-                        alumnos = cursor.fetchall()
+                    # 1️⃣ Traer alumnos del curso activo
+                    alumnos = query(
+                        "SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)",
+                        (curso_seleccionado,)
+                    )
 
-                        if not alumnos:
-                            st.warning("No hay alumnos en este curso.")
-                        else:
-                            datos_reporte = []
+                    if not alumnos:
+                        st.warning("No hay alumnos en este curso.")
+                    else:
+                        datos_reporte = []
 
-                            for id_al, nombre_al in alumnos:
-                                # 2. Traer historial del trimestre (Asumiendo que id_clase identifica el rango del trimestre)
-                                # Nota: Aquí adaptamos la lógica de 'sincronizar_historial_por_trimestre'
-                                # Si no tienes una columna 'trimestre', se asume por rango de id_clase o fecha.
-                                # Para este ejemplo, filtramos por la lógica de tu DB:
-                                # Unimos con la tabla clases para filtrar por el trimestre elegido en el selectbox
-                                query_hist = """
-                                    SELECT r.ejercicios_completados as esfuerzo, r.ejercicios_correctos as eficacia, r.nota_final 
-                                    FROM reportes_diarios r
-                                    JOIN clases c ON r.id_clase = c.id_clase
-                                    WHERE r.id_alumno = ? AND c.trimestre = ? AND r.nota_final IS NOT NULL
-                                """
-                                df_hist = pd.read_sql_query(query_hist, conn, params=(id_al, int(trimestre_n)))
+                        for id_al, nombre_al in alumnos:
 
-                                if df_hist.empty:
-                                    prom_base, adj_esf, adj_efi, nota_f = "---", "---", "---", "---"
-                                else:
-                                    p = df_hist['nota_final'].mean()
-                                    
-                                    if len(df_hist) >= 2:
-                                        # Cálculo de tendencias (Pendiente m)
-                                        x = np.arange(len(df_hist))
-                                        m_esf, _ = np.polyfit(x, df_hist['esfuerzo'], 1)
-                                        m_efi, _ = np.polyfit(x, df_hist['eficacia'], 1)
-                                        
-                                        # Lógica de ajuste (+/- 0.5)
-                                        # Ajudste Esfuerzo
-                                        if m_esf > 0.1: aesf = "+0.5"
-                                        elif m_esf < -0.1: aesf = "-0.5"
-                                        else: aesf = "0"
-                                        
-                                        # Ajuste Eficacia
-                                        if m_efi > 0.1: aefi = "+0.5"
-                                        elif m_efi < -0.1: aefi = "-0.5"
-                                        else: aefi = "0"
-                                        
-                                        # Nota Final (Promedio + ajustes)
-                                        v_esf = 0.5 if aesf == "+0.5" else (-0.5 if aesf == "-0.5" else 0)
-                                        v_efi = 0.5 if aefi == "+0.5" else (-0.5 if aefi == "-0.5" else 0)
-                                        nota_final_calc = int(round(p + v_esf + v_efi))
+                            # 2️⃣ Traer historial del trimestre
+                            query_hist = """
+                                SELECT 
+                                    r.ejercicios_completados as esfuerzo, 
+                                    r.ejercicios_correctos as eficacia, 
+                                    r.nota_final 
+                                FROM reportes_diarios r
+                                JOIN clases c ON r.id_clase = c.id_clase
+                                WHERE r.id_alumno = ? 
+                                AND c.trimestre = ? 
+                                AND r.nota_final IS NOT NULL
+                                ORDER BY r.id_clase ASC
+                            """
+
+                            registros = query(query_hist, (id_al, int(trimestre_n)))
+
+                            if not registros:
+                                prom_base, adj_esf, adj_efi, nota_f = "---", "---", "---", "---"
+                            else:
+                                df_hist = pd.DataFrame(registros, columns=["esfuerzo", "eficacia", "nota_final"])
+
+                                p = df_hist["nota_final"].mean()
+
+                                if len(df_hist) >= 2:
+                                    x = np.arange(len(df_hist))
+                                    m_esf, _ = np.polyfit(x, df_hist["esfuerzo"], 1)
+                                    m_efi, _ = np.polyfit(x, df_hist["eficacia"], 1)
+
+                                    # Ajuste Esfuerzo
+                                    if m_esf > 0.1:
+                                        aesf = "+0.5"
+                                    elif m_esf < -0.1:
+                                        aesf = "-0.5"
                                     else:
-                                        aesf, aefi = "0", "0"
-                                        nota_final_calc = int(round(p))
+                                        aesf = "0"
 
-                                    prom_base = f"{p:.2f}"
-                                    adj_esf = aesf
-                                    adj_efi = aefi
-                                    nota_f = max(1, min(10, nota_final_calc)) # Acotado entre 1 y 10
+                                    # Ajuste Eficacia
+                                    if m_efi > 0.1:
+                                        aefi = "+0.5"
+                                    elif m_efi < -0.1:
+                                        aefi = "-0.5"
+                                    else:
+                                        aefi = "0"
 
-                                datos_reporte.append({
-                                    "Estudiante": nombre_al,
-                                    "Prom. Base": prom_base,
-                                    "Adj. Esf.": adj_esf,
-                                    "Adj. Efi.": adj_efi,
-                                    "Nota Final": nota_f
-                                })
+                                    v_esf = 0.5 if aesf == "+0.5" else (-0.5 if aesf == "-0.5" else 0)
+                                    v_efi = 0.5 if aefi == "+0.5" else (-0.5 if aefi == "-0.5" else 0)
 
-                            # 3. Mostrar Resultados
-                            df_final = pd.DataFrame(datos_reporte)
-                            st.write(f"### 📋 Acta de Calificaciones - {curso_seleccionado} (T{trimestre_n})")
-                            
-                            # Estilo: resaltamos las notas finales aprobadas
-                            st.dataframe(df_final, use_container_width=True, hide_index=True)
-                            
-                            st.caption("📌 El ajuste de +/- 0.5 se aplica automáticamente por tendencia (mejora o descenso) en el desempeño.")
+                                    nota_final_calc = int(round(p + v_esf + v_efi))
+                                else:
+                                    aesf, aefi = "0", "0"
+                                    nota_final_calc = int(round(p))
+
+                                prom_base = f"{p:.2f}"
+                                adj_esf = aesf
+                                adj_efi = aefi
+                                nota_f = max(1, min(10, nota_final_calc))
+
+                            datos_reporte.append({
+                                "Estudiante": nombre_al,
+                                "Prom. Base": prom_base,
+                                "Adj. Esf.": adj_esf,
+                                "Adj. Efi.": adj_efi,
+                                "Nota Final": nota_f
+                            })
+
+                        # 3️⃣ Mostrar Resultados
+                        df_final = pd.DataFrame(datos_reporte)
+
+                        st.write(f"### 📋 Acta de Calificaciones - {curso_seleccionado} (T{trimestre_n})")
+                        st.dataframe(df_final, use_container_width=True, hide_index=True)
+
+                        st.caption(
+                            "📌 El ajuste de +/- 0.5 se aplica automáticamente por tendencia "
+                            "(mejora o descenso) en el desempeño."
+                        )
 
                 except Exception as e:
-                    st.error(f"Error al generar reporte: {e}")        
-                
+                    st.error(f"Error al generar el reporte: {e}")
                     
         # --- 10. CREADOR DE EXÁMENES (Versión AUTOINCREMENT) ---
         st.divider()
@@ -1013,37 +1075,32 @@ elif modo == "Profesor":
                     st.error("Por favor, ingresa un tema para la clase.")
                 else:
                     try:
-                        with sqlite3.connect(ruta) as conn:
-                            cursor = conn.cursor()
+                        # PASO A: Insertar la clase
+                        query("""
+                            INSERT INTO clases (fecha, tema, ejercicios_totales, trimestre) 
+                            VALUES (?, ?, ?, ?)
+                        """, ("", tema_new, cant_preguntas, int(trimestre_new)))
 
-                            # PASO A: Insertar la clase (SQLite genera el ID solo)
-                            # No incluimos 'id_clase' en la lista de columnas
-                            cursor.execute("""
-                                INSERT INTO clases (fecha, tema, ejercicios_totales, trimestre) 
-                                VALUES (?, ?, ?, ?)
-                            """, ("", tema_new, cant_preguntas, int(trimestre_new)))
+                        # PASO B: Obtener el ID recién generado
+                        id_clase_generado = query("SELECT last_insert_rowid()")[0][0]
 
-                            # PASO B: Obtener el ID que SQLite acaba de generar
-                            id_clase_generado = cursor.lastrowid
+                        # PASO C: Preparar preguntas con el ID obtenido
+                        preguntas_finales = []
+                        for p in preguntas_lista:
+                            preguntas_finales.append((id_clase_generado, *p))
 
-                            # PASO C: Preparar preguntas con el ID recién obtenido
-                            preguntas_finales = []
-                            for p in preguntas_lista:
-                                # Agregamos el id_clase_generado al principio de cada tupla
-                                preguntas_finales.append((id_clase_generado, *p))
-
-                            # PASO D: Insertar las preguntas vinculadas a ese ID
-                            cursor.executemany("""
-                                INSERT INTO preguntas (id_clase, enunciado, opc_a, opc_b, opc_c, opc_d, correcta)
+                        # PASO D: Insertar preguntas vinculadas
+                        for pregunta in preguntas_finales:
+                            query("""
+                                INSERT INTO preguntas 
+                                (id_clase, enunciado, opc_a, opc_b, opc_c, opc_d, correcta)
                                 VALUES (?, ?, ?, ?, ?, ?, ?)
-                            """, preguntas_finales)
-                            
-                            conn.commit()
-                        
+                            """, pregunta)
+
                         st.balloons()
-                        st.success(f"✅ ¡Éxito! Se ha creado la Clase N° {id_clase_generado} sobre '{tema_new}'.")
-                        # No hacemos rerun automático aquí para que el profe pueda ver el ID generado
-                        
+                        st.success(
+                            f"✅ ¡Éxito! Se ha creado la Clase N° {id_clase_generado} sobre '{tema_new}'."
+                        )
                     except Exception as e:
                         st.error(f"❌ ERROR: {e}")
                         
@@ -1052,53 +1109,64 @@ elif modo == "Profesor":
         st.subheader("📂 Explorador de Clases y Exámenes")
 
         try:
-            with sqlite3.connect(ruta) as conn:
-                # 1. Traer todas las clases registradas
-                query_clases = "SELECT * FROM clases ORDER BY id_clase DESC"
-                df_clases = pd.read_sql_query(query_clases, conn)
+            # 1️⃣ Traer todas las clases registradas
+            clases = query("SELECT * FROM clases ORDER BY id_clase DESC")
 
-            if df_clases.empty:
+            if not clases:
                 st.info("Aún no hay clases registradas en la base de datos.")
             else:
+                df_clases = pd.DataFrame(
+                    clases,
+                    columns=["id_clase", "fecha", "tema", "ejercicios_totales", "trimestre"]
+                )
+
                 st.write("### 1. Seleccione una Clase")
-                # Mostramos la tabla de clases para referencia rápida
                 st.dataframe(df_clases, use_container_width=True, hide_index=True)
 
-                # Creamos un buscador para elegir la clase y ver sus preguntas
-                opciones_clases = {f"ID: {r.id_clase} - {r.tema} ({r.fecha})": r.id_clase for _, r in df_clases.iterrows()}
-                clase_a_ver = st.selectbox("🔍 Seleccione una clase para ver sus preguntas:", 
-                                        options=opciones_clases.keys(),
-                                        index=None,
-                                        placeholder="Elija una clase...")
+                # Crear diccionario para selectbox
+                opciones_clases = {
+                    f"ID: {row.id_clase} - {row.tema} ({row.fecha})": row.id_clase
+                    for _, row in df_clases.iterrows()
+                }
+
+                clase_a_ver = st.selectbox(
+                    "🔍 Seleccione una clase para ver sus preguntas:",
+                    options=opciones_clases.keys(),
+                    index=None,
+                    placeholder="Elija una clase..."
+                )
 
                 if clase_a_ver:
                     id_seleccionado = opciones_clases[clase_a_ver]
-                    
-                    with sqlite3.connect(ruta) as conn:
-                        # 2. Traer las preguntas de la clase seleccionada
-                        query_preg = """
-                            SELECT enunciado, opc_a, opc_b, opc_c, opc_d, correcta 
-                            FROM preguntas 
-                            WHERE id_clase = ?
-                        """
-                        df_preguntas = pd.read_sql_query(query_preg, conn, params=(id_seleccionado,))
 
-                    if df_preguntas.empty:
+                    # 2️⃣ Traer preguntas de la clase seleccionada
+                    preguntas = query("""
+                        SELECT enunciado, opc_a, opc_b, opc_c, opc_d, correcta
+                        FROM preguntas
+                        WHERE id_clase = ?
+                    """, (id_seleccionado,))
+
+                    if not preguntas:
                         st.warning("Esta clase no tiene preguntas vinculadas.")
                     else:
+                        df_preguntas = pd.DataFrame(
+                            preguntas,
+                            columns=["enunciado", "opc_a", "opc_b", "opc_c", "opc_d", "correcta"]
+                        )
+
                         st.write(f"### 📝 Preguntas de la Clase ID: {id_seleccionado}")
-                        
-                        # Mostramos las preguntas de forma estética
+
                         for i, row in df_preguntas.iterrows():
                             with st.container(border=True):
                                 st.markdown(f"**Pregunta {i+1}: {row['enunciado']}**")
+
                                 c1, c2 = st.columns(2)
                                 c1.write(f"**A:** {row['opc_a']}")
                                 c2.write(f"**B:** {row['opc_b']}")
                                 c1.write(f"**C:** {row['opc_c']}")
                                 c2.write(f"**D:** {row['opc_d']}")
-                                st.success(f"✅ Respuesta Correcta: **{row['correcta']}**")
 
+                                st.success(f"✅ Respuesta Correcta: **{row['correcta']}**")
         except Exception as e:
             st.error(f"Error al leer la base de datos: {e}")
             

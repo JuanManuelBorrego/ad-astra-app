@@ -24,35 +24,38 @@ class Alumno:
     #------------------------------------------------------------------------------------------------------------------------
     #MÉTODO PARA VER SI EL EXAMEN ESTÁ ABIERTO O NO (ESTE MÉTODO CONSULTA SI EN EL PANEL DEL PROFESOR CAMBIÉ EL ESTADO DEL EXAMEN DE ACTIVO A BLOQUEADO PARA QUE SE LES CIERREN LAS NUEVAS PREGUNTAS A AQUELLOS ALUMNOS QUE CONTINÚEN RESPONDIENDO A PESAR DE QUE SE LES DIJO QUE SE TERMINÓ EL TIEMPO DE EXAMEN)
     def clase_esta_activa(self):
-        """Consulta si el profesor mantiene el examen habilitado."""
+    """Consulta si el profesor mantiene el examen habilitado."""
         try:
-            with sqlite3.connect(ruta) as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT examen_activo FROM configuracion_clase WHERE id = 1")
-                resultado = cursor.fetchone()
-                return resultado[0] == 1 if resultado else False
+            resultado = query(
+                "SELECT examen_activo FROM configuracion_clase WHERE id = 1"
+            )
+
+            return resultado[0][0] == 1 if resultado else False
+
         except:
-            return False # Por seguridad, si falla la DB, no dejamos seguir
+            return False  # Por seguridad, si falla la DB, no dejamos seguir
    #--------------------------------------------------------------------------------------------------------
     # MÉTODO REGISTRAR CLASE: ES LARGO, POR ESO LO DIVIDÍ EN 6 PARTES
     def registrar_clase(self, id_clase, completados, correctos, nota_oral=None):
-        
-        # 1. CONTAR REALIDAD Y ACTUALIZAR MAESTRO
-        with sqlite3.connect(ruta) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM preguntas WHERE id_clase = ?", (id_clase,))
-            totales_reales = cursor.fetchone()[0]
-            
-            if totales_reales == 0:
-                print(f"❌ Error: No se encontraron preguntas para la clase {id_clase}.")
-                return None
-            
-            cursor.execute("UPDATE clases SET ejercicios_totales = ? WHERE id_clase = ?", 
-                           (totales_reales, id_clase))
-            conn.commit()
-            
-        totales = totales_reales 
 
+        # 1. CONTAR REALIDAD Y ACTUALIZAR MAESTRO
+        resultado = query(
+            "SELECT COUNT(*) FROM preguntas WHERE id_clase = ?",
+            (id_clase,)
+        )
+
+        totales_reales = resultado[0][0] if resultado else 0
+
+        if totales_reales == 0:
+            print(f"❌ Error: No se encontraron preguntas para la clase {id_clase}.")
+            return None
+
+        execute(
+            "UPDATE clases SET ejercicios_totales = ? WHERE id_clase = ?",
+            (totales_reales, id_clase)
+        )
+
+        totales = totales_reales
         # 2. CALCULAMOS LOS DOS PILARES
         # A) ESFUERZO: Ahora basado en lo que el alumno REALMENTE intentó contestar
         esfuerzo = completados / totales
@@ -86,15 +89,14 @@ class Alumno:
 
         # 5. ENVIAR A LA BASE DE DATOS
         # Nota: He añadido 'asistencia' para diferenciar del ausente total
-        with sqlite3.connect(ruta) as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO reportes_diarios 
-                (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final, asistencia)
-                VALUES (?, ?, ?, ?, ?, ?, 'PRESENTE')
-            """, (self.id, id_clase, completados, correctos, nota_oral, nota_final))
-            conn.commit()
-
+        execute(
+            """
+            INSERT INTO reportes_diarios 
+            (id_alumno, id_clase, ejercicios_completados, ejercicios_correctos, nota_oral, nota_final, asistencia)
+            VALUES (?, ?, ?, ?, ?, ?, 'PRESENTE')
+            """,
+            (self.id, id_clase, completados, correctos, nota_oral, nota_final)
+        )
         # 6. RETORNO FINAL
         return nota_final
    #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------     
