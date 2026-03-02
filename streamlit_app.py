@@ -571,12 +571,12 @@ elif modo == "Profesor":
         st.title("Gestión Académica")
         
         # --- REFRESCO DE DATOS DESDE TURSO ANTES DE MOSTRAR EL PANEL ---
-with conectar() as conn:
-    conn = conectar() # Obtenemos la conexión sincrónica
-    cursor = conn.cursor()
-    cursor.execute("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
-    res = cursor.fetchone()
-    conn.close() # Siempre cerrar después de usar
+# --- REFRESCO DE DATOS DESDE TURSO ---
+conn = conectar() 
+cursor = conn.cursor()
+cursor.execute("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
+res = cursor.fetchone()
+conn.close()
 
 # --- CUERPO DEL EXPANDER ---
 with st.expander("⚙️ Configurar Clase y Curso Actual", expanded=True):
@@ -1116,6 +1116,7 @@ with st.expander("⚙️ Configurar Clase y Curso Actual", expanded=True):
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
