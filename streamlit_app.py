@@ -571,11 +571,15 @@ elif modo == "Profesor":
         st.title("Gestión Académica")
         
 # --- REFRESCO DE DATOS DESDE TURSO ---
-conn = conectar() 
-# En la librería 'libsql', la conexión ejecuta directamente:
-res_ejecucion = conn.execute("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
-res = res_ejecucion.fetchone() 
-# No cerramos aquí para que 'res' sea accesible por el resto del código
+try:
+    conn = conectar() 
+    # En la librería 'libsql', el cliente usa execute directamente
+    res_ejecucion = conn.execute("SELECT id_clase_actual, curso, feedback_visible, examen_activo FROM configuracion_clase WHERE id = 1")
+    res = res_ejecucion.fetchone()
+    # No cerramos aquí para evitar errores de objeto nulo
+except Exception as e:
+    st.error(f"Error de conexión a la base de datos: {e}")
+    res = [1, "5TO A", 0, 0] # Valores por defecto para que la app no se rompa
 
 # --- CUERPO DEL EXPANDER ---
 with st.expander("⚙️ Configurar Clase y Curso Actual", expanded=True):
@@ -1115,6 +1119,7 @@ with st.expander("⚙️ Configurar Clase y Curso Actual", expanded=True):
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
