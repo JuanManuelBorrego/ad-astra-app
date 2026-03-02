@@ -298,8 +298,10 @@ def mostrar_dashboard(alumno, id_clase_hoy, visible):
         # Escaneamos los 3 trimestres para el panorama general
         for t in ['1', '2', '3']:
             alumno.sincronizar_historial_por_trimestre(t)
+            # Inicializamos res como None por seguridad
+            res = None
             res = alumno.calcular_nota_trimestral(0, 0)
-            if isinstance(res, dict):
+            if res and isinstance(res, dict): # Verificamos que res exista y sea dict:
                 notas_anuales.append(res['total_entero'])
                 ultimo_trimestre_con_datos = t 
             else:
