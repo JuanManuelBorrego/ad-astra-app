@@ -30,64 +30,88 @@ st.set_page_config(
 )
 
 def aplicar_interfaz_cientifica():
-    # 1. DISEÑO VISUAL (CSS) - ASTRA STICKY BOTTOM
+    # 1. DISEÑO VISUAL (CSS) - ASTRA LATERAL IDENTITY
     st.markdown("""
         <style>
-        /* --- FUERZA AL CONTENEDOR A OCUPAR TODA LA PANTALLA --- */
-        .main .block-container {
-            display: flex;
-            flex-direction: column;
-            min-height: 90vh; /* Ocupa casi todo el alto visual */
-            padding-top: 2rem !important;
+        /* --- LIMPIEZA DE HEADER (Mantenemos flecha visible) --- */
+        [data-testid="stHeader"] {
+            background-color: rgba(0,0,0,0) !important;
+        }
+        
+        button[data-testid="stSidebarCollapse"] svg {
+            fill: #00E5FF !important; /* Flecha en cian para que resalte */
         }
 
-        /* --- ESTE ELEMENTO EMPUJA AL FOOTER HACIA ABAJO --- */
-        .spacer {
-            flex-grow: 1;
-        }
-
-        /* --- FOOTER EN EL SUELO REAL --- */
-        .grounded-footer {
-            width: 100%;
-            padding: 20px 0;
-            border-top: 1px solid rgba(0, 229, 255, 0.1);
+        /* --- FOOTER LATERAL IZQUIERDO (Vertical) --- */
+        .side-footer {
+            position: fixed;
+            left: 20px;
+            bottom: 30px;
+            z-index: 100;
             text-align: left;
+            border-left: 2px solid #00E5FF;
+            padding-left: 12px;
+            pointer-events: none; /* No interfiere con clics en el contenido */
         }
 
-        .footer-text-main {
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.3) !important;
-            letter-spacing: 1px;
+        .side-footer-title {
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            color: #FFFFFF !important;
+            margin-bottom: 2px;
             text-transform: uppercase;
-            margin: 0;
         }
 
-        .footer-text-sub {
+        .side-footer-sub {
             font-size: 9px;
-            color: rgba(0, 229, 255, 0.2) !important;
-            margin: 0;
+            color: rgba(0, 229, 255, 0.6) !important;
+            letter-spacing: 1px;
+            line-height: 1.2;
         }
 
-        /* --- LIMPIEZA DE HEADER Y FLECHA --- */
-        [data-testid="stHeader"] { background-color: rgba(0,0,0,0) !important; }
-        button[data-testid="stSidebarCollapse"] svg { fill: #FFFFFF !important; }
+        /* Ocultar en celulares muy pequeños si tapa el contenido */
+        @media (max-width: 600px) {
+            .side-footer {
+                left: 10px;
+                bottom: 20px;
+            }
+            .side-footer-title { font-size: 9px; }
+            .side-footer-sub { font-size: 8px; }
+        }
 
-        /* --- ESTÉTICA GENERAL ASTRA --- */
+        /* --- ESTÉTICA GENERAL --- */
         .stApp {
-            background: radial-gradient(circle at top, #1B263B 0%, #0D1B2A 100%);
+            background: radial-gradient(circle at top left, #1B263B 0%, #0D1B2A 100%);
             background-attachment: fixed;
         }
+
+        /* Ajuste de margen principal */
+        .main .block-container {
+            padding-top: 2rem !important;
+            padding-left: 5rem !important; /* Espacio para que el texto no choque con el footer lateral */
+        }
+
+        /* --- TARJETAS Y FORMULARIOS --- */
+        div[data-testid="stForm"], div.stCard, .stExpander {
+            background: rgba(255, 255, 255, 0.05) !important;
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 229, 255, 0.2);
+        }
+
+        /* --- BOTONES --- */
+        .stButton>button {
+            background-color: #FF7043 !important;
+            color: white !important;
+            border: none;
+            font-weight: bold;
+        }
         </style>
-    """, unsafe_allow_html=True)
 
-    # 2. ESPACIADOR INVISIBLE (Empuja el footer al final)
-    st.markdown('<div class="spacer"></div>', unsafe_allow_html=True)
-
-    # 3. EL FOOTER
-    st.markdown("""
-        <div class="grounded-footer">
-            <p class="footer-text-main">© 2026 <b>AD ASTRA</b> | Prof. Juan Manuel Borrego</p>
-            <p class="footer-text-sub">Centro de Navegación de Datos & Didáctica Matemática</p>
+        <div class="side-footer">
+            <p class="side-footer-title">© 2026 AD ASTRA</p>
+            <p class="side-footer-sub">Prof. Juan Manuel Borrego<br>Didáctica & Datos</p>
         </div>
     """, unsafe_allow_html=True)
     
@@ -1077,6 +1101,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
