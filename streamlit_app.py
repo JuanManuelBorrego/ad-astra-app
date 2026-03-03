@@ -44,7 +44,7 @@ def aplicar_interfaz_cientifica():
             margin-bottom: 20px;
             line-height: 1.4;
             position: relative;
-            z-index: 99; /* Debajo de la flecha */
+            z-index: 99; 
         }
         .header-title { 
             font-size: 14px; 
@@ -63,21 +63,21 @@ def aplicar_interfaz_cientifica():
 
         /* --- RECUPERAR LA FLECHA DEL SIDEBAR --- */
         [data-testid="stSidebarCollapse"] {
-            top: 15px !important; /* La bajamos un poquito para que no pegue al techo */
+            top: 15px !important; 
             left: 10px !important;
-            z-index: 1000001 !important; /* Por encima de todo */
+            z-index: 1000001 !important; 
             background-color: rgba(255, 255, 255, 0.1) !important;
             border-radius: 50% !important;
         }
         
         button[data-testid="stSidebarCollapse"] svg {
-            fill: #FFFFFF !important; /* Flecha blanca */
+            fill: #FFFFFF !important; 
             color: #FFFFFF !important;
             width: 30px;
             height: 30px;
         }
 
-        /* --- ELIMINAR ELEMENTOS NATIVOS PERO MANTENER LA FUNCIONALIDAD --- */
+        /* --- ELIMINAR ELEMENTOS NATIVOS --- */
         header { visibility: hidden !important; height: 0px !important; }
         footer { visibility: hidden !important; }
         #MainMenu { visibility: hidden !important; }
@@ -140,14 +140,8 @@ def aplicar_interfaz_cientifica():
             <p class="header-subtitle">Centro de Navegación de Datos & Didáctica Matemática</p>
         </div>
     """, unsafe_allow_html=True)
-    
-        <div class="header-astra">
-            <p class="header-title">© 2026 - Proyecto <b>AD ASTRA</b> | Prof. Juan Manuel Borrego</p>
-            <p class="header-subtitle">Centro de Navegación de Datos & Didáctica Matemática</p>
-        </div>
-    """, unsafe_allow_html=True)
 
-    # Leyenda lateral de versión (opcional)
+    # Leyenda lateral de versión
     st.sidebar.markdown(f"<div style='text-align: center; color: rgba(255,255,255,0.3); font-size: 10px; margin-top: 20px;'>Misión ASTRA v1.0</div>", unsafe_allow_html=True)
 
 # --- LLAMADA INICIAL ---
@@ -1136,6 +1130,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
