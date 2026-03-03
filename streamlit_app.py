@@ -44,8 +44,9 @@ def aplicar_interfaz_cientifica():
 
         /* --- FOOTER LATERAL IZQUIERDO (Vertical) --- */
         .side-footer {
-            position: fixed;
-            left: 20px;
+            position: relative;
+            margin-top: 50px;
+            left: 0px;
             bottom: 15px;
             z-index: 100;
             text-align: left;
@@ -1101,6 +1102,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
