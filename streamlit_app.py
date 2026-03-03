@@ -137,7 +137,7 @@ def aplicar_interfaz_cientifica():
 
     # LEYENDAS
     st.markdown('<p style="color: #00E5FF; font-size: 12px; text-align: right; font-style: italic; font-weight: bold;">ASTRA: Misión Educativa v1.0</p>', unsafe_allow_html=True)
-    st.markdown("""<div class="footer">© 2026 - Proyecto <b>Ad Astra</b> | Prof. Juan Manuel Borrego<br><b>Centro de Navegación de Datos & Didáctica Matemática</b></div>""", unsafe_allow_html=True)
+    st.markdown("""<div class="footer">© 2026 -<b>Astra</b> | Prof. Juan Manuel Borrego<br><b>Ciencia de Datos & Matemática</b></div>""", unsafe_allow_html=True)
 
 # --- LLAMADA INICIAL ---
 aplicar_interfaz_cientifica()
@@ -1125,6 +1125,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
