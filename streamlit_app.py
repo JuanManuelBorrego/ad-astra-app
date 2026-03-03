@@ -133,7 +133,7 @@ def aplicar_interfaz_cientifica():
             font-weight: 700 !important;
             text-transform: uppercase;
         }
-        </style>
+    </style>
         <div class="header-astra">
             <p class="header-title">© 2026 - Proyecto <b>AD ASTRA</b> | Prof. Juan Manuel Borrego</p>
             <p class="header-subtitle">Centro de Navegación de Datos & Didáctica Matemática</p>
@@ -1136,6 +1136,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
