@@ -30,101 +30,115 @@ st.set_page_config(
 )
 
 def aplicar_interfaz_cientifica():
-    # 1. DISEÑO VISUAL (CSS) - ASTRA LATERAL IDENTITY
+    # 1. DISEÑO VISUAL (CSS) - ASTRA FINAL REINFORCED
     st.markdown("""
         <style>
-        /* --- CORRECCIÓN DE TRANSPARENCIA GLOBAL --- */
-        /* Forzamos que todo el texto de la app sea opaco (1.0) */
-        .stApp, .stMarkdown p, span, li, label, .stWidgetLabel {
-            opacity: 1 !important;
-        }
-
-        /* 1. Obligamos a la página a ser alta para que el footer baje */
-        .main .block-container {
-            min-height: 90vh; 
-            display: flex;
-            flex-direction: column;
-            padding-top: 2rem !important;
-            padding-left: 5rem !important;
-        }
-        
-        /* --- LIMPIEZA DE HEADER (Mantenemos flecha visible) --- */
-        [data-testid="stHeader"] {
+        /* --- ELIMINAR RECTÁNGULO BLANCO SUPERIOR (Solo el fondo) --- */
+        header {
             background-color: rgba(0,0,0,0) !important;
+            border-bottom: none !important;
         }
         
+        /* Reducir espacio superior */
+        .main .block-container {
+            padding-top: 1rem !important;
+        }
+
+        /* --- FIX PARA LA FLECHITA DEL SIDEBAR (Blanca) --- */
         button[data-testid="stSidebarCollapse"] svg {
-            fill: #00E5FF !important; /* Flecha en cian para que resalte */
+            fill: #FFFFFF !important;
+            color: #FFFFFF !important;
         }
 
-        /* --- FOOTER CENTRAL --- */
-        .side-footer {
-            position: fixed;
-            left: 0;
-            right: 0;
-            bottom: 15px;
-            z-index: 1000;
-            text-align: center; /* Centrado */
-            border: none !important;
-            pointer-events: none;
-        }
-        /* Solo estas dos clases específicas tienen transparencia controlada */
-        .side-footer-title {
-            font-size: 11px !important;
-            font-weight: bold !important;
-            letter-spacing: 1.5px !important;
-            color: #555555 !important;
-            margin-bottom: 2px !important;
-            text-transform: uppercase !important;
+        /* --- LOGO DEL SIDEBAR CIRCULAR --- */
+        [data-testid="stSidebar"] [data-testid="stImage"] img {
+            border-radius: 50%;
+            border: 2px solid #00E5FF;
+            object-fit: cover;
+            width: 150px !important;
+            height: 150px !important;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
         }
 
-        .side-footer-sub {
-            font-size: 8.5px !important;
-            color: #444444 !important;
-            letter-spacing: 1px !important;
-            line-height: 1.0 !important;
-            margin: 0 !important;
-        }
-
-        /* Ocultar en celulares muy pequeños si tapa el contenido */
-        @media (max-width: 600px) {
-            .side-footer {
-                left: 10px;
-                bottom: 20px;
-            }
-            .side-footer-title { font-size: 9px; }
-            .side-footer-sub { font-size: 8px; }
-        }
-
-        /* --- ESTÉTICA GENERAL --- */
+        /* --- FONDO Y APP GENERAL --- */
         .stApp {
-            background: radial-gradient(circle at top left, #1B263B 0%, #0D1B2A 100%);
+            background: radial-gradient(circle at top, #1B263B 0%, #0D1B2A 100%);
             background-attachment: fixed;
+            color: #FFFFFF !important;
         }
 
-        /* --- TARJETAS Y FORMULARIOS --- */
+        /* --- TEXTO GENERAL --- */
+        label, .stMarkdown p, .stWidgetLabel, h1, h2, h3, .stText, p, span, li {
+            color: #FFFFFF !important;
+        }
+
+        /* --- FIX SELECTBOX (Texto seleccionado oscuro) --- */
+        div[data-baseweb="select"] div {
+            color: #0D1B2A !important;
+            font-weight: bold !important;
+        }
+
+        /* --- MENÚS DESPLEGABLES --- */
+        div[data-baseweb="popover"] div, div[data-baseweb="menu"], ul {
+            background-color: #1B263B !important;
+        }
+        div[data-baseweb="popover"] li, [role="option"] {
+            color: #FFFFFF !important;
+            background-color: #1B263B !important;
+        }
+        div[data-baseweb="popover"] li:hover, [role="option"]:hover {
+            background-color: #FF7043 !important;
+            color: #FFFFFF !important;
+        }
+
+        /* --- TARJETAS GLASSMORPHISM --- */
         div[data-testid="stForm"], div.stCard, .stExpander {
-            background: rgba(255, 255, 255, 0.05) !important;
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            border: 1px solid rgba(0, 229, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08) !important;
+            backdrop-filter: blur(12px);
+            padding: 2.5rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        /* --- BOTONES --- */
+        /* --- SIDEBAR --- */
+        section[data-testid="stSidebar"] {
+            background-color: #0D1B2A !important;
+            border-right: 1px solid #1B263B;
+        }
+        section[data-testid="stSidebar"] * {
+            color: #FFFFFF !important;
+        }
+
+        /* --- BOTONES NARANJA --- */
         .stButton>button {
             background-color: #FF7043 !important;
             color: white !important;
-            border: none;
-            font-weight: bold;
+            border-radius: 12px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase;
+        }
+
+        /* --- FOOTER --- */
+        .footer {
+            position: fixed;
+            left: 0; bottom: 0; width: 100%;
+            background-color: rgba(13, 27, 42, 0.95);
+            color: #00E5FF !important;
+            text-align: center;
+            padding: 12px 0px;
+            font-size: 13px;
+            border-top: 1px solid #1B263B;
+            z-index: 999;
         }
         </style>
-
-        <div class="side-footer">
-            <p class="side-footer-title">© 2026 AD ASTRA</p>
-            <p class="side-footer-sub">Prof. Juan Manuel Borrego<br>Ciencia de Datos & Matemática</p>
-        </div>
     """, unsafe_allow_html=True)
-    
+
+    # LEYENDAS
+    st.markdown('<p style="color: #00E5FF; font-size: 12px; text-align: right; font-style: italic; font-weight: bold;">ASTRA: Misión Educativa v1.0</p>', unsafe_allow_html=True)
+    st.markdown("""<div class="footer">© 2026 - Proyecto <b>Ad Astra</b> | Prof. Juan Manuel Borrego<br><b>Centro de Navegación de Datos & Didáctica Matemática</b></div>""", unsafe_allow_html=True)
+
 # --- LLAMADA INICIAL ---
 aplicar_interfaz_cientifica()
 
@@ -1111,6 +1125,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
