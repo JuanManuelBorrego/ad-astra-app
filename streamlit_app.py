@@ -33,7 +33,7 @@ def aplicar_interfaz_cientifica():
     # 1. DISEÑO VISUAL (CSS) - ASTRA FINAL REINFORCED
     st.markdown("""
         <style>
-        /* --- NUEVO HEADER SUPERIOR (Reemplaza al footer) --- */
+        /* --- NUEVO HEADER SUPERIOR --- */
         .header-astra {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
@@ -43,6 +43,8 @@ def aplicar_interfaz_cientifica():
             border-radius: 0 0 20px 20px;
             margin-bottom: 20px;
             line-height: 1.4;
+            position: relative;
+            z-index: 99; /* Debajo de la flecha */
         }
         .header-title { 
             font-size: 14px; 
@@ -59,20 +61,29 @@ def aplicar_interfaz_cientifica():
             letter-spacing: 0.5px;
         }
 
-        /* --- ELIMINAR ELEMENTOS NATIVOS --- */
-        header { visibility: hidden !important; }
+        /* --- RECUPERAR LA FLECHA DEL SIDEBAR --- */
+        [data-testid="stSidebarCollapse"] {
+            top: 15px !important; /* La bajamos un poquito para que no pegue al techo */
+            left: 10px !important;
+            z-index: 1000001 !important; /* Por encima de todo */
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            border-radius: 50% !important;
+        }
+        
+        button[data-testid="stSidebarCollapse"] svg {
+            fill: #FFFFFF !important; /* Flecha blanca */
+            color: #FFFFFF !important;
+            width: 30px;
+            height: 30px;
+        }
+
+        /* --- ELIMINAR ELEMENTOS NATIVOS PERO MANTENER LA FUNCIONALIDAD --- */
+        header { visibility: hidden !important; height: 0px !important; }
         footer { visibility: hidden !important; }
         #MainMenu { visibility: hidden !important; }
         
-        /* Ajustar espacio superior para el nuevo header */
         .main .block-container {
             padding-top: 0rem !important;
-        }
-
-        /* --- FIX PARA LA FLECHITA DEL SIDEBAR (Blanca) --- */
-        button[data-testid="stSidebarCollapse"] svg {
-            fill: #FFFFFF !important;
-            color: #FFFFFF !important;
         }
 
         /* --- LOGO DEL SIDEBAR CIRCULAR --- */
@@ -99,25 +110,6 @@ def aplicar_interfaz_cientifica():
             color: #FFFFFF !important;
         }
 
-        /* --- FIX SELECTBOX (Texto seleccionado oscuro) --- */
-        div[data-baseweb="select"] div {
-            color: #0D1B2A !important;
-            font-weight: bold !important;
-        }
-
-        /* --- MENÚS DESPLEGABLES --- */
-        div[data-baseweb="popover"] div, div[data-baseweb="menu"], ul {
-            background-color: #1B263B !important;
-        }
-        div[data-baseweb="popover"] li, [role="option"] {
-            color: #FFFFFF !important;
-            background-color: #1B263B !important;
-        }
-        div[data-baseweb="popover"] li:hover, [role="option"]:hover {
-            background-color: #FF7043 !important;
-            color: #FFFFFF !important;
-        }
-
         /* --- TARJETAS GLASSMORPHISM --- */
         div[data-testid="stForm"], div.stCard, .stExpander {
             background: rgba(255, 255, 255, 0.08) !important;
@@ -132,9 +124,6 @@ def aplicar_interfaz_cientifica():
             background-color: #0D1B2A !important;
             border-right: 1px solid #1B263B;
         }
-        section[data-testid="stSidebar"] * {
-            color: #FFFFFF !important;
-        }
 
         /* --- BOTONES NARANJA --- */
         .stButton>button {
@@ -144,6 +133,13 @@ def aplicar_interfaz_cientifica():
             font-weight: 700 !important;
             text-transform: uppercase;
         }
+        </style>
+
+        <div class="header-astra">
+            <p class="header-title">© 2026 - Proyecto <b>AD ASTRA</b> | Prof. Juan Manuel Borrego</p>
+            <p class="header-subtitle">Centro de Navegación de Datos & Didáctica Matemática</p>
+        </div>
+    """, unsafe_allow_html=True)
         </style>
 
         <div class="header-astra">
@@ -1141,6 +1137,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
