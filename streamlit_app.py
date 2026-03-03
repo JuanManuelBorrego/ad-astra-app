@@ -30,102 +30,88 @@ st.set_page_config(
 )
 
 def aplicar_interfaz_cientifica():
-    # 1. DISEÑO VISUAL (CSS) - ASTRA MINIMALIST HORIZON
+    # 1. DISEÑO VISUAL (CSS) - ASTRA LATERAL IDENTITY
     st.markdown("""
         <style>
-        /* --- LIMPIEZA TOTAL DEL HEADER NATIVO --- */
+        /* --- LIMPIEZA DE HEADER (Mantenemos flecha visible) --- */
         [data-testid="stHeader"] {
             background-color: rgba(0,0,0,0) !important;
         }
         
-        /* Flecha del Sidebar: Sutil y Blanca */
-        [data-testid="stSidebarCollapse"] svg {
-            fill: rgba(255, 255, 255, 0.6) !important;
+        button[data-testid="stSidebarCollapse"] svg {
+            fill: #00E5FF !important; /* Flecha en cian para que resalte */
         }
 
-        /* --- CONTENEDOR PRINCIPAL --- */
-        .main .block-container {
-            padding-top: 3.5rem !important;
-        }
-
-        /* --- HEADER ULTRA-MINIMALISTA --- */
-        .header-horizon {
+        /* --- FOOTER LATERAL IZQUIERDO (Vertical) --- */
+        .side-footer {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 10px 0;
-            text-align: center;
-            z-index: 90;
-            /* Degradado muy suave hacia la transparencia */
-            background: linear-gradient(to bottom, rgba(27, 38, 59, 0.8) 0%, rgba(27, 38, 59, 0) 100%);
+            left: 20px;
+            bottom: 30px;
+            z-index: 100;
+            text-align: left;
+            border-left: 2px solid #00E5FF;
+            padding-left: 12px;
+            pointer-events: none; /* No interfiere con clics en el contenido */
         }
 
-        .header-text { 
-            font-size: 7px; 
-            margin: 0; 
-            color: rgba(255, 255, 255, 0.5) !important; /* Texto semi-transparente */
-            font-weight: 300;
-            letter-spacing: 2px;
+        .side-footer-title {
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            color: #FFFFFF !important;
+            margin-bottom: 2px;
             text-transform: uppercase;
         }
-        
-        .header-text b { 
-            color: #00E5FF !important; 
-            font-weight: 600;
-            opacity: 0.9;
+
+        .side-footer-sub {
+            font-size: 9px;
+            color: rgba(0, 229, 255, 0.6) !important;
+            letter-spacing: 1px;
+            line-height: 1.2;
         }
 
-        .header-subtext { 
-            font-size: 7px; 
-            margin-top: 2px; 
-            color: rgba(0, 229, 255, 0.4) !important;
-            letter-spacing: 1.5px;
+        /* Ocultar en celulares muy pequeños si tapa el contenido */
+        @media (max-width: 600px) {
+            .side-footer {
+                left: 10px;
+                bottom: 20px;
+            }
+            .side-footer-title { font-size: 9px; }
+            .side-footer-sub { font-size: 8px; }
         }
 
-        /* --- SIDEBAR Y LOGO --- */
-        [data-testid="stSidebar"] {
-            background-color: #0D1B2A !important;
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        [data-testid="stSidebar"] [data-testid="stImage"] img {
-            border-radius: 50%;
-            border: 1px solid rgba(0, 229, 255, 0.2);
-            width: 100px !important;
-            height: 100px !important;
-            margin: 0 auto;
-            display: block;
-            filter: grayscale(30%);
-        }
-
-        /* --- FONDO GENERAL --- */
+        /* --- ESTÉTICA GENERAL --- */
         .stApp {
-            background: radial-gradient(circle at 50% -20%, #1B263B 0%, #0D1B2A 100%);
+            background: radial-gradient(circle at top left, #1B263B 0%, #0D1B2A 100%);
             background-attachment: fixed;
         }
 
-        /* --- TARJETAS MÁS REFINADAS --- */
+        /* Ajuste de margen principal */
+        .main .block-container {
+            padding-top: 2rem !important;
+            padding-left: 5rem !important; /* Espacio para que el texto no choque con el footer lateral */
+        }
+
+        /* --- TARJETAS Y FORMULARIOS --- */
         div[data-testid="stForm"], div.stCard, .stExpander {
-            background: rgba(255, 255, 255, 0.03) !important;
-            backdrop-filter: blur(5px);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.05) !important;
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 229, 255, 0.2);
         }
 
         /* --- BOTONES --- */
         .stButton>button {
             background-color: #FF7043 !important;
+            color: white !important;
             border: none;
-            border-radius: 8px !important;
-            font-size: 12px !important;
-            letter-spacing: 1px;
+            font-weight: bold;
         }
         </style>
 
-        <div class="header-horizon">
-            <p class="header-text">© 2026 <b>AD ASTRA</b> • Prof. Juan Manuel Borrego</p>
-            <p class="header-subtext">Matemática & Ciencia de Datos</p>
+        <div class="side-footer">
+            <p class="side-footer-title">© 2026 AD ASTRA</p>
+            <p class="side-footer-sub">Prof. Juan Manuel Borrego<br>Didáctica & Datos</p>
         </div>
     """, unsafe_allow_html=True)
     
@@ -1115,6 +1101,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
