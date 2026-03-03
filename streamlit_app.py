@@ -61,13 +61,11 @@ def aplicar_interfaz_cientifica():
         .side-footer {
             position: fixed;
             left: 0;
-            right: 0; /* Al poner left y right en 0, habilitamos el centrado */
-            bottom: 10px;
-            z-index: 100;
-            text-align: center; /* Centra el texto */
-            border-left: none; /* Quitamos la línea lateral */
-            border-top: 1px solid rgba(0, 229, 255, 0.1); /* Opcional: una línea arriba muy sutil */
-            padding-top: 10px;
+            right: 0;
+            bottom: 15px;
+            z-index: 1000;
+            text-align: center; /* Centrado */
+            border: none !important;
             pointer-events: none;
         }
         /* Solo estas dos clases específicas tienen transparencia controlada */
@@ -75,14 +73,14 @@ def aplicar_interfaz_cientifica():
             font-size: 11px !important;
             font-weight: bold !important;
             letter-spacing: 1.5px !important;
-            color: rgba(255, 255, 255, 0.3) !important;
+            color: #555555 !important;
             margin-bottom: 2px !important;
             text-transform: uppercase !important;
         }
 
         .side-footer-sub {
             font-size: 8.5px !important;
-            color: rgba(0, 229, 255, 0.2) !important;
+            color: #444444 !important;
             letter-spacing: 1px !important;
             line-height: 1.0 !important;
             margin: 0 !important;
@@ -1113,6 +1111,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
