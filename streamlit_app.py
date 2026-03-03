@@ -128,7 +128,7 @@ def aplicar_interfaz_cientifica():
             color: #00E5FF !important;
             text-align: center;
             padding: 12px 0px;
-            font-size: 13px;
+            font-size: 10px;
             border-top: 1px solid #1B263B;
             z-index: 999;
         }
@@ -1125,6 +1125,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
