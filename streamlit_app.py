@@ -33,6 +33,14 @@ def aplicar_interfaz_cientifica():
     # 1. DISEÑO VISUAL (CSS) - ASTRA LATERAL IDENTITY
     st.markdown("""
         <style>
+        /* 1. Obligamos a la página a ser alta para que el footer baje */
+        .main .block-container {
+            min-height: 90vh; 
+            display: flex;
+            flex-direction: column;
+            padding-left: 5rem !important;
+        }
+        
         /* --- LIMPIEZA DE HEADER (Mantenemos flecha visible) --- */
         [data-testid="stHeader"] {
             background-color: rgba(0,0,0,0) !important;
@@ -44,7 +52,8 @@ def aplicar_interfaz_cientifica():
 
         /* --- FOOTER LATERAL IZQUIERDO (Vertical) --- */
         .side-footer {
-            position: fixed;
+            position: relative;
+            margin-top: auto;
             left: 20px;
             bottom: 5px;
             z-index: 100;
@@ -1101,6 +1110,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
