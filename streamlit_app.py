@@ -122,15 +122,14 @@ def aplicar_interfaz_cientifica():
 
         /* --- FOOTER --- */
         .footer {
-            position: fixed;
-            left: 0; bottom: 0; width: 100%;
-            background-color: rgba(13, 27, 42, 0.95);
+            width: 100%;
+            background-color: rgba(13, 27, 42, 0.5);
             color: #00E5FF !important;
             text-align: center;
-            padding: 12px 0px;
+            padding: 20px 0px;
             font-size: 13px;
-            border-top: 1px solid #1B263B;
-            z-index: 999;
+            border-top: 1px solid rgba(0, 229, 255, 0.2);
+            margin-top: 50px; /* Separa el footer del contenido */
         }
         </style>
     """, unsafe_allow_html=True)
@@ -1125,6 +1124,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
