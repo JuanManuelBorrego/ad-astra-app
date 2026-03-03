@@ -291,7 +291,7 @@ if modo == "Estudiantes":
             st.metric("Puntos Acumulados", f"{puntos_totales} / 18")
             
             if puntos_totales >= 18 and notas_anuales[2] >= 6:
-                st.success("✨ ¡Estado: APROBADO EL AÑO!")
+                st.success("✨ ¡Estado: APROBANDO EL AÑO! ¡A SEGUIR ASÍ ESTE TRAMO FINAL!")
             else:
                 faltan = 18 - puntos_totales
                 if faltan > 0:
@@ -1150,6 +1150,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
