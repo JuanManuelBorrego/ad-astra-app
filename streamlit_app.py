@@ -42,43 +42,40 @@ def aplicar_interfaz_cientifica():
             fill: #00E5FF !important; /* Flecha en cian para que resalte */
         }
 
-        /* --- FOOTER LATERAL IZQUIERDO (Vertical) --- */
+        /* --- FOOTER LATERAL IZQUIERDO (No flotante, pegado al final) --- */
         .side-footer {
-            position: relative;
-            margin-top: 50px;
-            left: 0px;
-            bottom: 15px;
+            position: relative; /* Cambiado de fixed a relative para que no flote */
+            margin-top: 150px;   /* Espacio para que se aleje del contenido */
+            left: -55px;        /* Compensa el padding del block-container */
             z-index: 100;
             text-align: left;
-            border-left: 1px solid rgba(0, 229, 255, 0.3);
+            border-left: 1px solid rgba(0, 229, 255, 0.2); /* Línea fina y transparente */
             padding-left: 10px;
-            pointer-events: none; /* No interfiere con clics en el contenido */
+            pointer-events: none;
         }
 
         .side-footer-title {
-            font-size: 9px;
+            font-size: 8.5px;    /* Letra más pequeña y sutil */
             font-weight: bold;
             letter-spacing: 1.5px;
-            color: rgba(255, 255, 255, 0.4) !important;
-            margin-bottom: 2px;
+            color: rgba(255, 255, 255, 0.3) !important; /* Transparencia estilo marca de agua */
+            margin-bottom: 1px;
             text-transform: uppercase;
         }
 
         .side-footer-sub {
-            font-size: 8px;
-            color: rgba(0, 229, 255, 0.3) !important;
+            font-size: 7.5px;    /* Letra mínima */
+            color: rgba(0, 229, 255, 0.2) !important; /* Transparencia alta */
             letter-spacing: 1px;
-            line-height: 1.0;
+            line-height: 1.0;    /* Estrecho en altura */
         }
 
-        /* Ocultar en celulares muy pequeños si tapa el contenido */
+        /* Ajustes para móviles */
         @media (max-width: 600px) {
             .side-footer {
-                left: 10px;
-                bottom: 20px;
+                left: -35px;    /* Ajuste de posición en pantallas chicas */
+                margin-top: 80px;
             }
-            .side-footer-title { font-size: 9px; }
-            .side-footer-sub { font-size: 8px; }
         }
 
         /* --- ESTÉTICA GENERAL --- */
@@ -90,7 +87,7 @@ def aplicar_interfaz_cientifica():
         /* Ajuste de margen principal */
         .main .block-container {
             padding-top: 2rem !important;
-            padding-left: 5rem !important; /* Espacio para que el texto no choque con el footer lateral */
+            padding-left: 5rem !important; /* Este espacio empuja el contenido pero no al footer relativo */
         }
 
         /* --- TARJETAS Y FORMULARIOS --- */
@@ -107,6 +104,7 @@ def aplicar_interfaz_cientifica():
             color: white !important;
             border: none;
             font-weight: bold;
+            border-radius: 8px !important;
         }
         </style>
 
@@ -1102,6 +1100,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
