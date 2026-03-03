@@ -30,51 +30,61 @@ st.set_page_config(
 )
 
 def aplicar_interfaz_cientifica():
-    # 1. DISEÑO VISUAL (CSS) - ASTRA LATERAL IDENTITY
+    # 1. DISEÑO VISUAL (CSS) - ASTRA GROUNDED EDITION
     st.markdown("""
         <style>
-        /* --- LIMPIEZA DE HEADER (Mantenemos flecha visible) --- */
+        /* --- LIMPIEZA DE HEADER --- */
         [data-testid="stHeader"] {
             background-color: rgba(0,0,0,0) !important;
         }
         
         button[data-testid="stSidebarCollapse"] svg {
-            fill: #00E5FF !important; /* Flecha en cian para que resalte */
+            fill: #00E5FF !important;
         }
 
-        /* --- FOOTER LATERAL IZQUIERDO (No flotante, pegado al final) --- */
+        /* --- FUERZA AL CONTENEDOR A SER ALTO --- */
+        .main .block-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 95vh; /* Obliga a que la página sea alta como el celular */
+            padding-top: 2rem !important;
+            padding-left: 5rem !important;
+        }
+
+        /* --- FOOTER AL PISO (No flotante) --- */
         .side-footer {
-            position: relative; /* Cambiado de fixed a relative para que no flote */
-            margin-top: 150px;   /* Espacio para que se aleje del contenido */
-            left: -55px;        /* Compensa el padding del block-container */
+            margin-top: auto; /* ¡CLAVE! Empuja el footer al fondo del flexbox */
+            padding-top: 50px; /* Espacio de seguridad */
+            padding-bottom: 20px;
+            left: -55px;
+            position: relative;
             z-index: 100;
             text-align: left;
-            border-left: 1px solid rgba(0, 229, 255, 0.2); /* Línea fina y transparente */
+            border-left: 1px solid rgba(0, 229, 255, 0.2);
             padding-left: 10px;
             pointer-events: none;
         }
 
         .side-footer-title {
-            font-size: 8.5px;    /* Letra más pequeña y sutil */
+            font-size: 8.5px;
             font-weight: bold;
             letter-spacing: 1.5px;
-            color: rgba(255, 255, 255, 0.3) !important; /* Transparencia estilo marca de agua */
+            color: rgba(255, 255, 255, 0.3) !important;
             margin-bottom: 1px;
             text-transform: uppercase;
         }
 
         .side-footer-sub {
-            font-size: 7.5px;    /* Letra mínima */
-            color: rgba(0, 229, 255, 0.2) !important; /* Transparencia alta */
+            font-size: 7.5px;
+            color: rgba(0, 229, 255, 0.2) !important;
             letter-spacing: 1px;
-            line-height: 1.0;    /* Estrecho en altura */
+            line-height: 1.0;
         }
 
         /* Ajustes para móviles */
         @media (max-width: 600px) {
             .side-footer {
-                left: -35px;    /* Ajuste de posición en pantallas chicas */
-                margin-top: 80px;
+                left: -35px;
             }
         }
 
@@ -84,13 +94,7 @@ def aplicar_interfaz_cientifica():
             background-attachment: fixed;
         }
 
-        /* Ajuste de margen principal */
-        .main .block-container {
-            padding-top: 2rem !important;
-            padding-left: 5rem !important; /* Este espacio empuja el contenido pero no al footer relativo */
-        }
-
-        /* --- TARJETAS Y FORMULARIOS --- */
+        /* TARJETAS */
         div[data-testid="stForm"], div.stCard, .stExpander {
             background: rgba(255, 255, 255, 0.05) !important;
             backdrop-filter: blur(10px);
@@ -98,16 +102,17 @@ def aplicar_interfaz_cientifica():
             border: 1px solid rgba(0, 229, 255, 0.2);
         }
 
-        /* --- BOTONES --- */
+        /* BOTONES */
         .stButton>button {
             background-color: #FF7043 !important;
             color: white !important;
-            border: none;
-            font-weight: bold;
             border-radius: 8px !important;
         }
         </style>
+    """, unsafe_allow_html=True)
 
+    # 2. EL FOOTER DENTRO DEL CONTENEDOR PARA QUE RESPETE EL FLEX-END
+    st.markdown("""
         <div class="side-footer">
             <p class="side-footer-title">© 2026 AD ASTRA</p>
             <p class="side-footer-sub">Prof. Juan Manuel Borrego<br>Didáctica & Datos</p>
@@ -1100,6 +1105,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
