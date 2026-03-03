@@ -30,98 +30,105 @@ st.set_page_config(
 )
 
 def aplicar_interfaz_cientifica():
-    # 1. DISEÑO VISUAL (CSS) - ASTRA NEBULA EDITION
+    # 1. DISEÑO VISUAL (CSS) - ASTRA MINIMALIST HORIZON
     st.markdown("""
         <style>
-        /* --- LIMPIEZA DE HEADER NATIVO (Sin ocultar el botón) --- */
+        /* --- LIMPIEZA TOTAL DEL HEADER NATIVO --- */
         [data-testid="stHeader"] {
             background-color: rgba(0,0,0,0) !important;
-            color: white !important;
         }
         
-        /* Asegurar que la flecha sea blanca y visible */
+        /* Flecha del Sidebar: Sutil y Blanca */
         [data-testid="stSidebarCollapse"] svg {
-            fill: white !important;
+            fill: rgba(255, 255, 255, 0.6) !important;
         }
 
         /* --- CONTENEDOR PRINCIPAL --- */
         .main .block-container {
-            padding-top: 4rem !important; /* Espacio para el header flotante */
+            padding-top: 3.5rem !important;
         }
 
-        /* --- HEADER FLOTANTE ESTILO CRISTAL --- */
-        .header-astra-glass {
+        /* --- HEADER ULTRA-MINIMALISTA --- */
+        .header-horizon {
             position: fixed;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 85%;
-            max-width: 600px;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 229, 255, 0.3);
-            border-radius: 15px;
-            padding: 10px 20px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px 0;
             text-align: center;
-            z-index: 90; /* Por debajo de la flecha de ST */
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            z-index: 90;
+            /* Degradado muy suave hacia la transparencia */
+            background: linear-gradient(to bottom, rgba(27, 38, 59, 0.8) 0%, rgba(27, 38, 59, 0) 100%);
         }
 
-        .header-title { 
-            font-size: 13px; 
+        .header-text { 
+            font-size: 11px; 
             margin: 0; 
-            color: #FFFFFF !important;
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
-        .header-subtitle { 
-            font-size: 10px; 
-            margin: 0; 
-            color: #00E5FF !important;
-            opacity: 0.8;
+            color: rgba(255, 255, 255, 0.5) !important; /* Texto semi-transparente */
+            font-weight: 300;
+            letter-spacing: 2px;
             text-transform: uppercase;
         }
-
-        /* --- LOGO DEL SIDEBAR CIRCULAR --- */
-        [data-testid="stSidebar"] [data-testid="stImage"] img {
-            border-radius: 50%;
-            border: 2px solid #00E5FF;
-            object-fit: cover;
-            width: 120px !important;
-            height: 120px !important;
-            margin: 0 auto;
-            display: block;
+        
+        .header-text b { 
+            color: #00E5FF !important; 
+            font-weight: 600;
+            opacity: 0.9;
         }
 
-        /* --- FONDO Y APP GENERAL --- */
+        .header-subtext { 
+            font-size: 9px; 
+            margin-top: 2px; 
+            color: rgba(0, 229, 255, 0.4) !important;
+            letter-spacing: 1.5px;
+        }
+
+        /* --- SIDEBAR Y LOGO --- */
+        [data-testid="stSidebar"] {
+            background-color: #0D1B2A !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        [data-testid="stSidebar"] [data-testid="stImage"] img {
+            border-radius: 50%;
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            width: 100px !important;
+            height: 100px !important;
+            margin: 0 auto;
+            display: block;
+            filter: grayscale(30%);
+        }
+
+        /* --- FONDO GENERAL --- */
         .stApp {
-            background: radial-gradient(circle at top, #1B263B 0%, #0D1B2A 100%);
+            background: radial-gradient(circle at 50% -20%, #1B263B 0%, #0D1B2A 100%);
             background-attachment: fixed;
         }
 
-        /* --- TARJETAS GLASSMORPHISM --- */
+        /* --- TARJETAS MÁS REFINADAS --- */
         div[data-testid="stForm"], div.stCard, .stExpander {
-            background: rgba(255, 255, 255, 0.05) !important;
-            backdrop-filter: blur(8px);
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.03) !important;
+            backdrop-filter: blur(5px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* --- BOTONES NARANJA --- */
+        /* --- BOTONES --- */
         .stButton>button {
             background-color: #FF7043 !important;
-            color: white !important;
-            border-radius: 10px !important;
-            font-weight: 700 !important;
+            border: none;
+            border-radius: 8px !important;
+            font-size: 12px !important;
+            letter-spacing: 1px;
         }
         </style>
 
-        <div class="header-astra-glass">
-            <p class="header-title">© 2026 - Proyecto <b>AD ASTRA</b> | Prof. Borrego</p>
-            <p class="header-subtitle">Navegación de Datos & Didáctica Matemática</p>
+        <div class="header-horizon">
+            <p class="header-text">© 2026 <b>AD ASTRA</b> • Prof. Borrego</p>
+            <p class="header-subtext">Didáctica Matemática & Datos</p>
         </div>
     """, unsafe_allow_html=True)
+    
 # --- LLAMADA INICIAL ---
 aplicar_interfaz_cientifica()
 
@@ -1108,6 +1115,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
