@@ -72,7 +72,7 @@ def aplicar_interfaz_cientifica():
 
         /* Solo estas dos clases específicas tienen transparencia controlada */
         .side-footer-title {
-            font-size: 9px !important;
+            font-size: 11px !important;
             font-weight: bold !important;
             letter-spacing: 1.5px !important;
             color: rgba(255, 255, 255, 0.3) !important;
@@ -81,7 +81,7 @@ def aplicar_interfaz_cientifica():
         }
 
         .side-footer-sub {
-            font-size: 8px !important;
+            font-size: 10px !important;
             color: rgba(0, 229, 255, 0.2) !important;
             letter-spacing: 1px !important;
             line-height: 1.0 !important;
@@ -1113,6 +1113,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
