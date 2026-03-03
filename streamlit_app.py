@@ -30,60 +30,57 @@ st.set_page_config(
 )
 
 def aplicar_interfaz_cientifica():
-    # 1. DISEÑO VISUAL (CSS) - ASTRA FINAL REINFORCED
+    # 1. DISEÑO VISUAL (CSS) - ASTRA NEBULA EDITION
     st.markdown("""
         <style>
-        /* --- NUEVO HEADER SUPERIOR --- */
-        .header-astra {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-bottom: 2px solid #00E5FF;
-            padding: 15px;
-            text-align: center;
-            border-radius: 0 0 20px 20px;
-            margin-bottom: 20px;
-            line-height: 1.4;
-            position: relative;
-            z-index: 99; 
+        /* --- LIMPIEZA DE HEADER NATIVO (Sin ocultar el botón) --- */
+        [data-testid="stHeader"] {
+            background-color: rgba(0,0,0,0) !important;
+            color: white !important;
         }
+        
+        /* Asegurar que la flecha sea blanca y visible */
+        [data-testid="stSidebarCollapse"] svg {
+            fill: white !important;
+        }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .main .block-container {
+            padding-top: 4rem !important; /* Espacio para el header flotante */
+        }
+
+        /* --- HEADER FLOTANTE ESTILO CRISTAL --- */
+        .header-astra-glass {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            border-radius: 15px;
+            padding: 10px 20px;
+            text-align: center;
+            z-index: 90; /* Por debajo de la flecha de ST */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
         .header-title { 
-            font-size: 14px; 
+            font-size: 13px; 
             margin: 0; 
             color: #FFFFFF !important;
-            font-weight: bold;
+            font-weight: 600;
             letter-spacing: 1px;
         }
         .header-subtitle { 
-            font-size: 11px; 
+            font-size: 10px; 
             margin: 0; 
             color: #00E5FF !important;
+            opacity: 0.8;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* --- RECUPERAR LA FLECHA DEL SIDEBAR --- */
-        [data-testid="stSidebarCollapse"] {
-            top: 15px !important; 
-            left: 10px !important;
-            z-index: 1000001 !important; 
-            background-color: rgba(255, 255, 255, 0.1) !important;
-            border-radius: 50% !important;
-        }
-        
-        button[data-testid="stSidebarCollapse"] svg {
-            fill: #FFFFFF !important; 
-            color: #FFFFFF !important;
-            width: 30px;
-            height: 30px;
-        }
-
-        /* --- ELIMINAR ELEMENTOS NATIVOS --- */
-        header { visibility: hidden !important; height: 0px !important; }
-        footer { visibility: hidden !important; }
-        #MainMenu { visibility: hidden !important; }
-        
-        .main .block-container {
-            padding-top: 0rem !important;
         }
 
         /* --- LOGO DEL SIDEBAR CIRCULAR --- */
@@ -91,10 +88,9 @@ def aplicar_interfaz_cientifica():
             border-radius: 50%;
             border: 2px solid #00E5FF;
             object-fit: cover;
-            width: 150px !important;
-            height: 150px !important;
-            margin-left: auto;
-            margin-right: auto;
+            width: 120px !important;
+            height: 120px !important;
+            margin: 0 auto;
             display: block;
         }
 
@@ -102,48 +98,30 @@ def aplicar_interfaz_cientifica():
         .stApp {
             background: radial-gradient(circle at top, #1B263B 0%, #0D1B2A 100%);
             background-attachment: fixed;
-            color: #FFFFFF !important;
-        }
-
-        /* --- TEXTO GENERAL --- */
-        label, .stMarkdown p, .stWidgetLabel, h1, h2, h3, .stText, p, span, li {
-            color: #FFFFFF !important;
         }
 
         /* --- TARJETAS GLASSMORPHISM --- */
         div[data-testid="stForm"], div.stCard, .stExpander {
-            background: rgba(255, 255, 255, 0.08) !important;
-            backdrop-filter: blur(12px);
-            padding: 2rem;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        /* --- SIDEBAR --- */
-        section[data-testid="stSidebar"] {
-            background-color: #0D1B2A !important;
-            border-right: 1px solid #1B263B;
+            background: rgba(255, 255, 255, 0.05) !important;
+            backdrop-filter: blur(8px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         /* --- BOTONES NARANJA --- */
         .stButton>button {
             background-color: #FF7043 !important;
             color: white !important;
-            border-radius: 12px !important;
+            border-radius: 10px !important;
             font-weight: 700 !important;
-            text-transform: uppercase;
         }
         </style>
 
-        <div class="header-astra">
-            <p class="header-title">© 2026 - Proyecto <b>AD ASTRA</b> | Prof. Juan Manuel Borrego</p>
-            <p class="header-subtitle">Centro de Navegación de Datos & Didáctica Matemática</p>
+        <div class="header-astra-glass">
+            <p class="header-title">© 2026 - Proyecto <b>AD ASTRA</b> | Prof. Borrego</p>
+            <p class="header-subtitle">Navegación de Datos & Didáctica Matemática</p>
         </div>
     """, unsafe_allow_html=True)
-
-    # Leyenda lateral de versión
-    st.sidebar.markdown(f"<div style='text-align: center; color: rgba(255,255,255,0.3); font-size: 10px; margin-top: 20px;'>Misión ASTRA v1.0</div>", unsafe_allow_html=True)
-
 # --- LLAMADA INICIAL ---
 aplicar_interfaz_cientifica()
 
@@ -1130,6 +1108,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
