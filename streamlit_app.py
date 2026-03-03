@@ -30,71 +30,88 @@ st.set_page_config(
 )
 
 def aplicar_interfaz_cientifica():
-    # 1. DISEÑO VISUAL (CSS) - ASTRA FINAL ANCHOR
+    # 1. DISEÑO VISUAL (CSS) - ASTRA LATERAL IDENTITY
     st.markdown("""
         <style>
-        /* --- RESET DEL CONTENEDOR PARA FORZAR EL PISO --- */
-        .main .block-container {
-            padding-top: 2rem !important;
-            padding-bottom: 0px !important;
-            display: flex !important;
-            flex-direction: column !important;
-            min-height: 92vh !important; /* Forzamos altura casi total */
+        /* --- LIMPIEZA DE HEADER (Mantenemos flecha visible) --- */
+        [data-testid="stHeader"] {
+            background-color: rgba(0,0,0,0) !important;
+        }
+        
+        button[data-testid="stSidebarCollapse"] svg {
+            fill: #00E5FF !important; /* Flecha en cian para que resalte */
+        }
+
+        /* --- FOOTER LATERAL IZQUIERDO (Vertical) --- */
+        .side-footer {
+            position: fixed;
+            left: 20px;
+            bottom: 30px;
+            z-index: 100;
+            text-align: left;
+            border-left: 2px solid #00E5FF;
+            padding-left: 12px;
+            pointer-events: none; /* No interfiere con clics en el contenido */
+        }
+
+        .side-footer-title {
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            color: #FFFFFF !important;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+        }
+
+        .side-footer-sub {
+            font-size: 9px;
+            color: rgba(0, 229, 255, 0.6) !important;
+            letter-spacing: 1px;
+            line-height: 1.2;
+        }
+
+        /* Ocultar en celulares muy pequeños si tapa el contenido */
+        @media (max-width: 600px) {
+            .side-footer {
+                left: 10px;
+                bottom: 20px;
+            }
+            .side-footer-title { font-size: 9px; }
+            .side-footer-sub { font-size: 8px; }
         }
 
         /* --- ESTÉTICA GENERAL --- */
-        [data-testid="stHeader"] { background-color: rgba(0,0,0,0) !important; }
-        button[data-testid="stSidebarCollapse"] svg { fill: #00E5FF !important; }
-        
         .stApp {
             background: radial-gradient(circle at top left, #1B263B 0%, #0D1B2A 100%);
             background-attachment: fixed;
         }
 
-        /* --- EL FOOTER INYECTADO --- */
-        .footer-suelo {
-            margin-top: auto !important; /* El empuje final */
-            padding: 40px 0 20px 0;
-            border-left: 1px solid rgba(0, 229, 255, 0.2);
-            padding-left: 12px;
-            /* Lo sacamos del margen para que pegue a la izquierda */
-            transform: translateX(-40px); 
+        /* Ajuste de margen principal */
+        .main .block-container {
+            padding-top: 2rem !important;
+            padding-left: 5rem !important; /* Espacio para que el texto no choque con el footer lateral */
         }
 
-        .f-title {
-            font-size: 8.5px;
-            font-weight: bold;
-            letter-spacing: 1.5px;
-            color: rgba(255, 255, 255, 0.3) !important;
-            text-transform: uppercase;
-            margin: 0;
-        }
-
-        .f-sub {
-            font-size: 7.5px;
-            color: rgba(0, 229, 255, 0.2) !important;
-            letter-spacing: 1px;
-            line-height: 1.1;
-            margin: 2px 0 0 0;
-        }
-
-        /* Ajuste para móviles */
-        @media (max-width: 600px) {
-            .footer-suelo { transform: translateX(-30px); }
-        }
-
-        /* TARJETAS */
+        /* --- TARJETAS Y FORMULARIOS --- */
         div[data-testid="stForm"], div.stCard, .stExpander {
             background: rgba(255, 255, 255, 0.05) !important;
             backdrop-filter: blur(10px);
             border-radius: 15px;
             border: 1px solid rgba(0, 229, 255, 0.2);
         }
+
+        /* --- BOTONES --- */
+        .stButton>button {
+            background-color: #FF7043 !important;
+            color: white !important;
+            border: none;
+            font-weight: bold;
+        }
         </style>
 
-        <div class="footer-suelo">
-            <p class="f-title">© 2026 AD ASTRA</p>
-            <p class="f-sub">Prof. Juan Manuel Borrego<br>Didáctica & Datos</p>
+        <div class="side-footer">
+            <p class="side-footer-title">© 2026 AD ASTRA</p>
+            <p class="side-footer-sub">Prof. Juan Manuel Borrego<br>Didáctica & Datos</p>
         </div>
     """, unsafe_allow_html=True)
     
@@ -1084,6 +1101,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
