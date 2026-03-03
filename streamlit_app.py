@@ -30,68 +30,57 @@ st.set_page_config(
 )
 
 def aplicar_interfaz_cientifica():
-    # 1. DISEÑO VISUAL (CSS) - ASTRA GROUNDED EDITION
+    # 1. DISEÑO VISUAL (CSS) - ASTRA FINAL ANCHOR
     st.markdown("""
         <style>
-        /* --- LIMPIEZA DE HEADER --- */
-        [data-testid="stHeader"] {
-            background-color: rgba(0,0,0,0) !important;
-        }
-        
-        button[data-testid="stSidebarCollapse"] svg {
-            fill: #00E5FF !important;
-        }
-
-        /* --- FUERZA AL CONTENEDOR A SER ALTO --- */
+        /* --- RESET DEL CONTENEDOR PARA FORZAR EL PISO --- */
         .main .block-container {
-            display: flex;
-            flex-direction: column;
-            min-height: 95vh; /* Obliga a que la página sea alta como el celular */
             padding-top: 2rem !important;
-            padding-left: 5rem !important;
+            padding-bottom: 0px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            min-height: 92vh !important; /* Forzamos altura casi total */
         }
 
-        /* --- FOOTER AL PISO (No flotante) --- */
-        .side-footer {
-            margin-top: auto; /* ¡CLAVE! Empuja el footer al fondo del flexbox */
-            padding-top: 50px; /* Espacio de seguridad */
-            padding-bottom: 20px;
-            left: -55px;
-            position: relative;
-            z-index: 100;
-            text-align: left;
+        /* --- ESTÉTICA GENERAL --- */
+        [data-testid="stHeader"] { background-color: rgba(0,0,0,0) !important; }
+        button[data-testid="stSidebarCollapse"] svg { fill: #00E5FF !important; }
+        
+        .stApp {
+            background: radial-gradient(circle at top left, #1B263B 0%, #0D1B2A 100%);
+            background-attachment: fixed;
+        }
+
+        /* --- EL FOOTER INYECTADO --- */
+        .footer-suelo {
+            margin-top: auto !important; /* El empuje final */
+            padding: 40px 0 20px 0;
             border-left: 1px solid rgba(0, 229, 255, 0.2);
-            padding-left: 10px;
-            pointer-events: none;
+            padding-left: 12px;
+            /* Lo sacamos del margen para que pegue a la izquierda */
+            transform: translateX(-40px); 
         }
 
-        .side-footer-title {
+        .f-title {
             font-size: 8.5px;
             font-weight: bold;
             letter-spacing: 1.5px;
             color: rgba(255, 255, 255, 0.3) !important;
-            margin-bottom: 1px;
             text-transform: uppercase;
+            margin: 0;
         }
 
-        .side-footer-sub {
+        .f-sub {
             font-size: 7.5px;
             color: rgba(0, 229, 255, 0.2) !important;
             letter-spacing: 1px;
-            line-height: 1.0;
+            line-height: 1.1;
+            margin: 2px 0 0 0;
         }
 
-        /* Ajustes para móviles */
+        /* Ajuste para móviles */
         @media (max-width: 600px) {
-            .side-footer {
-                left: -35px;
-            }
-        }
-
-        /* --- ESTÉTICA GENERAL --- */
-        .stApp {
-            background: radial-gradient(circle at top left, #1B263B 0%, #0D1B2A 100%);
-            background-attachment: fixed;
+            .footer-suelo { transform: translateX(-30px); }
         }
 
         /* TARJETAS */
@@ -101,21 +90,11 @@ def aplicar_interfaz_cientifica():
             border-radius: 15px;
             border: 1px solid rgba(0, 229, 255, 0.2);
         }
-
-        /* BOTONES */
-        .stButton>button {
-            background-color: #FF7043 !important;
-            color: white !important;
-            border-radius: 8px !important;
-        }
         </style>
-    """, unsafe_allow_html=True)
 
-    # 2. EL FOOTER DENTRO DEL CONTENEDOR PARA QUE RESPETE EL FLEX-END
-    st.markdown("""
-        <div class="side-footer">
-            <p class="side-footer-title">© 2026 AD ASTRA</p>
-            <p class="side-footer-sub">Prof. Juan Manuel Borrego<br>Didáctica & Datos</p>
+        <div class="footer-suelo">
+            <p class="f-title">© 2026 AD ASTRA</p>
+            <p class="f-sub">Prof. Juan Manuel Borrego<br>Didáctica & Datos</p>
         </div>
     """, unsafe_allow_html=True)
     
@@ -1105,6 +1084,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
