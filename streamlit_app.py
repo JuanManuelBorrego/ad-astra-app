@@ -57,19 +57,19 @@ def aplicar_interfaz_cientifica():
             fill: #00E5FF !important; /* Flecha en cian para que resalte */
         }
 
-        /* --- FOOTER LATERAL IZQUIERDO (Vertical) --- */
+        /* --- FOOTER CENTRAL --- */
         .side-footer {
             position: fixed;
-            margin-top: auto;
-            left: 20px;
-            bottom: 5px;
+            left: 0;
+            right: 0; /* Al poner left y right en 0, habilitamos el centrado */
+            bottom: 10px;
             z-index: 100;
-            text-align: left;
-            border-left: 1px solid rgba(0, 229, 255, 0.3);
-            padding-left: 12px;
+            text-align: center; /* Centra el texto */
+            border-left: none; /* Quitamos la línea lateral */
+            border-top: 1px solid rgba(0, 229, 255, 0.1); /* Opcional: una línea arriba muy sutil */
+            padding-top: 10px;
             pointer-events: none;
         }
-
         /* Solo estas dos clases específicas tienen transparencia controlada */
         .side-footer-title {
             font-size: 11px !important;
@@ -1113,6 +1113,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
