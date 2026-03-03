@@ -81,7 +81,7 @@ def aplicar_interfaz_cientifica():
         }
 
         .side-footer-sub {
-            font-size: 9px !important;
+            font-size: 8.5px !important;
             color: rgba(0, 229, 255, 0.2) !important;
             letter-spacing: 1px !important;
             line-height: 1.0 !important;
@@ -1113,6 +1113,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
