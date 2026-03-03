@@ -33,15 +33,40 @@ def aplicar_interfaz_cientifica():
     # 1. DISEÑO VISUAL (CSS) - ASTRA FINAL REINFORCED
     st.markdown("""
         <style>
-        /* --- ELIMINAR RECTÁNGULO BLANCO SUPERIOR (Solo el fondo) --- */
-        header {
-            background-color: rgba(0,0,0,0) !important;
-            border-bottom: none !important;
+        /* --- NUEVO HEADER SUPERIOR (Reemplaza al footer) --- */
+        .header-astra {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid #00E5FF;
+            padding: 15px;
+            text-align: center;
+            border-radius: 0 0 20px 20px;
+            margin-bottom: 20px;
+            line-height: 1.4;
         }
+        .header-title { 
+            font-size: 14px; 
+            margin: 0; 
+            color: #FFFFFF !important;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .header-subtitle { 
+            font-size: 11px; 
+            margin: 0; 
+            color: #00E5FF !important;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- ELIMINAR ELEMENTOS NATIVOS --- */
+        header { visibility: hidden !important; }
+        footer { visibility: hidden !important; }
+        #MainMenu { visibility: hidden !important; }
         
-        /* Reducir espacio superior */
+        /* Ajustar espacio superior para el nuevo header */
         .main .block-container {
-            padding-top: 1rem !important;
+            padding-top: 0rem !important;
         }
 
         /* --- FIX PARA LA FLECHITA DEL SIDEBAR (Blanca) --- */
@@ -97,7 +122,7 @@ def aplicar_interfaz_cientifica():
         div[data-testid="stForm"], div.stCard, .stExpander {
             background: rgba(255, 255, 255, 0.08) !important;
             backdrop-filter: blur(12px);
-            padding: 2.5rem;
+            padding: 2rem;
             border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
@@ -119,24 +144,17 @@ def aplicar_interfaz_cientifica():
             font-weight: 700 !important;
             text-transform: uppercase;
         }
-
-        /* --- FOOTER --- */
-        .footer {
-            width: 100%;
-            background-color: rgba(13, 27, 42, 0.5);
-            color: #00E5FF !important;
-            text-align: center;
-            padding: 20px 0px;
-            font-size: 13px;
-            border-top: 1px solid rgba(0, 229, 255, 0.2);
-            margin-top: 50px; /* Separa el footer del contenido */
-        }
         </style>
+
+        <div class="header-astra">
+            <p class="header-title">© 2026 - Proyecto <b>AD ASTRA</b> | Prof. Juan Manuel Borrego</p>
+            <p class="header-subtitle">Centro de Navegación de Datos & Didáctica Matemática</p>
+        </div>
     """, unsafe_allow_html=True)
 
-    # LEYENDAS
-    st.markdown('<p style="color: #00E5FF; font-size: 12px; text-align: right; font-style: italic; font-weight: bold;">ASTRA: Misión Educativa v1.0</p>', unsafe_allow_html=True)
-    st.markdown('<div class="footer">© 2026 - Proyecto <b>Ad Astra</b> | Prof. Juan Manuel Borrego<br><b>Centro de Navegación de Datos & Didáctica Matemática</b></div>', unsafe_allow_html=True)
+    # Leyenda lateral de versión (opcional)
+    st.sidebar.markdown(f"<div style='text-align: center; color: rgba(255,255,255,0.3); font-size: 10px; margin-top: 20px;'>Misión ASTRA v1.0</div>", unsafe_allow_html=True)
+
 # --- LLAMADA INICIAL ---
 aplicar_interfaz_cientifica()
 
@@ -1123,6 +1141,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
