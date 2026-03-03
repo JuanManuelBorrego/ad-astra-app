@@ -530,7 +530,7 @@ elif modo == "Profesor":
         with col2:
             clave = st.text_input("Ingrese Clave de Administrador:", type="password")
             if st.button("Ingresar", use_container_width=True):
-                if clave == "35445771": # Tu clave actual
+                if clave == st.secrets["PASSWORD_DOCENTE"]: # Tu clave actual
                     st.session_state["autenticado"] = True
                     st.rerun()
                 else:
@@ -1125,6 +1125,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
