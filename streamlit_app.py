@@ -297,7 +297,7 @@ if modo == "Estudiantes":
                 if faltan > 0:
                     st.warning(f"Necesitás {faltan} puntos más para aprobar el año.")
                 else:
-                    st.info("Promedio alcanzado, pero recordá que el 3er trimestre debe ser >= 6.")
+                    st.info("Promedio alcanzado, pero recordá que para aprobar el año el 3er trimestre debe ser mayor o igual a 6.")
 
         st.divider()
         # --- BOTONES DE ACCIÓN ---
@@ -1150,6 +1150,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
