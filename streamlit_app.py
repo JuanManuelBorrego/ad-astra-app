@@ -46,28 +46,28 @@ def aplicar_interfaz_cientifica():
         .side-footer {
             position: fixed;
             left: 20px;
-            bottom: 30px;
+            bottom: 15px;
             z-index: 100;
             text-align: left;
-            border-left: 2px solid #00E5FF;
+            border-left: 1px solid rgba(0, 229, 255, 0.3);
             padding-left: 12px;
             pointer-events: none; /* No interfiere con clics en el contenido */
         }
 
         .side-footer-title {
-            font-size: 11px;
+            font-size: 9px;
             font-weight: bold;
             letter-spacing: 1.5px;
-            color: #FFFFFF !important;
+            color: rgba(255, 255, 255, 0.3) !important;
             margin-bottom: 2px;
             text-transform: uppercase;
         }
 
         .side-footer-sub {
-            font-size: 9px;
-            color: rgba(0, 229, 255, 0.6) !important;
+            font-size: 8px;
+            color: rgba(0, 229, 255, 0.2) !important;
             letter-spacing: 1px;
-            line-height: 1.2;
+            line-height: 1.0;
         }
 
         /* Ocultar en celulares muy pequeños si tapa el contenido */
@@ -1101,6 +1101,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
