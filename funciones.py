@@ -941,7 +941,7 @@ def panel_profesor():
     # 1. ACCESO DE SEGURIDAD
     print("\n" + "🔐" * 20)
     clave = getpass.getpass(" INGRESE CLAVE DE ADMINISTRADOR: ")
-    if clave != "35445771":
+    if clave != st.secrets["CLAVE_DOCENTE"]:
         print("❌ Acceso denegado.")
         return None
 
@@ -1128,6 +1128,7 @@ def ver_repaso_examen(alumno):
     except Exception as e:
 
         print(f"❌ Error al cargar el repaso: {e}")
+
 
 
 
