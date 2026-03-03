@@ -33,11 +33,18 @@ def aplicar_interfaz_cientifica():
     # 1. DISEÑO VISUAL (CSS) - ASTRA LATERAL IDENTITY
     st.markdown("""
         <style>
+        /* --- CORRECCIÓN DE TRANSPARENCIA GLOBAL --- */
+        /* Forzamos que todo el texto de la app sea opaco (1.0) */
+        .stApp, .stMarkdown p, span, li, label, .stWidgetLabel {
+            opacity: 1 !important;
+        }
+
         /* 1. Obligamos a la página a ser alta para que el footer baje */
         .main .block-container {
             min-height: 90vh; 
             display: flex;
             flex-direction: column;
+            padding-top: 2rem !important;
             padding-left: 5rem !important;
         }
         
@@ -60,23 +67,25 @@ def aplicar_interfaz_cientifica():
             text-align: left;
             border-left: 1px solid rgba(0, 229, 255, 0.3);
             padding-left: 12px;
-            pointer-events: none; /* No interfiere con clics en el contenido */
+            pointer-events: none;
         }
 
+        /* Solo estas dos clases específicas tienen transparencia controlada */
         .side-footer-title {
-            font-size: 9px;
-            font-weight: bold;
-            letter-spacing: 1.5px;
+            font-size: 9px !important;
+            font-weight: bold !important;
+            letter-spacing: 1.5px !important;
             color: rgba(255, 255, 255, 0.3) !important;
-            margin-bottom: 2px;
-            text-transform: uppercase;
+            margin-bottom: 2px !important;
+            text-transform: uppercase !important;
         }
 
         .side-footer-sub {
-            font-size: 8px;
+            font-size: 8px !important;
             color: rgba(0, 229, 255, 0.2) !important;
-            letter-spacing: 1px;
-            line-height: 1.0;
+            letter-spacing: 1px !important;
+            line-height: 1.0 !important;
+            margin: 0 !important;
         }
 
         /* Ocultar en celulares muy pequeños si tapa el contenido */
@@ -93,12 +102,6 @@ def aplicar_interfaz_cientifica():
         .stApp {
             background: radial-gradient(circle at top left, #1B263B 0%, #0D1B2A 100%);
             background-attachment: fixed;
-        }
-
-        /* Ajuste de margen principal */
-        .main .block-container {
-            padding-top: 2rem !important;
-            padding-left: 5rem !important; /* Espacio para que el texto no choque con el footer lateral */
         }
 
         /* --- TARJETAS Y FORMULARIOS --- */
@@ -1110,6 +1113,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
