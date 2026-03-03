@@ -1118,13 +1118,39 @@ elif modo == "Profesor":
 
         except Exception as e:
             st.error(f"Error al leer la base de datos: {e}")
+
+        # --- 12. GESTIÓN DE ALUMNOS (NUEVO) ---
+        st.sidebar.divider()
+        with st.expander("👤 Gestión de Alumnos", expanded=False):
+            st.subheader("Registrar Nuevo Alumno")
+            with st.form("form_nuevo_alumno", clear_on_submit=True):
+                nuevo_nombre = st.text_input("Nombre Completo del Alumno:")
+                nuevo_curso = st.selectbox("Asignar a Curso:", ["1° A", "1° B", "2° A", "2° B", "3° A"]) # Ajustá tus cursos aquí
+                btn_crear = st.form_submit_button("Registrar Alumno")
+
+                if btn_crear:
+                    if nuevo_nombre:
+                        try:
+                            conn = conectar()
+                            cursor = conn.cursor()
+                            # Insertamos en la tabla alumnos
+                            cursor.execute("INSERT INTO alumnos (nombre, curso) VALUES (?, ?)", 
+                                         (nuevo_nombre.strip().upper(), nuevo_curso))
+                            conn.commit()
+                            conn.close()
+                            st.success(f"✅ {nuevo_nombre.upper()} ha sido registrado en {nuevo_curso}")
+                        except Exception as e:
+                            st.error(f"Error al registrar: {e}")
+                    else:
+                        st.warning("Por favor, ingresa un nombre.")
             
-        # --- 12. CIERRE DE SESIÓN (UN SOLO BOTÓN) ---
+        # --- 13. CIERRE DE SESIÓN (UN SOLO BOTÓN) ---
         st.sidebar.divider()
         if st.sidebar.button("🚪 Cerrar Sesión", use_container_width=True):
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
