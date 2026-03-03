@@ -62,7 +62,7 @@ def aplicar_interfaz_cientifica():
         }
 
         .header-text { 
-            font-size: 11px; 
+            font-size: 9px; 
             margin: 0; 
             color: rgba(255, 255, 255, 0.5) !important; /* Texto semi-transparente */
             font-weight: 300;
@@ -1115,6 +1115,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
