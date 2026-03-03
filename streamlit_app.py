@@ -111,7 +111,7 @@ def aplicar_interfaz_cientifica():
 
         <div class="side-footer">
             <p class="side-footer-title">© 2026 AD ASTRA</p>
-            <p class="side-footer-sub">Prof. Juan Manuel Borrego<br>Didáctica & Datos</p>
+            <p class="side-footer-sub">Prof. Juan Manuel Borrego<br>Ciencia de Datos & Matemática</p>
         </div>
     """, unsafe_allow_html=True)
     
@@ -1101,6 +1101,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
