@@ -1125,7 +1125,7 @@ elif modo == "Profesor":
             st.subheader("Registrar Nuevo Alumno")
             with st.form("form_nuevo_alumno", clear_on_submit=True):
                 nuevo_nombre = st.text_input("Nombre Completo del Alumno:")
-                nuevo_curso = st.selectbox("Asignar a Curso:", ["4TO A", "4TO C", "5TO A", "5TO C", "5TO A NAT"]) # Ajustá tus cursos aquí
+                nuevo_curso = st.selectbox("Asignar a Curso:", ["4TO A", "4TO C", "5TO A", "5TO C", "5TO A NATURALES"]) # Ajustá tus cursos aquí
                 btn_crear = st.form_submit_button("Registrar Alumno")
 
                 if btn_crear:
@@ -1150,6 +1150,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
