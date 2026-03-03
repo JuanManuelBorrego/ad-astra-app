@@ -30,37 +30,33 @@ st.set_page_config(
 )
 
 def aplicar_interfaz_cientifica():
-    # 1. DISEÑO VISUAL (CSS) - ASTRA GROUNDED FOOTER
+    # 1. DISEÑO VISUAL (CSS) - ASTRA STICKY BOTTOM
     st.markdown("""
         <style>
-        /* --- LIMPIEZA DE HEADER (Mantenemos flecha original) --- */
-        [data-testid="stHeader"] {
-            background-color: rgba(0,0,0,0) !important;
-        }
-        
-        button[data-testid="stSidebarCollapse"] svg {
-            fill: #FFFFFF !important;
-        }
-
-        /* --- CONTENEDOR PRINCIPAL: Ajuste para que el footer respire --- */
+        /* --- FUERZA AL CONTENEDOR A OCUPAR TODA LA PANTALLA --- */
         .main .block-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 90vh; /* Ocupa casi todo el alto visual */
             padding-top: 2rem !important;
-            padding-bottom: 0rem !important; /* El footer definirá el final */
         }
 
-        /* --- FOOTER PEGADO AL PISO (No fijo) --- */
+        /* --- ESTE ELEMENTO EMPUJA AL FOOTER HACIA ABAJO --- */
+        .spacer {
+            flex-grow: 1;
+        }
+
+        /* --- FOOTER EN EL SUELO REAL --- */
         .grounded-footer {
             width: 100%;
-            margin-top: 100px; /* Gran espacio para que esté bien abajo */
             padding: 20px 0;
             border-top: 1px solid rgba(0, 229, 255, 0.1);
             text-align: left;
-            padding-left: 10px;
         }
 
         .footer-text-main {
             font-size: 10px;
-            color: rgba(255, 255, 255, 0.4) !important;
+            color: rgba(255, 255, 255, 0.3) !important;
             letter-spacing: 1px;
             text-transform: uppercase;
             margin: 0;
@@ -68,31 +64,26 @@ def aplicar_interfaz_cientifica():
 
         .footer-text-sub {
             font-size: 9px;
-            color: rgba(0, 229, 255, 0.3) !important;
+            color: rgba(0, 229, 255, 0.2) !important;
             margin: 0;
-            line-height: 1.2;
         }
 
-        /* --- ESTÉTICA GENERAL --- */
+        /* --- LIMPIEZA DE HEADER Y FLECHA --- */
+        [data-testid="stHeader"] { background-color: rgba(0,0,0,0) !important; }
+        button[data-testid="stSidebarCollapse"] svg { fill: #FFFFFF !important; }
+
+        /* --- ESTÉTICA GENERAL ASTRA --- */
         .stApp {
             background: radial-gradient(circle at top, #1B263B 0%, #0D1B2A 100%);
             background-attachment: fixed;
         }
-
-        /* TARJETAS GLASSMORPHISM REFINADAS */
-        div[data-testid="stForm"], div.stCard, .stExpander {
-            background: rgba(255, 255, 255, 0.05) !important;
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
         </style>
+    """, unsafe_allow_html=True)
 
-        """, unsafe_allow_html=True)
+    # 2. ESPACIADOR INVISIBLE (Empuja el footer al final)
+    st.markdown('<div class="spacer"></div>', unsafe_allow_html=True)
 
-    # --- AQUÍ DEFINIMOS EL FOOTER QUE SE QUEDA AL FINAL DEL CONTENIDO ---
-    # Lo ponemos dentro de un container para que respete el layout de Streamlit
-    st.markdown("---") # Una línea sutil para separar
+    # 3. EL FOOTER
     st.markdown("""
         <div class="grounded-footer">
             <p class="footer-text-main">© 2026 <b>AD ASTRA</b> | Prof. Juan Manuel Borrego</p>
@@ -1086,6 +1077,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
