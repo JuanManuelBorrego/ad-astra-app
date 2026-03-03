@@ -30,88 +30,73 @@ st.set_page_config(
 )
 
 def aplicar_interfaz_cientifica():
-    # 1. DISEÑO VISUAL (CSS) - ASTRA LATERAL IDENTITY
+    # 1. DISEÑO VISUAL (CSS) - ASTRA GROUNDED FOOTER
     st.markdown("""
         <style>
-        /* --- LIMPIEZA DE HEADER (Mantenemos flecha visible) --- */
+        /* --- LIMPIEZA DE HEADER (Mantenemos flecha original) --- */
         [data-testid="stHeader"] {
             background-color: rgba(0,0,0,0) !important;
         }
         
         button[data-testid="stSidebarCollapse"] svg {
-            fill: #00E5FF !important; /* Flecha en cian para que resalte */
+            fill: #FFFFFF !important;
         }
 
-        /* --- FOOTER LATERAL IZQUIERDO (Vertical) --- */
-        .side-footer {
-            position: fixed;
-            left: 20px;
-            bottom: 10px;
-            z-index: 100;
+        /* --- CONTENEDOR PRINCIPAL: Ajuste para que el footer respire --- */
+        .main .block-container {
+            padding-top: 2rem !important;
+            padding-bottom: 0rem !important; /* El footer definirá el final */
+        }
+
+        /* --- FOOTER PEGADO AL PISO (No fijo) --- */
+        .grounded-footer {
+            width: 100%;
+            margin-top: 100px; /* Gran espacio para que esté bien abajo */
+            padding: 20px 0;
+            border-top: 1px solid rgba(0, 229, 255, 0.1);
             text-align: left;
-            border-left: 2px solid #00E5FF;
-            padding-left: 12px;
-            pointer-events: none; /* No interfiere con clics en el contenido */
+            padding-left: 10px;
         }
 
-        .side-footer-title {
-            font-size: 9px;
-            font-weight: bold;
-            letter-spacing: 1.5px;
-            color: #FFFFFF !important;
-            margin-bottom: 2px;
-            text-transform: uppercase;
-        }
-
-        .side-footer-sub {
-            font-size: 9px;
-            color: rgba(0, 229, 255, 0.6) !important;
+        .footer-text-main {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.4) !important;
             letter-spacing: 1px;
-            line-height: 1.2;
+            text-transform: uppercase;
+            margin: 0;
         }
 
-        /* Ocultar en celulares muy pequeños si tapa el contenido */
-        @media (max-width: 600px) {
-            .side-footer {
-                left: 10px;
-                bottom: 20px;
-            }
-            .side-footer-title { font-size: 9px; }
-            .side-footer-sub { font-size: 8px; }
+        .footer-text-sub {
+            font-size: 9px;
+            color: rgba(0, 229, 255, 0.3) !important;
+            margin: 0;
+            line-height: 1.2;
         }
 
         /* --- ESTÉTICA GENERAL --- */
         .stApp {
-            background: radial-gradient(circle at top left, #1B263B 0%, #0D1B2A 100%);
+            background: radial-gradient(circle at top, #1B263B 0%, #0D1B2A 100%);
             background-attachment: fixed;
         }
 
-        /* Ajuste de margen principal */
-        .main .block-container {
-            padding-top: 2rem !important;
-            padding-left: 5rem !important; /* Espacio para que el texto no choque con el footer lateral */
-        }
-
-        /* --- TARJETAS Y FORMULARIOS --- */
+        /* TARJETAS GLASSMORPHISM REFINADAS */
         div[data-testid="stForm"], div.stCard, .stExpander {
             background: rgba(255, 255, 255, 0.05) !important;
             backdrop-filter: blur(10px);
             border-radius: 15px;
-            border: 1px solid rgba(0, 229, 255, 0.2);
-        }
-
-        /* --- BOTONES --- */
-        .stButton>button {
-            background-color: #FF7043 !important;
-            color: white !important;
-            border: none;
-            font-weight: bold;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         </style>
 
-        <div class="side-footer">
-            <p class="side-footer-title">© 2026 AD ASTRA</p>
-            <p class="side-footer-sub">Prof. Juan Manuel Borrego<br>Didáctica & Datos</p>
+        """, unsafe_allow_html=True)
+
+    # --- AQUÍ DEFINIMOS EL FOOTER QUE SE QUEDA AL FINAL DEL CONTENIDO ---
+    # Lo ponemos dentro de un container para que respete el layout de Streamlit
+    st.markdown("---") # Una línea sutil para separar
+    st.markdown("""
+        <div class="grounded-footer">
+            <p class="footer-text-main">© 2026 <b>AD ASTRA</b> | Prof. Juan Manuel Borrego</p>
+            <p class="footer-text-sub">Centro de Navegación de Datos & Didáctica Matemática</p>
         </div>
     """, unsafe_allow_html=True)
     
@@ -1101,6 +1086,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
