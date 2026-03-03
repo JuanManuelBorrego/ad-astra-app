@@ -124,8 +124,8 @@ def aplicar_interfaz_cientifica():
         </style>
 
         <div class="header-horizon">
-            <p class="header-text">© 2026 <b>AD ASTRA</b> • Prof. Borrego</p>
-            <p class="header-subtext">Didáctica Matemática & Datos</p>
+            <p class="header-text">© 2026 <b>AD ASTRA</b> • Prof. Juan Manuel Borrego</p>
+            <p class="header-subtext">Matemática & Ciencia de Datos</p>
         </div>
     """, unsafe_allow_html=True)
     
@@ -1115,6 +1115,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
