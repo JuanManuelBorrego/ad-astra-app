@@ -488,8 +488,8 @@ if modo == "Estudiantes":
                         else:
                             st.info("Aún no tienes registros para mostrar.")
                     
-                    except Exception as e:
-                        st.error(f"Error al procesar historial: {e}")
+                except Exception as e:
+                    st.error(f"Error al procesar historial: {e}")
         with c3:
             trim_sel = st.selectbox("Ver detalle de trimestre:", [1, 2, 3], index=2)
     
@@ -1160,6 +1160,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
