@@ -420,9 +420,19 @@ if modo == "Estudiantes":
                 st.subheader("📖 Tu Historial de Aprendizaje")
                 
                 try:
-                    conn = conectar()
-                    id_actual = st.session_state.estudiante.id
-                    
+                    # --- NUEVA VALIDACIÓN DE FEEDBACK ---
+                    # Verificamos si el profesor habilitó ver respuestas/notas
+                    # Si id_clase_hoy no existe, por defecto permitimos ver el historial viejo
+                    feedback_habilitado = True
+                    if st.session_state.id_clase_hoy:
+                        feedback_habilitado = st.session_state.estudiante.clase_esta_activa() # O la función que verifique el campo 'feedback'
+        
+                    if not feedback_habilitado:
+                        st.warning("🔒 El profesor ha desactivado la visualización de resultados momentáneamente.")
+                    else:
+                        # Si está habilitado (o no hay clase hoy bloqueando), mostramos todo el código que ya tenías
+                        conn = conectar()
+                        id_actual = st.session_state.estudiante.id                    
                     # 1. Definimos la Query con la Opción B y el redondeo
                     query = """
                         SELECT 
@@ -1150,6 +1160,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
