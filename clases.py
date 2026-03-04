@@ -181,18 +181,18 @@ class Alumno:
         
         # B. INTERPRETACIÓN DE EFICACIA (Calidad de las respuestas)
         if m_eficacia > 0.3:
-            f_eficacia = "📈 CALIDAD DE LAS RESPUESTAS: Tu concentración al resolver cada actividad está mejorando; cada vez hacés mejor las actividades."
+            f_eficacia = "📈 CONCENTRACIÓN: Tu concentración al resolver cada actividad está mejorando; cada vez hacés mejor las actividades."
         elif m_eficacia < -0.3:
-            f_eficacia = "📉 CALIDAD DE LAS RESPUESTAS: Cuidado, tu concentración en las actividades ha bajado últimamente. Hay que mejorar la concentración."
+            f_eficacia = "📉 CONCENTRACIÓN: Cuidado, tu concentración en las actividades ha bajado últimamente. Hay que mejorar la concentración."
         else:
-            f_eficacia = "📊 CALIDAD DE LAS RESPUESTAS: Tu nivel de concentración se mantiene constante."
+            f_eficacia = "📊 CONCENTRACIÓN: Tu nivel de concentración se mantiene constante."
         # C. INTERPRETACIÓN DE ESFUERZO (Cantidad de ejercicios terminados)
         if m_esfuerzo > 0.3:
-            f_esfuerzo = "💪 CANTIDAD DE TRABAJO DIARIO: ¡Excelente! Estás terminando más ejercicios que antes, eso es compromiso."
+            f_esfuerzo = "💪 ESFUERZO: ¡Excelente! Estás terminando más ejercicios que antes, eso es compromiso."
         elif m_esfuerzo < -0.3:
-            f_esfuerzo = "⚠️ CANTIDAD DE TRABAJO DIARIO: Ojo, estás dejando más ejercicios sin terminar que en las primeras clases."
+            f_esfuerzo = "⚠️ ESFUERZO: Ojo, estás dejando más ejercicios sin terminar que en las primeras clases."
         else:
-            f_esfuerzo = "⚙️ CANTIDAD DE TRABAJO DIARIO: Tu ritmo de trabajo (ejercicios completados en cada clase) es estable."
+            f_esfuerzo = "⚙️ ESFUERZO: Tu ritmo de trabajo (ejercicios completados en cada clase) es estable."
         # Unimos todo para el Dashboard
         reporte = (
             f"{f_promedio}\n"
@@ -350,4 +350,5 @@ class Alumno:
 #FIN DE LA CLASE ALUMNO
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
