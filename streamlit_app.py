@@ -420,13 +420,14 @@ if modo == "Estudiantes":
                 st.subheader("📖 Tu Historial de Aprendizaje")
                 
                 try:
-                    # --- NUEVA VALIDACIÓN DE FEEDBACK ---
-                    # Verificamos si el profesor habilitó ver respuestas/notas
-                    # Si id_clase_hoy no existe, por defecto permitimos ver el historial viejo
-                    feedback_habilitado = True
-                    if st.session_state.id_clase_hoy:
-                        feedback_habilitado = st.session_state.estudiante.clase_esta_activa() # O la función que verifique el campo 'feedback'
-        
+                    # --- VALIDACIÓN REAL CONTRA LA CONFIGURACIÓN DEL PROFESOR ---
+                    with conectar() as conn_check:
+                        cursor_check = conn_check.cursor()
+                        # Consultamos la tabla de configuración que usa el profesor
+                        cursor_check.execute("SELECT feedback_visible FROM configuracion_clase WHERE id = 1")
+                        res_check = cursor_check.fetchone()
+                        # Si es 1 está habilitado, si es 0 (o no existe) está bloqueado
+                        feedback_habilitado = (res_check[0] == 1) if res_check else False        
                     if not feedback_habilitado:
                         st.warning("🔒 El profesor ha desactivado la visualización de resultados momentáneamente.")
                     else:
@@ -1160,6 +1161,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
