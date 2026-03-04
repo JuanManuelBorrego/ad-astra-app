@@ -320,7 +320,7 @@ class Alumno:
         ax1.scatter(x, y_comp, color='blue', label='Datos reales')
         m1, b1 = np.polyfit(x, y_comp, 1)
         ax1.plot(x, m1*x + b1, color='red', linestyle='--', label='Tendencia')
-        ax1.set_title(f'CANTIDAD: Nivel de Esfuerzo (%) - {self.nombre}')
+        ax1.set_title(f'GRÁFICO DE ESFUERZO (%) - {self.nombre}')
         
         # FUERZA EL EJE Y: De 0 a 100 (o un poquito más para que no toque el borde)
         ax1.set_ylim(0, 110) 
@@ -334,7 +334,7 @@ class Alumno:
         ax2.scatter(x, y_corr, color='green', label='Datos reales')
         m2, b2 = np.polyfit(x, y_corr, 1)
         ax2.plot(x, m2*x + b2, color='orange', linestyle='--', label='Tendencia')
-        ax2.set_title(f'CALIDAD: Nivel de Concentración (%) - {self.nombre}')
+        ax2.set_title(f'GRÁFICO DE CONCENTRACIÓN (%) - {self.nombre}')
         
         # FUERZA EL EJE Y
         ax2.set_ylim(0, 110)
@@ -350,5 +350,6 @@ class Alumno:
 #FIN DE LA CLASE ALUMNO
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 
