@@ -433,63 +433,63 @@ if modo == "Estudiantes":
                         # Si está habilitado (o no hay clase hoy bloqueando), mostramos todo el código que ya tenías
                         conn = conectar()
                         id_actual = st.session_state.estudiante.id                    
-                    # 1. Definimos la Query con la Opción B y el redondeo
-                    query = """
-                        SELECT 
-                            c.fecha as 'Fecha', 
-                            c.tema as 'Tema', 
-                            r.asistencia as 'Asistencia',
-                            CAST(c.ejercicios_totales AS INTEGER) as 'Ejercicios del día',
-                            CAST(r.ejercicios_completados AS INTEGER) as 'Total resueltos',
-                            CAST(r.ejercicios_correctos AS INTEGER) as 'Total correctos',
-                            r.nota_oral as 'Nota examen Oral',
-                            ROUND(
-                                CASE 
-                                    WHEN r.nota_oral > 0 THEN r.nota_oral
-                                    WHEN r.ejercicios_completados = 0 THEN 1.0
-                                    ELSE (
-                                        (CAST(r.ejercicios_completados AS REAL) / c.ejercicios_totales) + 
-                                        (CAST(r.ejercicios_correctos AS REAL) / r.ejercicios_completados)
-                                    ) / 2 * 10
-                                END, 2
-                            ) as 'Nota final de la clase'
-                        FROM reportes_diarios r
-                        JOIN clases c ON r.id_clase = c.id_clase
-                        WHERE r.id_alumno = ?
-                        ORDER BY c.fecha DESC
-                    """
-                    df_repaso = pd.read_sql_query(query, conn, params=(id_actual,))
-                    conn.close()
-
-                    # 2. Procesamos y mostramos la tabla
-                    if not df_repaso.empty:
-                        # Forzamos los enteros para que no aparezca el .0
-                        cols_int = ['Ejercicios del día', 'Total resueltos', 'Total correctos']
-                        for col in cols_int:
-                            df_repaso[col] = pd.to_numeric(df_repaso[col], errors='coerce').fillna(0).astype(int)
-
-                        st.dataframe(
-                            df_repaso.style.applymap(
-                                lambda x: 'color: #FF4B4B; font-weight: bold' if x == 'AUSENTE' else 'color: #28a745',
-                                subset=['Asistencia']
-                            ).background_gradient(
-                                subset=['Nota final de la clase'], 
-                                cmap='RdYlGn', vmin=1, vmax=10
-                            ).format({
-                                "Nota examen Oral": "{:.2f}", 
-                                "Nota final de la clase": "{:.2f}",
-                                "Ejercicios del día": "{:d}",
-                                "Total resueltos": "{:d}",
-                                "Total correctos": "{:d}"
-                            }, na_rep="-"), 
-                            use_container_width=True,
-                            hide_index=True
-                        )
-                    else:
-                        st.info("Aún no tienes registros para mostrar.")
-                
-                except Exception as e:
-                    st.error(f"Error al procesar historial: {e}")
+                        # 1. Definimos la Query con la Opción B y el redondeo
+                        query = """
+                            SELECT 
+                                c.fecha as 'Fecha', 
+                                c.tema as 'Tema', 
+                                r.asistencia as 'Asistencia',
+                                CAST(c.ejercicios_totales AS INTEGER) as 'Ejercicios del día',
+                                CAST(r.ejercicios_completados AS INTEGER) as 'Total resueltos',
+                                CAST(r.ejercicios_correctos AS INTEGER) as 'Total correctos',
+                                r.nota_oral as 'Nota examen Oral',
+                                ROUND(
+                                    CASE 
+                                        WHEN r.nota_oral > 0 THEN r.nota_oral
+                                        WHEN r.ejercicios_completados = 0 THEN 1.0
+                                        ELSE (
+                                            (CAST(r.ejercicios_completados AS REAL) / c.ejercicios_totales) + 
+                                            (CAST(r.ejercicios_correctos AS REAL) / r.ejercicios_completados)
+                                        ) / 2 * 10
+                                    END, 2
+                                ) as 'Nota final de la clase'
+                            FROM reportes_diarios r
+                            JOIN clases c ON r.id_clase = c.id_clase
+                            WHERE r.id_alumno = ?
+                            ORDER BY c.fecha DESC
+                        """
+                        df_repaso = pd.read_sql_query(query, conn, params=(id_actual,))
+                        conn.close()
+    
+                        # 2. Procesamos y mostramos la tabla
+                        if not df_repaso.empty:
+                            # Forzamos los enteros para que no aparezca el .0
+                            cols_int = ['Ejercicios del día', 'Total resueltos', 'Total correctos']
+                            for col in cols_int:
+                                df_repaso[col] = pd.to_numeric(df_repaso[col], errors='coerce').fillna(0).astype(int)
+    
+                            st.dataframe(
+                                df_repaso.style.applymap(
+                                    lambda x: 'color: #FF4B4B; font-weight: bold' if x == 'AUSENTE' else 'color: #28a745',
+                                    subset=['Asistencia']
+                                ).background_gradient(
+                                    subset=['Nota final de la clase'], 
+                                    cmap='RdYlGn', vmin=1, vmax=10
+                                ).format({
+                                    "Nota examen Oral": "{:.2f}", 
+                                    "Nota final de la clase": "{:.2f}",
+                                    "Ejercicios del día": "{:d}",
+                                    "Total resueltos": "{:d}",
+                                    "Total correctos": "{:d}"
+                                }, na_rep="-"), 
+                                use_container_width=True,
+                                hide_index=True
+                            )
+                        else:
+                            st.info("Aún no tienes registros para mostrar.")
+                    
+                    except Exception as e:
+                        st.error(f"Error al procesar historial: {e}")
         with c3:
             trim_sel = st.selectbox("Ver detalle de trimestre:", [1, 2, 3], index=2)
     
@@ -1160,6 +1160,7 @@ elif modo == "Profesor":
             st.session_state.clear()
             st.session_state["logout_confirmado"] = True
             st.rerun()
+
 
 
 
