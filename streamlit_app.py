@@ -400,7 +400,7 @@ if modo == "Estudiantes":
                     
                                 # --- EFECTOS NATIVOS ---
                                 st.balloons() 
-                                st.success(f"✅ ¡Entregado! Nota: {nota}")
+                                st.success(f"✅ ¡Entregado! Vas a poder ver tu nota seleccionando REPASAR CLASES apenas el profesor lo habilite")
                                 
                                 import time
                                 time.sleep(2)
