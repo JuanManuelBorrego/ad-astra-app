@@ -940,6 +940,7 @@ elif modo == "Profesor":
                                     FROM reportes_diarios r
                                     JOIN clases c ON r.id_clase = c.id_clase
                                     WHERE r.id_alumno = ? AND c.trimestre = ? AND r.nota_final IS NOT NULL
+                                    ORDER BY c.id_clase ASC
                                 """
                                 df_hist = pd.read_sql_query(query_hist, conn, params=(id_al, int(trimestre_n)))
 
