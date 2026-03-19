@@ -277,6 +277,12 @@ class Alumno:
             for f in filas:
                 id_clase, comp, corr, nota, totales = f
                 
+                # --- 🏥 FILTRO DE JUSTIFICACIÓN ---
+                # Si no hay ejercicios cargados (None) Y no hay nota (None), 
+                # es porque el profesor justificó la falta. SALTAMOS LA FILA.
+                if comp is None and nota is None:
+                    continue
+                
                 # 🛡️ Escudos anti-None
                 comp = comp if comp is not None else 0
                 corr = corr if corr is not None else 0
