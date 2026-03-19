@@ -968,8 +968,8 @@ elif modo == "Profesor":
                                         "Estudiante": nombre_al,
                                         "Nota Final": n_final,
                                         "Prom. Base": p_base,
-                                        "Adj. Esf.": a_esf,
-                                        "Adj. Efi.": a_efi,
+                                        "Ajuste Esfuerzo.": a_esf,
+                                        "Ajuste Concentración.": a_efi,
                                     })
             
                             # 5. MOSTRAR RESULTADOS
