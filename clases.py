@@ -145,7 +145,7 @@ class Alumno:
     #MÉTODO OBTENER EL PROMEDIO DE TODAS LAS NOTAS FINALES DE TODAS LAS CLASES AL MOMENTO (SI EL TRIMESTRE CERRASE EN ESE MOMENTO, ESA SERÍA LA NOTA)
     def promedio(self):    
         # Filtramos para que no haya errores si hay datos vacíos (None)
-        notas = [n["nota_final"] for n in self.historial.values() if n["nota_final"] is not None]  #Si una clase existe en el historial pero por algún motivo la nota está vacía (None), esa clase no entra en la lista "notas"
+        notas = [n["nota_final"] for n in self.historial.values() if n["nota_final"] is not None and n["nota_final"] > 0]  #Si una clase existe en el historial pero por algún motivo la nota está vacía (None), esa clase no entra en la lista "notas"
         # Si la lista está vacía, devolvemos tu mensaje amigable (ya que no entró después de hacer el bucle ni siquiera una sola nota)
         if not notas:  #esto significa que notas está vacía, es decir que no es True la existencia de notas (una lista vacía es Falsa)
             return 'no hay cargas todavía'
