@@ -929,49 +929,54 @@ elif modo == "Profesor":
                         else:
                             datos_reporte = []
 
-                            # Usamos el spinner para que el profe sepa que está trabajando
-                            with st.spinner("Sincronizando tendencias de cada alumno..."):
-                                for id_al, nombre_al in alumnos:
-                                    # 1. Creamos el objeto temporal del alumno (usando tu clase Estudiante)
-                                    # Asegurate que la clase se llame Estudiante o Alumno según tu clases.py
-                                    est_temp = Estudiante(id_al, nombre_al) 
+                            with st.spinner("Sincronizando promedios y tendencias..."):
+                                for id_al, nombre_al, curso_al in alumnos_db:
+                                    # 2. CREAMOS EL OBJETO USANDO EL NOMBRE CORRECTO: Alumno
+                                    obj_al = Alumno(id_al, nombre_al, curso_al)
                                     
-                                    # 2. Usamos SUS mismos métodos
-                                    est_temp.sincronizar_historial_por_trimestre(str(trimestre_n))
+                                    # 3. SINCRONIZAMOS (Esto limpia Nones y aplica filtros de > 0)
+                                    obj_al.sincronizar_historial_por_trimestre(str(trimestre_n))
                                     
-                                    if len(est_temp.historial) == 0:
-                                        prom_base, adj_esf, adj_efi, nota_f = "---", "---", "---", "---"
+                                    if not obj_al.historial:
+                                        # Si no hay nada, el reporte muestra vacío o el 1 reglamentario
+                                        p_base, a_esf, a_efi, n_final = "---", "0", "0", "---"
                                     else:
-                                        res_graf = est_temp.graficar_tendencia()
-                                        if isinstance(res_graf, tuple):
-                                            m_esf, m_efi = res_graf
-                                            dt = est_temp.calcular_nota_trimestral(m_esf, m_efi)
+                                        # 4. USAMOS LA LÓGICA DE TENDENCIA DE LA CLASE
+                                        # graficar_tendencia devuelve (m1, m2) si hay 2 o más notas
+                                        res_tendencia = obj_al.graficar_tendencia()
+                                        
+                                        if isinstance(res_tendencia, tuple):
+                                            m_esf, m_efi = res_tendencia
+                                            # 5. CALCULAMOS LA NOTA CON TUS AJUSTES DE 0.3
+                                            dt = obj_al.calcular_nota_trimestral(m_esf, m_efi)
                                             
-                                            prom_base = f"{dt['promedio']:.2f}"
-                                            adj_esf = dt['ajuste_esfuerzo']
-                                            adj_efi = dt['ajuste_eficacia']
-                                            nota_f = dt['total_entero']
+                                            p_base = f"{dt['promedio']:.2f}"
+                                            a_esf = dt['ajuste_esfuerzo']
+                                            a_efi = dt['ajuste_eficacia']
+                                            n_final = dt['total_entero']
                                         else:
-                                            # Caso de una sola nota (sin tendencia)
-                                            prom_base = est_temp.promedio()
-                                            adj_esf, adj_efi = "0", "0"
-                                            nota_f = int(round(float(prom_base)))
-        
+                                            # Caso de una sola nota: Promedio simple sin ajustes
+                                            prom_val = obj_al.promedio()
+                                            p_base = f"{prom_val:.2f}"
+                                            a_esf, a_efi = "0", "0"
+                                            n_final = int(round(float(prom_val)))
+            
                                     datos_reporte.append({
                                         "Estudiante": nombre_al,
-                                        "Prom. Base": prom_base,
-                                        "Adj. Esf.": adj_esf,
-                                        "Adj. Efi.": adj_efi,
-                                        "Nota Final": nota_f
+                                        "Prom. Base": p_base,
+                                        "Adj. Esf.": a_esf,
+                                        "Adj. Efi.": a_efi,
+                                        "Nota Final": n_final
                                     })
-        
-                            # Mostrar el DataFrame final
+            
+                            # 6. MOSTRAR RESULTADOS
                             df_final = pd.DataFrame(datos_reporte)
                             st.write(f"### 📋 Acta de Calificaciones - {curso_seleccionado} (T{trimestre_n})")
                             st.dataframe(df_final, use_container_width=True, hide_index=True)
-        
+                            st.caption("✅ Los ajustes se calculan sobre la tendencia de mejora en porcentaje (0-100%).")
+            
                 except Exception as e:
-                    st.error(f"Hubo un problema: {e}")
+                    st.error(f"Error técnico al generar el acta: {e}")
                 
                     
         # --- 10. CREADOR DE EXÁMENES (Versión AUTOINCREMENT) ---
