@@ -117,7 +117,11 @@ class Alumno:
 
         for f in filas:
             id_clase_f = f[0]
-            # Usamos un "if" corto para que si es None, lo convierta en 0 (si hay registros cargados solamente con nota oral, estos dejan la celda de "completados" y los "correctos" de la base de datos vacía y esto da error cuando se carga este valor en el script)
+            # --- CAMBIO CLAVE PARA JUSTIFICACIONES ---
+            # Si no hay ejercicios Y no hay nota final, es una inasistencia justificada: SALTAMOS.
+            if f[1] is None and f[3] is None:
+                continue
+            # Si llegamos acá, o tiene ejercicios o tiene al menos una nota (ej. oral)
             completados_f = f[1] if f[1] is not None else 0
             correctos_f = f[2] if f[2] is not None else 0
             totales_f = f[5]
