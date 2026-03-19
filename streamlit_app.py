@@ -939,7 +939,7 @@ elif modo == "Profesor":
                                     SELECT r.ejercicios_completados as esfuerzo, r.ejercicios_correctos as eficacia, r.nota_final 
                                     FROM reportes_diarios r
                                     JOIN clases c ON r.id_clase = c.id_clase
-                                    WHERE r.id_alumno = ? AND c.trimestre = ? AND r.nota_final IS NOT NULL
+                                    WHERE r.id_alumno = ? AND c.trimestre = ? AND r.nota_final IS NOT NULL AND r.nota_final > 0
                                     ORDER BY c.id_clase ASC
                                 """
                                 df_hist = pd.read_sql_query(query_hist, conn, params=(id_al, int(trimestre_n)))
