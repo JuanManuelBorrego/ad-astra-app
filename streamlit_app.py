@@ -966,10 +966,10 @@ elif modo == "Profesor":
             
                                     datos_reporte.append({
                                         "Estudiante": nombre_al,
+                                        "Nota Final": n_final,
                                         "Prom. Base": p_base,
                                         "Adj. Esf.": a_esf,
                                         "Adj. Efi.": a_efi,
-                                        "Nota Final": n_final
                                     })
             
                             # 5. MOSTRAR RESULTADOS
