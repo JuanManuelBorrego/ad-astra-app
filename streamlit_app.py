@@ -929,75 +929,49 @@ elif modo == "Profesor":
                         else:
                             datos_reporte = []
 
-                            for id_al, nombre_al in alumnos:
-                                # 2. Traer historial del trimestre (Asumiendo que id_clase identifica el rango del trimestre)
-                                # Nota: Aquí adaptamos la lógica de 'sincronizar_historial_por_trimestre'
-                                # Si no tienes una columna 'trimestre', se asume por rango de id_clase o fecha.
-                                # Para este ejemplo, filtramos por la lógica de tu DB:
-                                # Unimos con la tabla clases para filtrar por el trimestre elegido en el selectbox
-                                query_hist = """
-                                    SELECT r.ejercicios_completados as esfuerzo, r.ejercicios_correctos as eficacia, r.nota_final 
-                                    FROM reportes_diarios r
-                                    JOIN clases c ON r.id_clase = c.id_clase
-                                    WHERE r.id_alumno = ? AND c.trimestre = ? AND r.nota_final IS NOT NULL AND r.nota_final > 0
-                                    ORDER BY c.id_clase ASC
-                                """
-                                df_hist = pd.read_sql_query(query_hist, conn, params=(id_al, int(trimestre_n)))
-
-                                if df_hist.empty:
-                                    prom_base, adj_esf, adj_efi, nota_f = "---", "---", "---", "---"
-                                else:
-                                    p = df_hist['nota_final'].mean()
+                            # Usamos el spinner para que el profe sepa que está trabajando
+                            with st.spinner("Sincronizando tendencias de cada alumno..."):
+                                for id_al, nombre_al in alumnos:
+                                    # 1. Creamos el objeto temporal del alumno (usando tu clase Estudiante)
+                                    # Asegurate que la clase se llame Estudiante o Alumno según tu clases.py
+                                    est_temp = Estudiante(id_al, nombre_al) 
                                     
-                                    if len(df_hist) >= 2:
-                                        # Cálculo de tendencias (Pendiente m)
-                                        x = np.arange(len(df_hist))
-                                        m_esf, _ = np.polyfit(x, df_hist['esfuerzo'], 1)
-                                        m_efi, _ = np.polyfit(x, df_hist['eficacia'], 1)
-                                        
-                                        # Lógica de ajuste (+/- 0.5)
-                                        # Ajudste Esfuerzo
-                                        if m_esf > 0.1: aesf = "+0.5"
-                                        elif m_esf < -0.1: aesf = "-0.5"
-                                        else: aesf = "0"
-                                        
-                                        # Ajuste Eficacia
-                                        if m_efi > 0.1: aefi = "+0.5"
-                                        elif m_efi < -0.1: aefi = "-0.5"
-                                        else: aefi = "0"
-                                        
-                                        # Nota Final (Promedio + ajustes)
-                                        v_esf = 0.5 if aesf == "+0.5" else (-0.5 if aesf == "-0.5" else 0)
-                                        v_efi = 0.5 if aefi == "+0.5" else (-0.5 if aefi == "-0.5" else 0)
-                                        nota_final_calc = int(round(p + v_esf + v_efi))
+                                    # 2. Usamos SUS mismos métodos
+                                    est_temp.sincronizar_historial_por_trimestre(str(trimestre_n))
+                                    
+                                    if len(est_temp.historial) == 0:
+                                        prom_base, adj_esf, adj_efi, nota_f = "---", "---", "---", "---"
                                     else:
-                                        aesf, aefi = "0", "0"
-                                        nota_final_calc = int(round(p))
-
-                                    prom_base = f"{p:.2f}"
-                                    adj_esf = aesf
-                                    adj_efi = aefi
-                                    nota_f = max(1, min(10, nota_final_calc)) # Acotado entre 1 y 10
-
-                                datos_reporte.append({
-                                    "Estudiante": nombre_al,
-                                    "Prom. Base": prom_base,
-                                    "Adj. Esf.": adj_esf,
-                                    "Adj. Efi.": adj_efi,
-                                    "Nota Final": nota_f
-                                })
-
-                            # 3. Mostrar Resultados
+                                        res_graf = est_temp.graficar_tendencia()
+                                        if isinstance(res_graf, tuple):
+                                            m_esf, m_efi = res_graf
+                                            dt = est_temp.calcular_nota_trimestral(m_esf, m_efi)
+                                            
+                                            prom_base = f"{dt['promedio']:.2f}"
+                                            adj_esf = dt['ajuste_esfuerzo']
+                                            adj_efi = dt['ajuste_eficacia']
+                                            nota_f = dt['total_entero']
+                                        else:
+                                            # Caso de una sola nota (sin tendencia)
+                                            prom_base = est_temp.promedio()
+                                            adj_esf, adj_efi = "0", "0"
+                                            nota_f = int(round(float(prom_base)))
+        
+                                    datos_reporte.append({
+                                        "Estudiante": nombre_al,
+                                        "Prom. Base": prom_base,
+                                        "Adj. Esf.": adj_esf,
+                                        "Adj. Efi.": adj_efi,
+                                        "Nota Final": nota_f
+                                    })
+        
+                            # Mostrar el DataFrame final
                             df_final = pd.DataFrame(datos_reporte)
                             st.write(f"### 📋 Acta de Calificaciones - {curso_seleccionado} (T{trimestre_n})")
-                            
-                            # Estilo: resaltamos las notas finales aprobadas
                             st.dataframe(df_final, use_container_width=True, hide_index=True)
-                            
-                            st.caption("📌 El ajuste de +/- 0.5 se aplica automáticamente por tendencia (mejora o descenso) en el desempeño.")
-
+        
                 except Exception as e:
-                    st.error(f"Error al generar reporte: {e}")        
+                    st.error(f"Hubo un problema: {e}")
                 
                     
         # --- 10. CREADOR DE EXÁMENES (Versión AUTOINCREMENT) ---
