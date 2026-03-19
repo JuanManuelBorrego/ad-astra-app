@@ -913,41 +913,44 @@ elif modo == "Profesor":
         with st.expander("Calcular Acta del Trimestre", expanded=False):
             trimestre_n = st.selectbox("Seleccione el Trimestre:", ["1", "2", "3"], key="trim_sel")
             
-            if st.button("🚀 GENERAR REPORTE", use_container_width=True):
+            # --- DENTRO DEL EXPANDER DEL PROFESOR ---
+            if st.button("🚀 GENERAR REPORTE", key="btn_generar_acta", use_container_width=True):
                 try:
-                    import numpy as np
+                    import numpy as np # Aseguramos que estén disponibles para los métodos de la clase
                     import pandas as pd
-
+            
                     with conectar() as conn:
-                        # 1. Traer alumnos del curso activo
                         cursor = conn.cursor()
-                        cursor.execute("SELECT id_alumno, nombre FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_seleccionado,))
-                        alumnos = cursor.fetchall()
-
-                        if not alumnos:
-                            st.warning("No hay alumnos en este curso.")
+                        # 1. Traer alumnos del curso activo
+                        cursor.execute("SELECT id_alumno, nombre, curso FROM alumnos WHERE UPPER(curso) = UPPER(?)", (curso_seleccionado,))
+                        
+                        # DEFINIMOS LA VARIABLE AQUÍ MISMO
+                        alumnos_lista = cursor.fetchall() 
+            
+                        if not alumnos_lista:
+                            st.warning(f"No se encontraron alumnos registrados en el curso: {curso_seleccionado}")
                         else:
                             datos_reporte = []
-
-                            with st.spinner("Sincronizando promedios y tendencias..."):
-                                for id_al, nombre_al, curso_al in alumnos_db:
-                                    # 2. CREAMOS EL OBJETO USANDO EL NOMBRE CORRECTO: Alumno
+                            
+                            with st.spinner("Sincronizando promedios y tendencias de cada alumno..."):
+                                for id_al, nombre_al, curso_al in alumnos_lista:
+                                    # 2. INSTANCIAMOS LA CLASE (Usando 'Alumno' como definiste arriba)
                                     obj_al = Alumno(id_al, nombre_al, curso_al)
                                     
-                                    # 3. SINCRONIZAMOS (Esto limpia Nones y aplica filtros de > 0)
+                                    # 3. SINCRONIZAMOS TRIMESTRE (Limpia Nones y aplica nota > 0)
                                     obj_al.sincronizar_historial_por_trimestre(str(trimestre_n))
                                     
+                                    # 4. PROCESAMOS SEGÚN CANTIDAD DE NOTAS
                                     if not obj_al.historial:
-                                        # Si no hay nada, el reporte muestra vacío o el 1 reglamentario
+                                        # Caso sin notas (Inasistencia total o sin carga)
                                         p_base, a_esf, a_efi, n_final = "---", "0", "0", "---"
                                     else:
-                                        # 4. USAMOS LA LÓGICA DE TENDENCIA DE LA CLASE
-                                        # graficar_tendencia devuelve (m1, m2) si hay 2 o más notas
-                                        res_tendencia = obj_al.graficar_tendencia()
+                                        # Intentamos calcular tendencia (m1, m2)
+                                        res_t = obj_al.graficar_tendencia()
                                         
-                                        if isinstance(res_tendencia, tuple):
-                                            m_esf, m_efi = res_tendencia
-                                            # 5. CALCULAMOS LA NOTA CON TUS AJUSTES DE 0.3
+                                        if isinstance(res_t, tuple):
+                                            # Caso: 2 o más notas (Usa tus ajustes de 0.3)
+                                            m_esf, m_efi = res_t
                                             dt = obj_al.calcular_nota_trimestral(m_esf, m_efi)
                                             
                                             p_base = f"{dt['promedio']:.2f}"
@@ -955,11 +958,11 @@ elif modo == "Profesor":
                                             a_efi = dt['ajuste_eficacia']
                                             n_final = dt['total_entero']
                                         else:
-                                            # Caso de una sola nota: Promedio simple sin ajustes
+                                            # Caso: 1 sola nota (Promedio simple, sin ajustes)
                                             prom_val = obj_al.promedio()
-                                            p_base = f"{prom_val:.2f}"
+                                            p_base = f"{prom_val:.2f}" if isinstance(prom_val, (int, float)) else "---"
                                             a_esf, a_efi = "0", "0"
-                                            n_final = int(round(float(prom_val)))
+                                            n_final = int(round(float(prom_val))) if isinstance(prom_val, (int, float)) else "---"
             
                                     datos_reporte.append({
                                         "Estudiante": nombre_al,
@@ -969,11 +972,11 @@ elif modo == "Profesor":
                                         "Nota Final": n_final
                                     })
             
-                            # 6. MOSTRAR RESULTADOS
+                            # 5. MOSTRAR RESULTADOS
                             df_final = pd.DataFrame(datos_reporte)
                             st.write(f"### 📋 Acta de Calificaciones - {curso_seleccionado} (T{trimestre_n})")
                             st.dataframe(df_final, use_container_width=True, hide_index=True)
-                            st.caption("✅ Los ajustes se calculan sobre la tendencia de mejora en porcentaje (0-100%).")
+                            st.caption("📌 Nota: Los ajustes de +/- 0.5 se aplican automáticamente según la tendencia de mejora en el desempeño.")
             
                 except Exception as e:
                     st.error(f"Error técnico al generar el acta: {e}")
