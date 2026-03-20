@@ -28,7 +28,15 @@ st.set_page_config(
     layout="centered", 
     page_icon="✨" 
 )
-
+# --- TRUCO PARA FORZAR EL ICONO EN EL ESCRITORIO DEL CELULAR ---
+st.markdown(
+    """
+    <link rel="apple-touch-icon" sizes="180x180" href="https://em-content.zobj.net/source/apple/354/sparkles_2728.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://em-content.zobj.net/source/apple/354/sparkles_2728.png">
+    <link rel="shortcut icon" href="https://em-content.zobj.net/source/apple/354/sparkles_2728.png">
+    """,
+    unsafe_allow_html=True
+)
 def aplicar_interfaz_cientifica():
     # 1. DISEÑO VISUAL (CSS) - ASTRA FINAL REINFORCED
     st.markdown("""
