@@ -28,12 +28,15 @@ st.set_page_config(
     layout="centered", 
     page_icon="✨" 
 )
-# --- TRUCO PARA FORZAR EL ICONO EN EL ESCRITORIO DEL CELULAR ---
+# --- INYECTOR DE ICONO PARA MÓVIL ---
 st.markdown(
     """
-    <link rel="apple-touch-icon" sizes="180x180" href="https://em-content.zobj.net/source/apple/354/sparkles_2728.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="https://em-content.zobj.net/source/apple/354/sparkles_2728.png">
-    <link rel="shortcut icon" href="https://em-content.zobj.net/source/apple/354/sparkles_2728.png">
+    <head>
+        <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/2728.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/2728.png">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-title" content="ASTRA">
+    </head>
     """,
     unsafe_allow_html=True
 )
