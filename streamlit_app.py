@@ -28,18 +28,7 @@ st.set_page_config(
     layout="centered", 
     page_icon="✨" 
 )
-# --- INYECTOR DE ICONO PARA MÓVIL ---
-st.markdown(
-    """
-    <head>
-        <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/2728.png">
-        <link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/2728.png">
-        <meta name="mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-title" content="ASTRA">
-    </head>
-    """,
-    unsafe_allow_html=True
-)
+
 def aplicar_interfaz_cientifica():
     # 1. DISEÑO VISUAL (CSS) - ASTRA FINAL REINFORCED
     st.markdown("""
