@@ -879,8 +879,8 @@ elif modo == "Profesor":
                         r.ejercicios_correctos AS 'Correctos', 
                         r.nota_oral AS 'Nota Oral',
                         r.nota_final AS 'Nota Final'
-                        r.fecha
-                    FROM reportes_diarios r
+                        r.fecha AS Fecha
+                    FROM reportes_diarios AS r
                     INNER JOIN alumnos a ON r.id_alumno = a.id_alumno
                     WHERE r.id_clase = ? 
                     AND UPPER(TRIM(a.curso)) = UPPER(TRIM(?))
