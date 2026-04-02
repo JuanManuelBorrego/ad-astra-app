@@ -879,8 +879,7 @@ elif modo == "Profesor":
                         r.ejercicios_correctos AS 'Correctos', 
                         r.nota_oral AS 'Nota Oral',
                         r.nota_final AS 'Nota Final'
-                        r.fecha AS Fecha
-                    FROM reportes_diarios AS r
+                    FROM reportes_diarios r
                     INNER JOIN alumnos a ON r.id_alumno = a.id_alumno
                     WHERE r.id_clase = ? 
                     AND UPPER(TRIM(a.curso)) = UPPER(TRIM(?))
@@ -890,14 +889,6 @@ elif modo == "Profesor":
                 df_mon = pd.read_sql_query(query_monitor, conn, params=(id_clase_input, curso_seleccionado))
                 
                 if not df_mon.empty:
-                    # --- LÓGICA DEL TÍTULO ---
-                    # Intentamos obtener la fecha del primer registro
-                    fecha_clase = ""
-                    if 'fecha' in df_mon.columns and not df_mon['fecha'].isnull().all():
-                        # Tomamos la primera fecha y la formateamos si es necesario
-                        fecha_clase = f" - Fecha: {df_mon['fecha'].iloc[0]}"
-                    
-                    titulo_grafico = f"Distribución de Notas: {curso_seleccionado} (Clase № {id_clase_input}){fecha_clase}"
                     # --- NUEVO: ESTADÍSTICAS RÁPIDAS Y GRÁFICO ---
                     # Filtramos solo a los presentes para el histograma de notas reales
                     df_presentes = df_mon[df_mon['Asistencia'] == 'PRESENTE'].copy()
