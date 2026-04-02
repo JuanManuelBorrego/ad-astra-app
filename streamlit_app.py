@@ -909,6 +909,8 @@ elif modo == "Profesor":
                         
                         # Ajustes visuales para que se vea limpio
                         fig.update_layout(
+                            xaxis=dict(tickmode='linear', tick0=1, dtick=1),
+                            yaxis_title="Cantidad de Alumnos", # Reforzamos el nombre del eje Y
                             bargap=0.1, 
                             height=350,
                             margin=dict(l=20, r=20, t=40, b=20)
