@@ -879,24 +879,16 @@ elif modo == "Profesor":
                         r.ejercicios_correctos AS 'Correctos', 
                         r.nota_oral AS 'Nota Oral',
                         r.nota_final AS 'Nota Final'
-                        c.fecha AS Fecha
-                    FROM reportes_diarios AS "r"
-                    INNER JOIN alumnos "a" ON "r".id_alumno = "a".id_alumno
-                    INNER JOIN clases AS "c" ON "r".id_clase = "c".id_clase
-                    WHERE "r".id_clase = ? 
-                    AND UPPER(TRIM("a".curso)) = UPPER(TRIM(?))
-                    ORDER BY "a".nombre ASC
+                    FROM reportes_diarios AS r
+                    INNER JOIN alumnos a ON r.id_alumno = a.id_alumno
+                    WHERE r.id_clase = ? 
+                    AND UPPER(TRIM(a.curso)) = UPPER(TRIM(?))
+                    ORDER BY a.nombre ASC
                 """
                 
                 df_mon = pd.read_sql_query(query_monitor, conn, params=(id_clase_input, curso_seleccionado))
                 
                 if not df_mon.empty:
-                    # --- LÓGICA DEL TÍTULO DINÁMICO ---
-                    val_fecha = df_mon['Fecha'].iloc[0]
-                    # Si la fecha viene como string "2026-04-02", la dejamos linda
-                    fecha_txt = f" - Fecha: {val_fecha}" if val_fecha else ""
-                    titulo_dinamico = f"Distribución de Notas: {curso_seleccionado} (Clase {id_clase_input}){fecha_txt}"
-                    
                     # --- HISTOGRAMA ---
                     # Filtramos solo a los presentes para el histograma de notas reales
                     df_presentes = df_mon[df_mon['Asistencia'] == 'PRESENTE'].copy()
