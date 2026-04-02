@@ -1020,6 +1020,41 @@ elif modo == "Profesor":
                             # 5. MOSTRAR RESULTADOS
                             df_final = pd.DataFrame(datos_reporte)
                             st.write(f"### 📋 Acta de Calificaciones - {curso_seleccionado} (T{trimestre_n})")
+                            # --- NUEVO: SECCIÓN DE ANÁLISIS VISUAL ---
+                            df_grafico = df_final[df_final["Nota Final"] != "---"].copy()
+                            
+                            if not df_grafico.empty:
+                                df_grafico["Nota Final"] = pd.to_numeric(df_grafico["Nota Final"])
+                                
+                                # Histogramas del Trimestre (En color Azul para diferenciar del diario)
+                                fig_trim = px.histogram(
+                                    df_grafico, 
+                                    x="Nota Final", 
+                                    nbins=11, 
+                                    range_x=[0, 11],
+                                    labels={'Nota Final': 'Calificación Final', 'count': 'Alumnos'},
+                                    color_discrete_sequence=['#007BFF'],
+                                    text_auto=True
+                                )
+        
+                                fig_trim.update_layout(
+                                    xaxis=dict(tickmode='linear', tick0=1, dtick=1),
+                                    yaxis_title="Cantidad de Alumnos",
+                                    bargap=0.1, height=350,
+                                    margin=dict(l=20, r=20, t=20, b=20)
+                                )
+                                fig_trim.update_traces(xbins=dict(start=0.5, end=10.5, size=1))
+                                
+                                # Mostrar métricas destacadas
+                                c1, c2, c3 = st.columns(3)
+                                c1.metric("Promedio General", f"{df_grafico['Nota Final'].mean():.2f}")
+                                aprobados = len(df_grafico[df_grafico["Nota Final"] >= 6])
+                                c2.metric("Aprobados", f"{aprobados} ({int(aprobados/len(df_grafico)*100)}%)")
+                                c3.metric("Evaluados", len(df_grafico))
+        
+                                st.plotly_chart(fig_trim, use_container_width=True)
+                                
+                            # Tabla de detalles
                             st.dataframe(df_final, use_container_width=True, hide_index=True)
                             st.caption("📌 Nota: Los ajustes de +/- 0.5 se aplican automáticamente según la tendencia de mejora en el desempeño.")
             
