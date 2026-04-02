@@ -896,7 +896,7 @@ elif modo == "Profesor":
                         return f'color: {color}; font-weight: bold'
 
                     # Aplicamos el estilo a la columna Asistencia
-                    df_estilado = df_mon.style.applymap(resaltar_ausencia, subset=['Asistencia'])
+                    df_estilado = df_mon.style.map(resaltar_ausencia, subset=['Asistencia'])
 
                     st.dataframe(df_estilado, use_container_width=True, hide_index=True)
                     st.caption(f"✅ Mostrando {len(df_mon)} registros encontrados en la tabla reportes_diarios.")
