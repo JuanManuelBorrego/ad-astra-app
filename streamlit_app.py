@@ -900,37 +900,6 @@ elif modo == "Profesor":
         
                     # --- Aquí seguís con el histograma y la tabla ---
                     # ...
-                    
-                else:
-                    st.subheader(f"📈 {curso_seleccionado} - Clase № {id_clase_input}")
-                    st.info("No hay registros para esta clase.")
-        
-        except Exception as e:
-            st.error(f"❌ Error: {e}")
-        
-        st.divider()
-        st.subheader(f"📈 Reportes en DB: {curso_seleccionado} - Clase № {id_clase_input}")
-        
-        try:
-            with conectar() as conn:
-                query_monitor = """
-                    SELECT 
-                        a.nombre AS 'Alumno', 
-                        r.asistencia AS 'Asistencia',
-                        r.ejercicios_completados AS 'Hechos', 
-                        r.ejercicios_correctos AS 'Correctos', 
-                        r.nota_oral AS 'Nota Oral',
-                        r.nota_final AS 'Nota Final'
-                    FROM reportes_diarios AS r
-                    INNER JOIN alumnos a ON r.id_alumno = a.id_alumno
-                    WHERE r.id_clase = ? 
-                    AND UPPER(TRIM(a.curso)) = UPPER(TRIM(?))
-                    ORDER BY a.nombre ASC
-                """
-                
-                df_mon = pd.read_sql_query(query_monitor, conn, params=(id_clase_input, curso_seleccionado))
-                
-                if not df_mon.empty:
                     # --- HISTOGRAMA ---
                     # Filtramos solo a los presentes para el histograma de notas reales
                     df_presentes = df_mon[df_mon['Asistencia'] == 'PRESENTE'].copy()
@@ -979,11 +948,12 @@ elif modo == "Profesor":
                     st.caption(f"✅ Mostrando {len(df_mon)} registros encontrados.")
                     
                 else:
-                    st.info(f"No hay registros para {curso_seleccionado} en la clase {id_clase_input}.")
+                    st.subheader(f"📈 {curso_seleccionado} - Clase № {id_clase_input}")
+                    st.info("No hay registros para esta clase.")
         
         except Exception as e:
-            st.error(f"❌ Error al consultar la base de datos: {e}")
-                
+            st.error(f"❌ Error: {e}")
+        
         # --- 8. REPORTE TRIMESTRAL (Cálculo de Tendencias y Notas) ---
         st.divider()
         st.subheader("📊 Generador de Notas Trimestrales")
