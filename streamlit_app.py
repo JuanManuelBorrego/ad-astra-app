@@ -903,7 +903,7 @@ elif modo == "Profesor":
                             nbins=10, 
                             range_x=[0, 11],
                             title="Distribución de Calificaciones (Presentes)",
-                            labels={'Nota Final': 'Calificación', 'count': 'Cantidad de Alumnos'},
+                            labels={'Nota Final': 'Calificación', 'Cantidad de Alumnos': 'Cantidad de Alumnos'},
                             color_discrete_sequence=['#28a745'] # Verde como tus notas
                         )
                         
