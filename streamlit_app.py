@@ -923,6 +923,13 @@ elif modo == "Profesor":
                             height=350,
                             margin=dict(l=20, r=20, t=40, b=20)
                         )
+
+                        # ESTO ES LO QUE CENTRA LA BARRA SOBRE EL NÚMERO
+                        fig.update_traces(xbins=dict(
+                            start=0.5,   # Empezamos en 0.5 para que el '1' sea el centro
+                            end=10.5,    # Terminamos en 10.5 para que el '10' sea el centro
+                            size=1       # Cada barra ocupa exactamente 1 unidad de nota
+                        ))
                         
                         # Mostramos el gráfico
                         st.plotly_chart(fig, use_container_width=True)
