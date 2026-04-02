@@ -880,12 +880,12 @@ elif modo == "Profesor":
                         r.nota_oral AS 'Nota Oral',
                         r.nota_final AS 'Nota Final'
                         c.fecha AS Fecha
-                    FROM reportes_diarios AS r
-                    INNER JOIN alumnos a ON r.id_alumno = a.id_alumno
-                    INNER JOIN clases AS c ON r.id_clase = c.id_clase
-                    WHERE r.id_clase = ? 
-                    AND UPPER(TRIM(a.curso)) = UPPER(TRIM(?))
-                    ORDER BY a.nombre ASC
+                    FROM reportes_diarios AS "r"
+                    INNER JOIN alumnos "a" ON "r".id_alumno = "a".id_alumno
+                    INNER JOIN clases AS "c" ON "r".id_clase = "c".id_clase
+                    WHERE "r".id_clase = ? 
+                    AND UPPER(TRIM("a".curso)) = UPPER(TRIM(?))
+                    ORDER BY "a".nombre ASC
                 """
                 
                 df_mon = pd.read_sql_query(query_monitor, conn, params=(id_clase_input, curso_seleccionado))
