@@ -868,10 +868,9 @@ elif modo == "Profesor":
         # --- 7. MONITOR EN TIEMPO REAL (LECTURA DIRECTA DE DB) ---
         st.divider()
         st.subheader(f"📈 Reportes en DB: {curso_seleccionado} - Clase № {id_clase_input}")
-
+        
         try:
             with conectar() as conn:
-                # Actualizamos la consulta para incluir 'asistencia'
                 query_monitor = """
                     SELECT 
                         a.nombre AS 'Alumno', 
@@ -890,19 +889,54 @@ elif modo == "Profesor":
                 df_mon = pd.read_sql_query(query_monitor, conn, params=(id_clase_input, curso_seleccionado))
                 
                 if not df_mon.empty:
-                    # --- FUNCIÓN DE ESTILO PARA RESALTAR AUSENCIAS ---
+                    # --- NUEVO: ESTADÍSTICAS RÁPIDAS Y GRÁFICO ---
+                    # Filtramos solo a los presentes para el histograma de notas reales
+                    df_presentes = df_mon[df_mon['Asistencia'] == 'PRESENTE'].copy()
+                    
+                    if not df_presentes.empty:
+                        import plotly.express as px
+                        
+                        # Crear el histograma
+                        fig = px.histogram(
+                            df_presentes, 
+                            x="Nota Final", 
+                            nbins=10, 
+                            range_x=[1, 10],
+                            title="Distribución de Calificaciones (Presentes)",
+                            labels={'Nota Final': 'Calificación', 'count': 'Cantidad de Alumnos'},
+                            color_discrete_sequence=['#28a745'] # Verde como tus notas
+                        )
+                        
+                        # Ajustes visuales para que se vea limpio
+                        fig.update_layout(
+                            bargap=0.1, 
+                            height=350,
+                            margin=dict(l=20, r=20, t=40, b=20)
+                        )
+                        
+                        # Mostramos el gráfico
+                        st.plotly_chart(fig, use_container_width=True)
+                        
+                        # Métricas rápidas arriba de la tabla
+                        col1, col2, col3 = st.columns(3)
+                        col1.metric("Promedio Clase", f"{df_presentes['Nota Final'].mean():.2f}")
+                        col2.metric("Aprobados", len(df_presentes[df_presentes['Nota Final'] >= 6]))
+                        col3.metric("Ausentes", len(df_mon[df_mon['Asistencia'] == 'AUSENTE']))
+                    
+                    # --- TU TABLA DE SIEMPRE (DEBAJO DEL GRÁFICO) ---
+                    st.write("### Detalle por Alumno")
                     def resaltar_ausencia(val):
                         color = '#FF4B4B' if val == 'AUSENTE' else '#28a745'
                         return f'color: {color}; font-weight: bold'
-
-                    # Aplicamos el estilo a la columna Asistencia
+        
                     df_estilado = df_mon.style.map(resaltar_ausencia, subset=['Asistencia'])
-
                     st.dataframe(df_estilado, use_container_width=True, hide_index=True)
-                    st.caption(f"✅ Mostrando {len(df_mon)} registros encontrados en la tabla reportes_diarios.")
+                    
+                    st.caption(f"✅ Mostrando {len(df_mon)} registros encontrados.")
+                    
                 else:
-                    st.info(f"Empty Set: No hay registros grabados en la base de datos para el curso {curso_seleccionado} en la clase {id_clase_input}.")
-
+                    st.info(f"No hay registros para {curso_seleccionado} en la clase {id_clase_input}.")
+        
         except Exception as e:
             st.error(f"❌ Error al consultar la base de datos: {e}")
                 
