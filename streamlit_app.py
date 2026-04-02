@@ -865,8 +865,7 @@ elif modo == "Profesor":
             st.success(st.session_state.msg_justificar)
             del st.session_state.msg_justificar
         
-        # --- 7. MONITOR EN TIEMPO REAL (LECTURA DIRECTA DE DB) ---
-        
+      
         # --- 7. MONITOR EN TIEMPO REAL (LECTURA DIRECTA DE DB) ---
         st.divider()
         
@@ -895,11 +894,9 @@ elif modo == "Profesor":
                     # LLAMAMOS A LA COLUMNA FECHA DIRECTO (del primer renglón)
                     fecha_clase = df_mon['Fecha'].iloc[0]
                     
-                    # SUBHEADER CORTO COMO QUERÉS:
+                    # SUBHEADER CORTO:
                     st.subheader(f"📈 {curso_seleccionado} - Clase № {id_clase_input} - {fecha_clase}")
-        
-                    # --- Aquí seguís con el histograma y la tabla ---
-                    # ...
+                    
                     # --- HISTOGRAMA ---
                     # Filtramos solo a los presentes para el histograma de notas reales
                     df_presentes = df_mon[df_mon['Asistencia'] == 'PRESENTE'].copy()
@@ -936,7 +933,7 @@ elif modo == "Profesor":
                         col2.metric("Aprobados", len(df_presentes[df_presentes['Nota Final'] >= 6]))
                         col3.metric("Ausentes", len(df_mon[df_mon['Asistencia'] == 'AUSENTE']))
                     
-                    # --- TU TABLA DE SIEMPRE (DEBAJO DEL GRÁFICO) ---
+                    # --- LA TABLA DE SIEMPRE (DEBAJO DEL GRÁFICO) ---
                     st.write("### Detalle por Alumno")
                     def resaltar_ausencia(val):
                         color = '#FF4B4B' if val == 'AUSENTE' else '#28a745'
