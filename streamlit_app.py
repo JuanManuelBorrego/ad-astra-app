@@ -866,6 +866,48 @@ elif modo == "Profesor":
             del st.session_state.msg_justificar
         
         # --- 7. MONITOR EN TIEMPO REAL (LECTURA DIRECTA DE DB) ---
+        
+        # --- 7. MONITOR EN TIEMPO REAL (LECTURA DIRECTA DE DB) ---
+        st.divider()
+        
+        try:
+            with conectar() as conn:
+                query_monitor = """
+                    SELECT 
+                        alumnos.nombre AS Alumno, 
+                        reportes_diarios.asistencia AS Asistencia,
+                        reportes_diarios.ejercicios_completados AS Hechos, 
+                        reportes_diarios.ejercicios_correctos AS Correctos, 
+                        reportes_diarios.nota_oral AS "Nota Oral",
+                        reportes_diarios.nota_final AS "Nota Final",
+                        clases.fecha AS Fecha
+                    FROM reportes_diarios
+                    INNER JOIN alumnos ON reportes_diarios.id_alumno = alumnos.id_alumno
+                    INNER JOIN clases ON reportes_diarios.id_clase = clases.id_clase
+                    WHERE reportes_diarios.id_clase = ? 
+                    AND UPPER(TRIM(alumnos.curso)) = UPPER(TRIM(?))
+                    ORDER BY alumnos.nombre ASC
+                """
+                
+                df_mon = pd.read_sql_query(query_monitor, conn, params=(id_clase_input, curso_seleccionado))
+                
+                if not df_mon.empty:
+                    # LLAMAMOS A LA COLUMNA FECHA DIRECTO (del primer renglón)
+                    fecha_clase = df_mon['Fecha'].iloc[0]
+                    
+                    # SUBHEADER CORTO COMO QUERÉS:
+                    st.subheader(f"📈 {curso_seleccionado} - Clase № {id_clase_input} - {fecha_clase}")
+        
+                    # --- Aquí seguís con el histograma y la tabla ---
+                    # ...
+                    
+                else:
+                    st.subheader(f"📈 {curso_seleccionado} - Clase № {id_clase_input}")
+                    st.info("No hay registros para esta clase.")
+        
+        except Exception as e:
+            st.error(f"❌ Error: {e}")
+        
         st.divider()
         st.subheader(f"📈 Reportes en DB: {curso_seleccionado} - Clase № {id_clase_input}")
         
