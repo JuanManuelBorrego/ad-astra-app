@@ -470,7 +470,7 @@ if modo == "Estudiantes":
                                 df_repaso[col] = pd.to_numeric(df_repaso[col], errors='coerce').fillna(0).astype(int)
     
                             st.dataframe(
-                                df_repaso.style.applymap(
+                                df_repaso.style.map(
                                     lambda x: 'color: #FF4B4B; font-weight: bold' if x == 'AUSENTE' else 'color: #28a745',
                                     subset=['Asistencia']
                                 ).background_gradient(
