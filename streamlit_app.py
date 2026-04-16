@@ -457,7 +457,7 @@ if modo == "Estudiantes":
                             FROM reportes_diarios r
                             JOIN clases c ON r.id_clase = c.id_clase
                             WHERE r.id_alumno = ?
-                            ORDER BY c.fecha DESC
+                            ORDER BY c.id_clase DESC
                         """
                         df_repaso = pd.read_sql_query(query, conn, params=(id_actual,))
                         conn.close()
