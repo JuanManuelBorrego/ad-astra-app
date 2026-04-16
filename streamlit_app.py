@@ -436,7 +436,8 @@ if modo == "Estudiantes":
                         id_actual = st.session_state.estudiante.id                    
                         # 1. Definimos la Query con la Opción B y el redondeo
                         query = """
-                            SELECT 
+                            SELECT
+                                c.id_clase as "ID Clase"
                                 c.fecha as 'Fecha', 
                                 c.tema as 'Tema', 
                                 r.asistencia as 'Asistencia',
