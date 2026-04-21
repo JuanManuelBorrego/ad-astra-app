@@ -14,10 +14,6 @@ import json
 st.set_page_config(layout="wide") #para que se vea en computadora usando todo el ancho
 
 
-# --- 1. CONFIGURACIÓN DE PÁGINA (SIEMPRE PRIMERO) ---
-import streamlit as st
-import os
-
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #CON ESTA FUNCIÓN MIGRÉ LOS DATOS DEL ARCHIVO "TRANSITORIO" QUE LO VOY A DEJAR SOLAMENTE PARA QUE SEPA CÓMO LO HICE, LO MISMO QUE ESTA FUNCIÓN (tanto el archivo como esta función en realidad deberían ser borrados después de que se cumplió ese traspaso a Turso)
 #from migrar_a_turso import migrar
