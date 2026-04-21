@@ -362,7 +362,7 @@ if modo == "Estudiantes":
                                         st.warning("¡A seguir sumando para entrar al TOP 10!")
 
                                     # Agregamos el promedio personal bien visible debajo del estado
-                                    st.write(f"Tu promedio: **{prom_actual:.2f}**")
+                                    st.write(f"Tu promedio (últimos 3 exámenes): **{prom_actual:.2f}**")
                                     
                                     st.markdown("</div>", unsafe_allow_html=True)
                     else:
