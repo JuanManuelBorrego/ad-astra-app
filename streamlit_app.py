@@ -467,7 +467,6 @@ if modo == "Estudiantes":
                                 # Usamos enumerate para PREGUNTA 1, 2, etc.
                                 for i, (_, p) in enumerate(df_p.iterrows(), 1):
                                     st.markdown(f"#### 🚩 PREGUNTA {i}")
-                                    st.markdown(f"#### 🚩 PREGUNTA {i}")
                                     st.info(f"**{p['enunciado']}**") # Usamos info para que el enunciado resalte
                                     
                                     id_preg = str(p['id_pregunta'])
