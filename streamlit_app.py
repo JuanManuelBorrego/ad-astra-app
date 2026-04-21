@@ -309,15 +309,29 @@ if modo == "Estudiantes":
                             
                             with c_lista:
                                 medallas = {1: "🥇", 2: "🥈", 3: "🥉", 4: "🏅", 5: "🏅"}
-                                # Filtramos para mostrar a todos los que integren el Top 5 (incluyendo empatados)
-                                for i, row in df_ranking[df_ranking['puesto'] <= 5].iterrows():
+                                
+                                # 1. Agrupamos los nombres de los alumnos que comparten el mismo puesto
+                                # Solo tomamos los puestos del 1 al 5
+                                ranking_agrupado = df_ranking[df_ranking['puesto'] <= 5].groupby('puesto')['nombre'].apply(list).reset_index()
+                                
+                                for i, row in ranking_agrupado.iterrows():
                                     p = row['puesto']
                                     emoji = medallas.get(p, "👤")
-                                    es_usuario = " (Vos)" if row['nombre'] == st.session_state.estudiante.nombre else ""
                                     
-                                    # Resaltamos con negrita el podio (1°, 2° y 3°)
-                                    nombre_display = f"**{row['nombre']}**" if p <= 3 else row['nombre']
-                                    st.markdown(f"{emoji} {p}° {nombre_display}{es_usuario}")
+                                    # Formateamos la lista de nombres (Juan, Pedro, Ana)
+                                    nombres_lista = []
+                                    for n in row['nombre']:
+                                        # Resaltamos si uno de los empatados es el usuario actual
+                                        if n == st.session_state.estudiante.nombre:
+                                            nombres_lista.append(f"**{n} (Vos)**")
+                                        else:
+                                            # Negrita para los nombres del podio (1, 2, 3)
+                                            nombres_lista.append(f"**{n}**" if p <= 3 else n)
+                                    
+                                    nombres_juntos = ", ".join(nombres_lista)
+                                    
+                                    # Mostramos una sola línea por puesto con todos sus integrantes
+                                    st.markdown(f"{emoji} {p}° {nombres_juntos}")
 
                             with c_yo:
                                 # --- SECCIÓN PERSONAL IDENTADA ---
