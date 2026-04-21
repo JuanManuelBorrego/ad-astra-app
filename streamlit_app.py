@@ -321,9 +321,21 @@ if modo == "Estudiantes":
                                     st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
                                     st.write("🎯 **Tu Posición**")
                                     
-                                    if p == 1: st.subheader(f"👑 #{p}"); st.success("¡Líder!")
-                                    elif p <= 5: st.subheader(f"✨ #{p}"); st.success("¡En el Cuadro!")
-                                    else: st.subheader(f"🚀 #{p}"); st.info("¡A subir!")
+                                    if p == 1:
+                                        st.subheader(f"👑 #{p}")
+                                        st.success("¡Sos líder del curso!")
+                                    
+                                    elif p <= 5:
+                                        st.subheader(f"✨ #{p}")
+                                        st.success("¡Estás en el Cuadro de Honor!")
+                                    
+                                    elif p <= 10:
+                                        st.subheader(f"⚡ #{p}")
+                                        st.info("Estás en el top 10: ¡A nada de integrar el Cuadro de Honor!")
+                                    
+                                    else:
+                                        st.subheader(f"🚀 #{p}")
+                                        st.warning("¡A seguir sumando!")
                                     st.markdown("</div>", unsafe_allow_html=True)
                     else:
                         st.info("📉 No hay datos suficientes para el curso.")
