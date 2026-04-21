@@ -9,6 +9,7 @@ from config import conectar
 from clases import Alumno
 from funciones import login_alumno, obtener_clase_activa
 import os
+import json
 
 
 # --- 1. CONFIGURACIÓN DE PÁGINA (SIEMPRE PRIMERO) ---
