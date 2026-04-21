@@ -310,18 +310,28 @@ if modo == "Estudiantes":
                             with c_lista:
                                 medallas = {1: "🥇", 2: "🥈", 3: "🥉", 4: "🏅", 5: "🏅"}
                                 
-                                # Mostramos a todos los que integren los primeros 5 puestos
-                                for i, row in df_ranking[df_ranking['puesto'] <= 5].iterrows():
+                                # 1. Agrupamos los nombres de los alumnos que comparten el mismo puesto
+                                # Solo tomamos los puestos del 1 al 5
+                                ranking_agrupado = df_ranking[df_ranking['puesto'] <= 5].groupby('puesto')['nombre'].apply(list).reset_index()
+                                
+                                for i, row in ranking_agrupado.iterrows():
                                     p = row['puesto']
                                     emoji = medallas.get(p, "👤")
-                                    es_usuario = " (Vos)" if row['nombre'] == st.session_state.estudiante.nombre else ""
                                     
-                                    # Resaltamos con negrita el podio
-                                    nombre_display = f"**{row['nombre']}**" if p <= 3 else row['nombre']
+                                    # Formateamos la lista de nombres (Juan, Pedro, Ana)
+                                    nombres_lista = []
+                                    for n in row['nombre']:
+                                        # Resaltamos si uno de los empatados es el usuario actual
+                                        if n == st.session_state.estudiante.nombre:
+                                            nombres_lista.append(f"**{n} (Vos)**")
+                                        else:
+                                            # Negrita para los nombres del podio (1, 2, 3)
+                                            nombres_lista.append(f"**{n}**" if p <= 3 else n)
                                     
-                                    # Esto imprimirá: 🥇 1° Juan, luego 🥇 1° Ana, luego 🥈 2° Pedro...
-                                    st.markdown(f"{emoji} {p}° {nombre_display}{es_usuario}")
-
+                                    nombres_juntos = ", ".join(nombres_lista)
+                                    
+                                    # Mostramos una sola línea por puesto con todos sus integrantes
+                                    st.markdown(f"{emoji} {p}° {nombres_juntos}")
                             with c_yo:
                                 # (Tu bloque personal se mantiene igual, ya usa la variable 'p' del ranking)
                                 yo = df_ranking[df_ranking['nombre'] == st.session_state.estudiante.nombre]
