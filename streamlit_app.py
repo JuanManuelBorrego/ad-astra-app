@@ -256,55 +256,66 @@ if modo == "Estudiantes":
         st.title(f"👨‍🚀 Astro: {st.session_state.estudiante.nombre}")
         st.divider()
 
-        # --- NUEVO: CUADRO DE HONOR (ESTILO RIVER) ---
+        # --- RANKING DINÁMICO (ESTILO RIVER) ---
         try:
             with conectar() as conn:
-                # Calculamos el ranking basado en las últimas 3 clases del curso del alumno
+                # 1. Obtenemos el ranking general de promedios
+                # Nota: Usamos COALESCE para evitar errores si ejercicios_totales es 0
                 query_ranking = """
-                    SELECT a.nombre, AVG(
+                    SELECT a.nombre, 
+                    AVG(
                         CASE 
                             WHEN r.ejercicios_completados = 0 THEN 1.0 
-                            ELSE ((CAST(r.ejercicios_completados AS REAL) / c.ejercicios_totales) + 
-                                 (CAST(r.ejercicios_correctos AS REAL) / r.ejercicios_completados)) / 2 * 10 
+                            ELSE ((CAST(r.ejercicios_completados AS REAL) / NULLIF(c.ejercicios_totales, 0)) + 
+                                 (CAST(r.ejercicios_correctos AS REAL) / NULLIF(r.ejercicios_completados, 0))) / 2 * 10 
                         END
-                    ) as promedio_reciente
+                    ) as promedio
                     FROM reportes_diarios r
                     JOIN clases c ON r.id_clase = c.id_clase
                     JOIN alumnos a ON r.id_alumno = a.id_alumno
-                    WHERE a.curso = ? AND c.id_clase IN (SELECT id_clase FROM clases ORDER BY id_clase DESC LIMIT 3)
+                    WHERE a.curso = ?
                     GROUP BY a.id_alumno
-                    ORDER BY promedio_reciente DESC
+                    ORDER BY promedio DESC
                 """
                 df_ranking = pd.read_sql_query(query_ranking, conn, params=(st.session_state.estudiante.curso,))
                 
-                # Buscamos la posición del alumno actual
                 if not df_ranking.empty:
-                    # El ranking real (índice + 1)
+                    # Calculamos el puesto (1, 2, 3...)
                     df_ranking['puesto'] = range(1, len(df_ranking) + 1)
-                    fila_alumno = df_ranking[df_ranking['nombre'] == st.session_state.estudiante.nombre]
                     
-                    if not fila_alumno.empty:
-                        puesto_actual = fila_alumno.iloc[0]['puesto']
-                        
-                        # Mostramos el Top 5 Público
-                        st.subheader("🏆 Cuadro de Honor (Últimas 3 Clases)")
-                        top_5 = df_ranking.head(5)[['nombre']]
-                        top_5.index = range(1, 6) # Para que luzca 1, 2, 3, 4, 5
-                        st.table(top_5)
-                        
-                        # Mensaje Privado de Posición
-                        if puesto_actual <= 5:
-                            st.success(f"🌟 ¡Felicitaciones! Estás en el puesto {puesto_actual} del Cuadro de Honor.")
-                        elif 6 <= puesto_actual <= 10:
-                            st.info(f"⚡ Puesto {puesto_actual}. ¡Casi entrás al Top 5, estás en el pelotón de élite!")
-                        elif 11 <= puesto_actual <= 20:
-                            st.warning(f"📈 Puesto {puesto_actual}. Tenés un ritmo constante. ¡Buscá el Top 10!")
-                        else:
-                            st.write(f"💪 Puesto {puesto_actual}. Tu meta de hoy: superar tu posición. ¡Cada acierto suma!")
+                    # Filtramos el Top 5 para mostrar
+                    top_5 = df_ranking.head(5).copy()
+                    top_5 = top_5.rename(columns={'nombre': 'Alumno', 'promedio': 'Rendimiento'})
+                    
+                    st.subheader("🏆 Cuadro de Honor")
+                    
+                    # Layout: Tabla a la izquierda, mensaje a la derecha
+                    c_tabla, c_puesto = st.columns([1.5, 1])
+                    
+                    with c_tabla:
+                        # Mostramos solo los nombres en la tabla pública
+                        st.table(top_5[['Alumno']].set_index(pd.Index(range(1, len(top_5) + 1))))
+                    
+                    with c_puesto:
+                        # Buscamos al alumno logueado
+                        yo = df_ranking[df_ranking['nombre'] == st.session_state.estudiante.nombre]
+                        if not yo.empty:
+                            p = yo.iloc[0]['puesto']
+                            st.markdown(f"### Tu posición: **#{p}**")
+                            
+                            if p <= 5:
+                                st.success("🌟 ¡En el Top 5!")
+                            elif p <= 10:
+                                st.info("⚡ ¡Casi entras!")
+                            else:
+                                st.warning("💪 ¡A seguir sumando!")
+                else:
+                    st.info("📉 El ranking se activará cuando haya notas registradas en este curso.")
+                    
         except Exception as e:
-            st.error(f"No se pudo cargar el ranking: {e}")
+            st.warning(f"Aviso: El Cuadro de Honor se está actualizando... ({e})")
 
-        st.divider() # Separador antes del gráfico de barras
+        st.divider()
 
         # --- LÓGICA DE DATOS ---
         notas_anuales = []
