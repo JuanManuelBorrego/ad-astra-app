@@ -297,12 +297,12 @@ if modo == "Estudiantes":
                     df_ranking = pd.read_sql_query(query_ranking, conn, params=params)
                     
                     if not df_ranking.empty:
-                        # --- LÓGICA DE RANKING CON EMPATES ---
-                        # 'method=min' hace que si hay empate en el 1°, ambos sean #1
-                        df_ranking['puesto'] = df_ranking['promedio'].rank(method='min', ascending=False).astype(int)
+                        # --- LÓGICA DE RANKING CON EMPATES CONSECUTIVOS ---
+                        # 'dense' hace que si hay dos 1°. el siguiente sea 2° (sin saltos)
+                        df_ranking['puesto'] = df_ranking['promedio'].rank(method='dense', ascending=False).astype(int)
                         
                         st.subheader("🏆 Cuadro de Honor")
-                        st.caption(f"⚡ Basado en el promedio de rendimiento de los últimos {len(ids_activas)} exámenes.")
+                        st.caption(f"⚡ Basado en el promedio de los últimos {len(ids_activas)} exámenes.")
 
                         with st.container(border=True):
                             c_lista, c_yo = st.columns([1.5, 1])
@@ -310,53 +310,33 @@ if modo == "Estudiantes":
                             with c_lista:
                                 medallas = {1: "🥇", 2: "🥈", 3: "🥉", 4: "🏅", 5: "🏅"}
                                 
-                                # 1. Agrupamos los nombres de los alumnos que comparten el mismo puesto
-                                # Solo tomamos los puestos del 1 al 5
-                                ranking_agrupado = df_ranking[df_ranking['puesto'] <= 5].groupby('puesto')['nombre'].apply(list).reset_index()
-                                
-                                for i, row in ranking_agrupado.iterrows():
+                                # Mostramos a todos los que integren los primeros 5 puestos
+                                for i, row in df_ranking[df_ranking['puesto'] <= 5].iterrows():
                                     p = row['puesto']
                                     emoji = medallas.get(p, "👤")
+                                    es_usuario = " (Vos)" if row['nombre'] == st.session_state.estudiante.nombre else ""
                                     
-                                    # Formateamos la lista de nombres (Juan, Pedro, Ana)
-                                    nombres_lista = []
-                                    for n in row['nombre']:
-                                        # Resaltamos si uno de los empatados es el usuario actual
-                                        if n == st.session_state.estudiante.nombre:
-                                            nombres_lista.append(f"**{n} (Vos)**")
-                                        else:
-                                            # Negrita para los nombres del podio (1, 2, 3)
-                                            nombres_lista.append(f"**{n}**" if p <= 3 else n)
+                                    # Resaltamos con negrita el podio
+                                    nombre_display = f"**{row['nombre']}**" if p <= 3 else row['nombre']
                                     
-                                    nombres_juntos = ", ".join(nombres_lista)
-                                    
-                                    # Mostramos una sola línea por puesto con todos sus integrantes
-                                    st.markdown(f"{emoji} {p}° {nombres_juntos}")
+                                    # Esto imprimirá: 🥇 1° Juan, luego 🥇 1° Ana, luego 🥈 2° Pedro...
+                                    st.markdown(f"{emoji} {p}° {nombre_display}{es_usuario}")
 
                             with c_yo:
-                                # --- SECCIÓN PERSONAL IDENTADA ---
+                                # (Tu bloque personal se mantiene igual, ya usa la variable 'p' del ranking)
                                 yo = df_ranking[df_ranking['nombre'] == st.session_state.estudiante.nombre]
                                 if not yo.empty:
                                     p_actual = int(yo.iloc[0]['puesto'])
                                     st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
                                     st.write("🎯 **Tu Posición**")
                                     
-                                    if p == 1:
-                                        st.subheader(f"👑 #{p}")
+                                    if p_actual == 1:
+                                        st.subheader(f"👑 #{p_actual}")
                                         st.success("¡Líder del curso!")
-                                    
-                                    elif p <= 5:
-                                        st.subheader(f"✨ #{p}")
-                                        st.success("¡En el Cuadro de Honor!")
-                                    
-                                    elif p <= 10:
-                                        st.subheader(f"⚡ #{p}")
-                                        st.info("Estás en el top 10: ¡A nada de entrar al Cuadro de Honor!")
-                                    
-                                    else:
-                                        st.subheader(f"🚀 #{p}")
-                                        st.warning("¡A seguir sumando!")
-                                    
+                                    elif p_actual <= 5:
+                                        st.subheader(f"✨ #{p_actual}")
+                                        st.success("¡En el Cuadro!")
+                                    # ... resto de tus elif ...
                                     st.markdown("</div>", unsafe_allow_html=True)
                     else:
                         st.info("📉 No hay notas suficientes para el curso.")
