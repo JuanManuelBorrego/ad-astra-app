@@ -259,23 +259,22 @@ if modo == "Estudiantes":
         # --- RANKING DINÁMICO (VERSIÓN FINAL: EMPATES + ESTÉTICA) ---
         try:
             with conectar() as conn:
-                # 1. Obtenemos los IDs de las últimas 3 clases con actividad para este curso
+                # 1. Identificamos las últimas 3 clases del CURSO específico
                 cursor = conn.cursor()
                 cursor.execute("""
-                    SELECT DISTINCT r.id_clase 
-                    FROM reportes_diarios r
-                    JOIN alumnos a ON r.id_alumno = a.id_alumno
-                    WHERE a.curso = ?
-                    ORDER BY r.id_clase DESC LIMIT 3
+                    SELECT id_clase 
+                    FROM clases 
+                    WHERE curso = ? 
+                    ORDER BY id_clase DESC LIMIT 3
                 """, (st.session_state.estudiante.curso,))
                 
                 filas = cursor.fetchall()
                 ids_activas = [f[0] for f in filas]
 
                 if ids_activas:
-                    # Construimos los placeholders (?,?,?) según la cantidad de clases encontradas
                     placeholders = ', '.join(['?'] * len(ids_activas))
                     
+                    # 2. La Query ahora solo mira reportes que pertenezcan a esas clases
                     query_ranking = f"""
                         SELECT a.nombre, 
                         AVG(
@@ -288,12 +287,15 @@ if modo == "Estudiantes":
                         FROM reportes_diarios r
                         JOIN clases c ON r.id_clase = c.id_clase
                         JOIN alumnos a ON r.id_alumno = a.id_alumno
-                        WHERE a.curso = ? AND c.id_clase IN ({placeholders})
+                        WHERE c.id_clase IN ({placeholders}) 
+                          AND a.curso = ?
                         GROUP BY a.id_alumno
                         ORDER BY promedio DESC
                     """
                     
-                    params = [st.session_state.estudiante.curso] + ids_activas
+                    # IMPORTANTE: El orden de los parámetros debe coincidir con la query
+                    # Primero los IDs de las clases, luego el curso
+                    params = ids_activas + [st.session_state.estudiante.curso]
                     df_ranking = pd.read_sql_query(query_ranking, conn, params=params)
                     
                     if not df_ranking.empty:
