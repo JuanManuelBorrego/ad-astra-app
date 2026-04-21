@@ -336,6 +336,8 @@ if modo == "Estudiantes":
                                 yo = df_ranking[df_ranking['nombre'] == st.session_state.estudiante.nombre]
                                 if not yo.empty:
                                     p_actual = int(yo.iloc[0]['puesto'])
+                                    prom_actual = float(yo.iloc[0]['promedio']) # Obtenemos el promedio personal
+                                    
                                     st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
                                     st.write("🎯 **Tu Posición**")
                                     
@@ -351,6 +353,10 @@ if modo == "Estudiantes":
                                     else:
                                         st.subheader(f"🚀 #{p_actual}")
                                         st.warning("¡A seguir sumando para entrar al TOP 10!")
+
+                                    # Agregamos el promedio personal bien visible debajo del estado
+                                    st.write(f"Tu promedio: **{prom_actual:.2f}**")
+                                    
                                     st.markdown("</div>", unsafe_allow_html=True)
                     else:
                         st.info("📉 No hay datos suficientes para el ranking.")
