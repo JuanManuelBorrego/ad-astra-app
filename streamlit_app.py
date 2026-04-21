@@ -259,14 +259,12 @@ if modo == "Estudiantes":
         # --- RANKING DINÁMICO (VERSIÓN FINAL SIN ERRORES DE COLUMNA) ---
         try:
             with conectar() as conn:
-                # 1. Identificamos las últimas 3 clases donde alumnos DE ESTE CURSO tuvieron actividad
-                cursor = conn.cursor()
+                # 1. Buscamos las últimas 3 clases donde hubo actividad de ESTE CURSO específico
                 cursor.execute("""
-                    SELECT DISTINCT r.id_clase 
-                    FROM reportes_diarios r
-                    JOIN alumnos a ON r.id_alumno = a.id_alumno
-                    WHERE a.curso = ?
-                    ORDER BY r.id_clase DESC LIMIT 3
+                    SELECT DISTINCT id_clase 
+                    FROM reportes_diarios 
+                    WHERE id_alumno IN (SELECT id_alumno FROM alumnos WHERE curso = ?)
+                    ORDER BY id_clase DESC LIMIT 3
                 """, (st.session_state.estudiante.curso,))
                 
                 filas = cursor.fetchall()
