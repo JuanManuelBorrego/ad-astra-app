@@ -256,16 +256,17 @@ if modo == "Estudiantes":
         st.title(f"👨‍🚀 Astro: {st.session_state.estudiante.nombre}")
         st.divider()
 
-        # --- RANKING DINÁMICO (VERSIÓN FINAL: EMPATES + ESTÉTICA) ---
+        # --- RANKING DINÁMICO (VERSIÓN FINAL SIN ERRORES DE COLUMNA) ---
         try:
             with conectar() as conn:
-                # 1. Identificamos las últimas 3 clases del CURSO específico
+                # 1. Identificamos las últimas 3 clases donde alumnos DE ESTE CURSO tuvieron actividad
                 cursor = conn.cursor()
                 cursor.execute("""
-                    SELECT id_clase 
-                    FROM clases 
-                    WHERE curso = ? 
-                    ORDER BY id_clase DESC LIMIT 3
+                    SELECT DISTINCT r.id_clase 
+                    FROM reportes_diarios r
+                    JOIN alumnos a ON r.id_alumno = a.id_alumno
+                    WHERE a.curso = ?
+                    ORDER BY r.id_clase DESC LIMIT 3
                 """, (st.session_state.estudiante.curso,))
                 
                 filas = cursor.fetchall()
@@ -274,7 +275,7 @@ if modo == "Estudiantes":
                 if ids_activas:
                     placeholders = ', '.join(['?'] * len(ids_activas))
                     
-                    # 2. La Query ahora solo mira reportes que pertenezcan a esas clases
+                    # 2. Query de Ranking: Ahora sí promediamos solo lo que está en esas 3 IDs
                     query_ranking = f"""
                         SELECT a.nombre, 
                         AVG(
@@ -293,36 +294,32 @@ if modo == "Estudiantes":
                         ORDER BY promedio DESC
                     """
                     
-                    # IMPORTANTE: El orden de los parámetros debe coincidir con la query
-                    # Primero los IDs de las clases, luego el curso
+                    # Los parámetros: primero los IDs de las clases, luego el curso para el WHERE final
                     params = ids_activas + [st.session_state.estudiante.curso]
                     df_ranking = pd.read_sql_query(query_ranking, conn, params=params)
                     
                     if not df_ranking.empty:
-                        # --- LÓGICA DE RANKING CON EMPATES ---
-                        # 'method=min' hace que si hay empate en el 1°, ambos sean #1
-                        df_ranking['puesto'] = df_ranking['promedio'].rank(method='min', ascending=False).astype(int)
+                        # --- LÓGICA DE EMPATES 'DENSE' (CONSECUTIVOS) ---
+                        df_ranking['puesto'] = df_ranking['promedio'].rank(method='dense', ascending=False).astype(int)
                         
                         st.subheader("🏆 Cuadro de Honor")
-                        st.caption(f"⚡ Basado en el promedio de rendimiento de los últimos {len(ids_activas)} exámenes.")
+                        st.caption(f"⚡ Promedio de rendimiento en las últimas {len(ids_activas)} clases con actividad.")
 
                         with st.container(border=True):
                             c_lista, c_yo = st.columns([1.5, 1])
                             
                             with c_lista:
                                 medallas = {1: "🥇", 2: "🥈", 3: "🥉", 4: "🏅", 5: "🏅"}
-                                # Filtramos para mostrar a todos los que integren el Top 5 (incluyendo empatados)
-                                for i, row in df_ranking[df_ranking['puesto'] <= 5].iterrows():
+                                # Mostramos a los alumnos en el top 5 de puestos
+                                for _, row in df_ranking[df_ranking['puesto'] <= 5].iterrows():
                                     p = row['puesto']
                                     emoji = medallas.get(p, "👤")
                                     es_usuario = " (Vos)" if row['nombre'] == st.session_state.estudiante.nombre else ""
-                                    
-                                    # Resaltamos con negrita el podio (1°, 2° y 3°)
-                                    nombre_display = f"**{row['nombre']}**" if p <= 3 else row['nombre']
-                                    st.markdown(f"{emoji} {p}° {nombre_display}{es_usuario}")
+                                    nombre_fmt = f"**{row['nombre']}**" if p <= 3 else row['nombre']
+                                    st.markdown(f"{emoji} {p}° {nombre_fmt}{es_usuario}")
 
                             with c_yo:
-                                # --- SECCIÓN PERSONAL IDENTADA ---
+                                # --- POSICIÓN PERSONAL ---
                                 yo = df_ranking[df_ranking['nombre'] == st.session_state.estudiante.nombre]
                                 if not yo.empty:
                                     p_actual = int(yo.iloc[0]['puesto'])
@@ -331,25 +328,21 @@ if modo == "Estudiantes":
                                     
                                     if p_actual == 1:
                                         st.subheader(f"👑 #{p_actual}")
-                                        st.success("Orgullo: ¡Líder del Curso!")
-                                    
+                                        st.success("¡Líder del curso!")
                                     elif p_actual <= 5:
                                         st.subheader(f"✨ #{p_actual}")
-                                        st.success("Orgullo: ¡En el Cuadro de Honor del Curso!")
-                                    
+                                        st.success("¡En el Cuadro!")
                                     elif p_actual <= 10:
                                         st.subheader(f"⚡ #{p_actual}")
-                                        st.info(" Estás en el TOP 10: ¡cerca de integrar el Cuadro de Honor!")
-                                    
+                                        st.info("¡Casi entrás!")
                                     else:
                                         st.subheader(f"🚀 #{p_actual}")
-                                        st.warning("¡A seguir sumando para llegar al TOP 10!")
-                                    
+                                        st.warning("¡A seguir sumando!")
                                     st.markdown("</div>", unsafe_allow_html=True)
                     else:
-                        st.info("📉 No hay notas suficientes para el curso.")
+                        st.info("📉 No hay datos suficientes para el ranking.")
                 else:
-                    st.info("📉 El Cuadro de Honor se activará cuando rindas tu primer examen.")
+                    st.info("📉 El ranking aparecerá cuando se registren las primeras notas.")
                     
         except Exception as e:
             st.error(f"Error técnico en el ranking: {e}")
