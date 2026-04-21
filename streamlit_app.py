@@ -305,7 +305,7 @@ if modo == "Estudiantes":
                         df_ranking['puesto'] = df_ranking['promedio'].rank(method='dense', ascending=False).astype(int)
                         
                         st.subheader("🏆 Cuadro de Honor")
-                        st.caption(f"⚡ Promedio de rendimiento en las últimas {len(ids_activas)} clases con actividad.")
+                        st.caption(f"⚡ Promedio de rendimiento en los últimos {len(ids_activas)} exámenes.")
 
                         with st.container(border=True):
                             c_lista, c_yo = st.columns([1.5, 1])
