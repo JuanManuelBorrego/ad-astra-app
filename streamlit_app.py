@@ -463,49 +463,55 @@ if modo == "Estudiantes":
                                     FROM preguntas WHERE id_clase = ?
                                 """, conn, params=(id_clase_guardada,))
                             
-                            with st.expander("📝 Detalle de tus respuestas", expanded=True):
-                                # Usamos enumerate para PREGUNTA 1, 2, etc.
-                                for i, (_, p) in enumerate(df_p.iterrows(), 1):
-                                    st.markdown(f"#### 🚩 PREGUNTA {i}")
-                                    st.info(f"**{p['enunciado']}**") # Usamos info para que el enunciado resalte
+                            with st.expander("📝 Revisión Pregunta por Pregunta", expanded=True):
+                                
+                                # 1. Inicializamos el índice si no existe
+                                if 'indice_revision' not in st.session_state:
+                                    st.session_state.indice_revision = 0
+                        
+                                # 2. Obtenemos la pregunta actual según el índice del DataFrame que ya descargamos
+                                total_preguntas = len(df_p)
+                                if total_preguntas > 0:
+                                    p = df_p.iloc[st.session_state.indice_revision]
+                                    
+                                    # --- RENDERIZADO DE LA PREGUNTA ACTUAL ---
+                                    st.markdown(f"### PREGUNTA {st.session_state.indice_revision + 1} de {total_preguntas}")
+                                    st.info(f"**{p['enunciado']}**")
                                     
                                     id_preg = str(p['id_pregunta'])
                                     rta_alumno = respuestas_alumno.get(id_preg, 'N')
                                     rta_correcta = str(p['correcta']).strip().upper()
                                     
-                                    # Diccionario de las opciones disponibles en la DB
-                                    opciones_db = {
-                                        'A': p['opc_a'], 
-                                        'B': p['opc_b'], 
-                                        'C': p['opc_c'], 
-                                        'D': p['opc_d']
-                                    }
+                                    opciones_db = {'A': p['opc_a'], 'B': p['opc_b'], 'C': p['opc_c'], 'D': p['opc_d']}
                                     
-                                    # Iteramos por las 4 opciones posibles para mostrarlas todas
                                     for letra, texto_opcion in opciones_db.items():
-                                        if texto_opcion: # Solo mostramos si la opción no está vacía
-                                            
-                                            # CASO 1: Es la que marcó el alumno Y es correcta (Acierto)
+                                        if texto_opcion:
                                             if letra == rta_alumno and letra == rta_correcta:
                                                 st.success(f"🟢 **{letra}) {texto_opcion}** (Tu respuesta)")
-                                                
-                                            # CASO 2: Es la que marcó el alumno PERO es incorrecta (Error)
                                             elif letra == rta_alumno and letra != rta_correcta:
                                                 st.error(f"🔴 **{letra}) {texto_opcion}** (Tu respuesta)")
-                                                
-                                            # CASO 3: No la marcó el alumno PERO es la correcta
                                             elif letra == rta_correcta:
-                                                st.warning(f"✅ **{letra}) {texto_opcion}** (Esta era la correcta)")
-                                                
-                                            # CASO 4: Es una opción incorrecta que el alumno NO marcó
+                                                st.warning(f"✅ **{letra}) {texto_opcion}** (Correcta)")
                                             else:
                                                 st.write(f"⚪ {letra}) {texto_opcion}")
+                        
+                                    # --- NAVEGACIÓN DEL CARRUSEL ---
+                                    st.write("---")
+                                    col_izq, col_der = st.columns(2)
                                     
-                                    # Si el alumno no respondió nada
-                                    if rta_alumno == 'N':
-                                        st.caption("⚠️ *No seleccionaste ninguna respuesta en esta pregunta.*")
-                                    
-                                    st.divider()
+                                    with col_izq:
+                                        # Si estamos en la primera pregunta, el botón se desactiva visualmente o no hace nada
+                                        if st.button("⬅️ Anterior", use_container_width=True, disabled=(st.session_state.indice_revision == 0)):
+                                            st.session_state.indice_revision -= 1
+                                            st.rerun()
+                        
+                                    with col_der:
+                                        # Si estamos en la última, el botón se desactiva
+                                        if st.button("Siguiente ➡️", use_container_width=True, disabled=(st.session_state.indice_revision == total_preguntas - 1)):
+                                            st.session_state.indice_revision += 1
+                                            st.rerun()
+                                else:
+                                    st.write("No hay preguntas para mostrar.")
                                     
                     elif not feedback_ok:
                         st.caption("🔒 La revisión detallada de respuestas no está habilitada por el profesor.")
