@@ -467,25 +467,45 @@ if modo == "Estudiantes":
                                 # Usamos enumerate para PREGUNTA 1, 2, etc.
                                 for i, (_, p) in enumerate(df_p.iterrows(), 1):
                                     st.markdown(f"#### 🚩 PREGUNTA {i}")
+                                    st.markdown(f"#### 🚩 PREGUNTA {i}")
+                                    st.info(f"**{p['enunciado']}**") # Usamos info para que el enunciado resalte
                                     
-                                    # Sincronización por ID (convertido a string para el JSON)
                                     id_preg = str(p['id_pregunta'])
-                                    rta_dada = respuestas_alumno.get(id_preg)
-                                    # 1. Agregamos .strip() aquí para limpiar la letra de la DB (evita que "A " != "A")
-                                    correcta_limpia = str(p['correcta']).strip()
-                                    es_correcta = (rta_dada == correcta_limpia)
+                                    rta_alumno = respuestas_alumno.get(id_preg, 'N')
+                                    rta_correcta = str(p['correcta']).strip().upper()
                                     
-                                    textos = {
-                                        'A': p['opc_a'], 'B': p['opc_b'], 'C': p['opc_c'], 
-                                        'D': p['opc_d'], 'N': '⚪ No respondida'
+                                    # Diccionario de las opciones disponibles en la DB
+                                    opciones_db = {
+                                        'A': p['opc_a'], 
+                                        'B': p['opc_b'], 
+                                        'C': p['opc_c'], 
+                                        'D': p['opc_d']
                                     }
                                     
-                                    color = "green" if es_correcta else "red"
-                                    st.write(f"**{p['enunciado']}**")
-                                    st.write(f"Tu respuesta: :{color}[{textos.get(rta_dada, 'N/A')}]")
+                                    # Iteramos por las 4 opciones posibles para mostrarlas todas
+                                    for letra, texto_opcion in opciones_db.items():
+                                        if texto_opcion: # Solo mostramos si la opción no está vacía
+                                            
+                                            # CASO 1: Es la que marcó el alumno Y es correcta (Acierto)
+                                            if letra == rta_alumno and letra == rta_correcta:
+                                                st.success(f"🟢 **{letra}) {texto_opcion}** (Tu respuesta)")
+                                                
+                                            # CASO 2: Es la que marcó el alumno PERO es incorrecta (Error)
+                                            elif letra == rta_alumno and letra != rta_correcta:
+                                                st.error(f"🔴 **{letra}) {texto_opcion}** (Tu respuesta)")
+                                                
+                                            # CASO 3: No la marcó el alumno PERO es la correcta
+                                            elif letra == rta_correcta:
+                                                st.warning(f"✅ **{letra}) {texto_opcion}** (Esta era la correcta)")
+                                                
+                                            # CASO 4: Es una opción incorrecta que el alumno NO marcó
+                                            else:
+                                                st.write(f"⚪ {letra}) {texto_opcion}")
                                     
-                                    if not es_correcta:
-                                        st.success(f"✔️ La correcta era: **{textos.get(p['correcta'])}**")
+                                    # Si el alumno no respondió nada
+                                    if rta_alumno == 'N':
+                                        st.caption("⚠️ *No seleccionaste ninguna respuesta en esta pregunta.*")
+                                    
                                     st.divider()
                                     
                     elif not feedback_ok:
