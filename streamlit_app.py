@@ -437,6 +437,7 @@ if modo == "Estudiantes":
                 
                 # --- 1. LÓGICA DE REVISIÓN DETALLADA (ÚLTIMO EXAMEN) ---
                 try:
+                    # Consultas rápidas iniciales para saber si hay algo que mostrar
                     with conectar() as conn:
                         cursor = conn.cursor()
                         cursor.execute("SELECT feedback_visible FROM configuracion_clase WHERE id = 1")
@@ -446,33 +447,32 @@ if modo == "Estudiantes":
                         cursor.execute("SELECT id_clase, respuestas_json FROM ultimo_examen_alumno WHERE id_alumno = ?", 
                                        (st.session_state.estudiante.id,))
                         datos_memoria = cursor.fetchone()
-                
+
                     if datos_memoria and feedback_ok:
                         id_clase_guardada, json_respuestas = datos_memoria
                         st.info(f"💡 Tenés disponible la revisión detallada (Clase ID: {id_clase_guardada})")
                         
-                        # EL SECRETO: Usar una variable en session_state para mantener la vista abierta
+                        # Al tocar este botón, cargamos TODO a la memoria una sola vez
                         if st.button(f"🔎 MIRÁ TU ÚLTIMO EXAMEN CORREGIDO", key="btn_feedback_detallado", use_container_width=True):
                             st.session_state.mostrar_detalles = True
-                            st.session_state.indice_revision = 0  # Reiniciar al abrir
+                            st.session_state.indice_revision = 0
                             
-                        # Si la vista está activa, ejecutamos el carrusel
-                        if st.session_state.get('mostrar_detalles', False):
+                            # DESCARGA ÚNICA DE PREGUNTAS
+                            with conectar() as conn:
+                                st.session_state.df_revision = pd.read_sql_query(
+                                    "SELECT id_pregunta, enunciado, correcta, opc_a, opc_b, opc_c, opc_d FROM preguntas WHERE id_clase = ?", 
+                                    conn, params=(id_clase_guardada,)
+                                )
+                            st.session_state.rtas_alumno_dict = json.loads(json_respuestas)
+                            st.session_state.clase_actual_revision = id_clase_guardada
+
+                        # Si la revisión está activa y tenemos los datos en memoria...
+                        if st.session_state.get('mostrar_detalles', False) and 'df_revision' in st.session_state:
                             
-                            # Traemos las preguntas UNA SOLA VEZ y las guardamos en memoria
-                            if 'df_revision' not in st.session_state or st.session_state.clase_cargada != id_clase_guardada:
-                                with conectar() as conn:
-                                    st.session_state.df_revision = pd.read_sql_query(
-                                        "SELECT id_pregunta, enunciado, correcta, opc_a, opc_b, opc_c, opc_d FROM preguntas WHERE id_clase = ?", 
-                                        conn, params=(id_clase_guardada,)
-                                    )
-                                st.session_state.clase_cargada = id_clase_guardada
-                                st.session_state.rtas_alumno_dict = json.loads(json_respuestas)
-                
                             df_p = st.session_state.df_revision
                             respuestas_alumno = st.session_state.rtas_alumno_dict
                             total_preguntas = len(df_p)
-                
+
                             with st.expander("📝 Detalle de tus respuestas", expanded=True):
                                 p = df_p.iloc[st.session_state.indice_revision]
                                 
@@ -483,36 +483,22 @@ if modo == "Estudiantes":
                                 id_preg = str(p['id_pregunta'])
                                 rta_alumno = respuestas_alumno.get(id_preg, 'N')
                                 rta_correcta = str(p['correcta']).strip().upper()
-                                
-                                opciones_db = {
-                                    'A': p['opc_a'], 
-                                    'B': p['opc_b'], 
-                                    'C': p['opc_c'], 
-                                    'D': p['opc_d']
-                                }
+                                opciones_db = {'A': p['opc_a'], 'B': p['opc_b'], 'C': p['opc_c'], 'D': p['opc_d']}
                                 
                                 for letra, texto_opcion in opciones_db.items():
                                     if texto_opcion:
-                                        # CASO 1: Correcta y marcada por alumno
                                         if letra == rta_alumno and letra == rta_correcta:
                                             st.success(f"🟢 **{letra}) {texto_opcion}** (Tu respuesta)")
-                                        
-                                        # CASO 2: Incorrecta y marcada por alumno
                                         elif letra == rta_alumno and letra != rta_correcta:
                                             st.error(f"🔴 **{letra}) {texto_opcion}** (Tu respuesta)")
-                                        
-                                        # CASO 3: Es la correcta (pero el alumno no la marcó o marcó otra)
                                         elif letra == rta_correcta:
-                                            st.warning(f"✅ **{letra}) {texto_opcion}** (Esta era la correcta)")
-                                        
-                                        # CASO 4: Opción incorrecta no marcada
+                                            st.warning(f"✅ **{letra}) {texto_opcion}** (Correcta)")
                                         else:
                                             st.write(f"⚪ {letra}) {texto_opcion}")
-                        
+
                                 if rta_alumno == 'N':
-                                    st.caption("⚠️ *No seleccionaste ninguna respuesta en esta pregunta.*")
-                                # --- FIN DE LÓGICA DE OPCIONES ---
-                                
+                                    st.caption("⚠️ *No seleccionaste ninguna respuesta.*")
+
                                 st.divider()
                                 col_izq, col_der, col_cerrar = st.columns([1, 1, 1])
                                 
@@ -520,7 +506,7 @@ if modo == "Estudiantes":
                                     if st.button("⬅️ Anterior", disabled=(st.session_state.indice_revision == 0)):
                                         st.session_state.indice_revision -= 1
                                         st.rerun()
-                
+
                                 with col_der:
                                     if st.button("Siguiente ➡️", disabled=(st.session_state.indice_revision == total_preguntas - 1)):
                                         st.session_state.indice_revision += 1
@@ -529,16 +515,18 @@ if modo == "Estudiantes":
                                 with col_cerrar:
                                     if st.button("❌ Cerrar"):
                                         st.session_state.mostrar_detalles = False
+                                        # Opcional: limpiar memoria para que no pese el session_state
+                                        if 'df_revision' in st.session_state:
+                                            del st.session_state.df_revision
                                         st.rerun()
-                
-                    elif not feedback_ok:
-                        st.caption("🔒 La revisión no está habilitada por el profesor.")
+
+                    elif not feedback_ok and datos_memoria:
+                        st.caption("🔒 La revisión detallada no está habilitada por el profesor.")
                     else:
-                        st.caption("ℹ️ No hay un examen reciente guardado para revisión detallada.")
-                        
+                        st.caption("ℹ️ No hay un examen reciente guardado.")
+
                 except Exception as e:
                     st.error(f"Error al cargar revisión: {e}")
-
                 # --- 2. TU HISTORIAL GENERAL (TABLA REPORTES_DIARIOS) ---
                 st.markdown("---")
                 st.subheader("📖 Tu Historial de Aprendizaje")
