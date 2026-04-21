@@ -111,6 +111,37 @@ def aplicar_interfaz_cientifica():
             box-sizing: border-box !important;
         }
 
+        /* --- ROMPER LÍMITES DE ANCHO EN CUADROS DE REVISIÓN --- */
+        
+        /* 1. Forzar que el contenedor de la columna no limite el ancho */
+        [data-testid="column"] > div > div > div > div {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        /* 2. Forzar que los expanders y tarjetas ocupen todo el espacio disponible */
+        div[data-testid="stForm"], div.stCard, .stExpander, .stChatMessage {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 100% !important;
+            background: rgba(255, 255, 255, 0.08) !important;
+            backdrop-filter: blur(12px);
+            padding: 1.5rem !important;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* 3. El secreto: atacar el contenedor de bloque vertical de Streamlit */
+        [data-testid="stVerticalBlock"] {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        /* 4. Asegurar que el contenido dentro del expander no tenga márgenes locos */
+        .stExpander div[role="ant-collapse-content"] {
+            width: 100% !important;
+        }
+
         /* Quitar el límite de ancho que Streamlit le pone a los bloques de contenido internos */
         [data-testid="stVerticalBlock"] > div {
             width: 100% !important;
