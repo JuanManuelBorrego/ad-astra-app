@@ -275,21 +275,23 @@ if modo == "Estudiantes":
                 if ids_activas:
                     placeholders = ', '.join(['?'] * len(ids_activas))
                     
-                    # 2. Query de Ranking: Ahora sí promediamos solo lo que está en esas 3 IDs
+                    # 2. Query de Ranking Blindada: Fuerza el 1.0 si no hay reporte
                     query_ranking = f"""
                         SELECT a.nombre, 
                         AVG(
-                            CASE 
-                                WHEN r.ejercicios_completados = 0 THEN 1.0 
-                                ELSE ((CAST(r.ejercicios_completados AS REAL) / NULLIF(c.ejercicios_totales, 0)) + 
-                                     (CAST(r.ejercicios_correctos AS REAL) / NULLIF(r.ejercicios_completados, 0))) / 2 * 10 
-                            END
+                            COALESCE(
+                                CASE 
+                                    WHEN r.ejercicios_completados = 0 THEN 1.0 
+                                    ELSE ((CAST(r.ejercicios_completados AS REAL) / NULLIF(c.ejercicios_totales, 0)) + 
+                                         (CAST(r.ejercicios_correctos AS REAL) / NULLIF(r.ejercicios_completados, 0))) / 2 * 10 
+                                END, 
+                                1.0 -- Si el reporte no existe (NULL), promedia un 1.0
+                            )
                         ) as promedio
-                        FROM reportes_diarios r
-                        JOIN clases c ON r.id_clase = c.id_clase
-                        JOIN alumnos a ON r.id_alumno = a.id_alumno
-                        WHERE c.id_clase IN ({placeholders}) 
-                          AND a.curso = ?
+                        FROM alumnos a
+                        CROSS JOIN (SELECT id_clase, ejercicios_totales FROM clases WHERE id_clase IN ({placeholders})) c
+                        LEFT JOIN reportes_diarios r ON a.id_alumno = r.id_alumno AND c.id_clase = r.id_clase
+                        WHERE a.curso = ?
                         GROUP BY a.id_alumno
                         ORDER BY promedio DESC
                     """
