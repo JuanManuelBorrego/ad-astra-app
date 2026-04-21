@@ -256,6 +256,56 @@ if modo == "Estudiantes":
         st.title(f"👨‍🚀 Astro: {st.session_state.estudiante.nombre}")
         st.divider()
 
+        # --- NUEVO: CUADRO DE HONOR (ESTILO RIVER) ---
+        try:
+            with conectar() as conn:
+                # Calculamos el ranking basado en las últimas 3 clases del curso del alumno
+                query_ranking = """
+                    SELECT a.nombre, AVG(
+                        CASE 
+                            WHEN r.ejercicios_completados = 0 THEN 1.0 
+                            ELSE ((CAST(r.ejercicios_completados AS REAL) / c.ejercicios_totales) + 
+                                 (CAST(r.ejercicios_correctos AS REAL) / r.ejercicios_completados)) / 2 * 10 
+                        END
+                    ) as promedio_reciente
+                    FROM reportes_diarios r
+                    JOIN clases c ON r.id_clase = c.id_clase
+                    JOIN alumnos a ON r.id_alumno = a.id_alumno
+                    WHERE a.curso = ? AND c.id_clase IN (SELECT id_clase FROM clases ORDER BY id_clase DESC LIMIT 3)
+                    GROUP BY a.id_alumno
+                    ORDER BY promedio_reciente DESC
+                """
+                df_ranking = pd.read_sql_query(query_ranking, conn, params=(st.session_state.estudiante.curso,))
+                
+                # Buscamos la posición del alumno actual
+                if not df_ranking.empty:
+                    # El ranking real (índice + 1)
+                    df_ranking['puesto'] = range(1, len(df_ranking) + 1)
+                    fila_alumno = df_ranking[df_ranking['nombre'] == st.session_state.estudiante.nombre]
+                    
+                    if not fila_alumno.empty:
+                        puesto_actual = fila_alumno.iloc[0]['puesto']
+                        
+                        # Mostramos el Top 5 Público
+                        st.subheader("🏆 Cuadro de Honor (Últimas 3 Clases)")
+                        top_5 = df_ranking.head(5)[['nombre']]
+                        top_5.index = range(1, 6) # Para que luzca 1, 2, 3, 4, 5
+                        st.table(top_5)
+                        
+                        # Mensaje Privado de Posición
+                        if puesto_actual <= 5:
+                            st.success(f"🌟 ¡Felicitaciones! Estás en el puesto {puesto_actual} del Cuadro de Honor.")
+                        elif 6 <= puesto_actual <= 10:
+                            st.info(f"⚡ Puesto {puesto_actual}. ¡Casi entrás al Top 5, estás en el pelotón de élite!")
+                        elif 11 <= puesto_actual <= 20:
+                            st.warning(f"📈 Puesto {puesto_actual}. Tenés un ritmo constante. ¡Buscá el Top 10!")
+                        else:
+                            st.write(f"💪 Puesto {puesto_actual}. Tu meta de hoy: superar tu posición. ¡Cada acierto suma!")
+        except Exception as e:
+            st.error(f"No se pudo cargar el ranking: {e}")
+
+        st.divider() # Separador antes del gráfico de barras
+
         # --- LÓGICA DE DATOS ---
         notas_anuales = []
         labels_anuales = ['1° Trim', '2° Trim', '3° Trim']
