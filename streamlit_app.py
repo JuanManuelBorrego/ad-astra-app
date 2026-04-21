@@ -471,7 +471,9 @@ if modo == "Estudiantes":
                                     # Sincronización por ID (convertido a string para el JSON)
                                     id_preg = str(p['id_pregunta'])
                                     rta_dada = respuestas_alumno.get(id_preg)
-                                    es_correcta = (rta_dada == p['correcta'])
+                                    # 1. Agregamos .strip() aquí para limpiar la letra de la DB (evita que "A " != "A")
+                                    correcta_limpia = str(p['correcta']).strip()
+                                    es_correcta = (rta_dada == correcta_limpia)
                                     
                                     textos = {
                                         'A': p['opc_a'], 'B': p['opc_b'], 'C': p['opc_c'], 
