@@ -400,7 +400,6 @@ if modo == "Estudiantes":
                                 )
 
                                 # --- NUEVO: GUARDAR ÚLTIMO EXAMEN EN JSON ---
-                                import json
                                 try:
                                     # Convertimos el diccionario a una cadena de texto (JSON)
                                     respuestas_json = json.dumps(st.session_state.respuestas_temporales)
