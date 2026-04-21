@@ -435,7 +435,7 @@ if modo == "Estudiantes":
                 
             if st.session_state.get('ver_historial', False):
                 
-                # --- 1. LÓGICA DE REVISIÓN DETALLADA (MODO LISTA FLUIDA) ---
+                # --- 1. LÓGICA DE REVISIÓN DETALLADA (MODO LISTA CON BOTÓN) ---
                 try:
                     with conectar() as conn:
                         cursor = conn.cursor()
@@ -449,10 +449,18 @@ if modo == "Estudiantes":
                 
                     if datos_memoria and feedback_ok:
                         id_clase_guardada, json_respuestas = datos_memoria
-                        st.info(f"💡 Revisión detallada disponible para la Clase ID: {id_clase_guardada}")
+                        st.info(f"💡 Revisión detallada disponible (Clase ID: {id_clase_guardada})")
                         
-                        if st.checkbox("🔎 Mostrar todas las respuestas corregidas", value=False):
-                            # Traemos todas las preguntas de una sola vez
+                        # Inicializamos la variable de estado si no existe
+                        if 'ver_revision' not in st.session_state:
+                            st.session_state.ver_revision = False
+                
+                        # Botón para activar la vista
+                        if st.button("🔎 MIRÁ TU ÚLTIMO EXAMEN CORREGIDO", use_container_width=True):
+                            st.session_state.ver_revision = True
+                
+                        # Si el estado es True, mostramos la lista completa
+                        if st.session_state.ver_revision:
                             with conectar() as conn:
                                 df_p = pd.read_sql_query(
                                     "SELECT id_pregunta, enunciado, correcta, opc_a, opc_b, opc_c, opc_d FROM preguntas WHERE id_clase = ?", 
@@ -462,7 +470,6 @@ if modo == "Estudiantes":
                             respuestas_alumno = json.loads(json_respuestas)
                             
                             with st.expander("📝 Detalle de tu examen", expanded=True):
-                                # Usamos enumerate para PREGUNTA 1, 2, etc. en forma de lista
                                 for i, (_, p) in enumerate(df_p.iterrows(), 1):
                                     st.markdown(f"#### 🚩 PREGUNTA {i}")
                                     st.info(f"**{p['enunciado']}**")
@@ -473,7 +480,6 @@ if modo == "Estudiantes":
                                     
                                     opciones_db = {'A': p['opc_a'], 'B': p['opc_b'], 'C': p['opc_c'], 'D': p['opc_d']}
                                     
-                                    # Dibujamos las 4 opciones con sus colores
                                     for letra, texto_opcion in opciones_db.items():
                                         if texto_opcion:
                                             if letra == rta_alumno and letra == rta_correcta:
@@ -488,7 +494,12 @@ if modo == "Estudiantes":
                                     if rta_alumno == 'N':
                                         st.caption("⚠️ *No seleccionaste ninguna respuesta.*")
                                     
-                                    st.divider() # Separador entre preguntas
+                                    st.divider()
+                                
+                                # Botón opcional para volver a ocultar la lista
+                                if st.button("Ocultar revisión"):
+                                    st.session_state.ver_revision = False
+                                    st.rerun()
                 
                     elif not feedback_ok and datos_memoria:
                         st.caption("🔒 La revisión detallada no está habilitada por el profesor.")
@@ -496,7 +507,9 @@ if modo == "Estudiantes":
                         st.caption("ℹ️ No hay un examen reciente para revisar.")
                 
                 except Exception as e:
-                    st.error(f"Error al cargar revisión: {e}")                # --- 2. TU HISTORIAL GENERAL (TABLA REPORTES_DIARIOS) ---
+                    st.error(f"Error al cargar revisión: {e}")                
+                           
+                # --- 2. TU HISTORIAL GENERAL (TABLA REPORTES_DIARIOS) ---
                 st.markdown("---")
                 st.subheader("📖 Tu Historial de Aprendizaje")
                 
