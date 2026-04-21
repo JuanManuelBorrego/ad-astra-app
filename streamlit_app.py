@@ -266,7 +266,7 @@ if modo == "Estudiantes":
                     FROM reportes_diarios r
                     JOIN alumnos a ON r.id_alumno = a.id_alumno
                     WHERE a.curso = ?
-                    ORDER BY r.id_clase DESC LIMIT 3
+                    ORDER BY r.id_clase DESC LIMIT 5
                 """, (st.session_state.estudiante.curso,))
                 
                 filas = cursor.fetchall()
