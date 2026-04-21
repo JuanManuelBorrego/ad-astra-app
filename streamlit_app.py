@@ -329,19 +329,19 @@ if modo == "Estudiantes":
                                     
                                     if p_actual == 1:
                                         st.subheader(f"👑 #{p_actual}")
-                                        st.success("¡Líder del curso!")
+                                        st.success("Orgullo: ¡Líder del Curso!")
                                     
                                     elif p_actual <= 5:
                                         st.subheader(f"✨ #{p_actual}")
-                                        st.success("¡En el Cuadro de Honor del curso!")
+                                        st.success("Orgullo: ¡En el Cuadro de Honor del Curso!")
                                     
                                     elif p_actual <= 10:
                                         st.subheader(f"⚡ #{p_actual}")
-                                        st.info(" Estás en el TOP 10: ¡estás a nada de entrar en el Cuadro de Honor del curso!")
+                                        st.info(" Estás en el TOP 10: ¡cerca de integrar el Cuadro de Honor!")
                                     
                                     else:
                                         st.subheader(f"🚀 #{p_actual}")
-                                        st.warning("¡A seguir sumando para llegar a estar en el TOP 10!")
+                                        st.warning("¡A seguir sumando para llegar al TOP 10!")
                                     
                                     st.markdown("</div>", unsafe_allow_html=True)
                     else:
