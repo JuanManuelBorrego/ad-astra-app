@@ -435,54 +435,66 @@ if modo == "Estudiantes":
                 
             if st.session_state.get('ver_historial', False):
                 
-                # --- NUEVA LÓGICA DE CONSULTA DE ÚLTIMO EXAMEN ---
+                # --- 1. LÓGICA DE REVISIÓN DETALLADA (ÚLTIMO EXAMEN) ---
                 try:
                     with conectar() as conn:
                         cursor = conn.cursor()
-                        # 1. Verificamos si el profesor habilitó el feedback
+                        # Verificamos permiso del profesor
                         cursor.execute("SELECT feedback_visible FROM configuracion_clase WHERE id = 1")
-                        feedback_ok = cursor.fetchone()[0] == 1
+                        res_f = cursor.fetchone()
+                        feedback_ok = res_f[0] == 1 if res_f else False
                         
-                        # 2. Buscamos si este alumno tiene un examen en la "memoria"
+                        # Buscamos datos en la tabla de memoria
                         cursor.execute("SELECT id_clase, respuestas_json FROM ultimo_examen_alumno WHERE id_alumno = ?", 
                                        (st.session_state.estudiante.id,))
                         datos_memoria = cursor.fetchone()
 
-                    # Si hay datos y está permitido, mostramos el botón destacado
                     if datos_memoria and feedback_ok:
                         id_clase_guardada, json_respuestas = datos_memoria
+                        st.info(f"💡 Tienes disponible la revisión detallada (Clase {id_clase_guardada})")
                         
-                        st.info(f"💡 Tenés disponible la revisión de la Clase de ID: {id_clase_guardada}")
-                        if st.button(f"🔎 VER TU ÚLTIMO EXAMEN CORREGIDO", key="btn_feedback_detallado"):
+                        # Botón para desplegar la corrección
+                        if st.button(f"🔎 VER TU ÚLTIMO EXAMEN CORREGIDO", key="btn_feedback_detallado", use_container_width=True):
                             respuestas_alumno = json.loads(json_respuestas)
                             
-                            # Traemos las preguntas de esa clase para comparar
                             with conectar() as conn:
                                 df_p = pd.read_sql_query("""
                                     SELECT id_pregunta, enunciado, correcta, opc_a, opc_b, opc_c, opc_d 
                                     FROM preguntas WHERE id_clase = ?
                                 """, conn, params=(id_clase_guardada,))
                             
-                            # Mostramos los resultados en un expander para no ocupar tanto espacio inicial
                             with st.expander("📝 Detalle de tus respuestas", expanded=True):
-                                for _, p in df_p.iterrows():
-                                    rta_dada = respuestas_alumno.get(str(p['id_pregunta']))
-                                    es_correcta = rta_dada == p['correcta']
-                                    textos = {'A': p['opc_a'], 'B': p['opc_b'], 'C': p['opc_c'], 'D': p['opc_d'], 'N': 'No respondida'}
+                                # Usamos enumerate para PREGUNTA 1, 2, etc.
+                                for i, (_, p) in enumerate(df_p.iterrows(), 1):
+                                    st.markdown(f"#### 🚩 PREGUNTA {i}")
+                                    
+                                    # Sincronización por ID (convertido a string para el JSON)
+                                    id_preg = str(p['id_pregunta'])
+                                    rta_dada = respuestas_alumno.get(id_preg)
+                                    es_correcta = (rta_dada == p['correcta'])
+                                    
+                                    textos = {
+                                        'A': p['opc_a'], 'B': p['opc_b'], 'C': p['opc_c'], 
+                                        'D': p['opc_d'], 'N': '⚪ No respondida'
+                                    }
                                     
                                     color = "green" if es_correcta else "red"
                                     st.write(f"**{p['enunciado']}**")
-                                    st.write(f"Marcaste: :{color}[{textos.get(rta_dada, 'N/A')}]")
+                                    st.write(f"Tu respuesta: :{color}[{textos.get(rta_dada, 'N/A')}]")
+                                    
                                     if not es_correcta:
-                                        st.write(f"La correcta era: **{textos.get(p['correcta'])}**")
+                                        st.success(f"✔️ La correcta era: **{textos.get(p['correcta'])}**")
                                     st.divider()
+                                    
                     elif not feedback_ok:
-                        st.caption("🔒 La revisión detallada de respuestas no está habilitada.")
+                        st.caption("🔒 La revisión detallada de respuestas no está habilitada por el profesor.")
+                    else:
+                        st.caption("ℹ️ No hay un examen reciente guardado para revisión detallada.")
                         
                 except Exception as e:
                     st.error(f"Error al cargar revisión: {e}")
 
-                # --- EL RESTO DE TU CÓDIGO (La tabla de historial que ya tenías) ---
+                # --- 2. TU HISTORIAL GENERAL (TABLA REPORTES_DIARIOS) ---
                 st.markdown("---")
                 st.subheader("📖 Tu Historial de Aprendizaje")
                 
