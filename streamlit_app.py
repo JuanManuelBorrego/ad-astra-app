@@ -256,11 +256,10 @@ if modo == "Estudiantes":
         st.title(f"👨‍🚀 Astro: {st.session_state.estudiante.nombre}")
         st.divider()
 
-        # --- RANKING DINÁMICO (ESTILO RIVER) ---
+        # --- RANKING DINÁMICO (ESTILO RIVER - ÚLTIMOS 3 EXÁMENES) ---
         try:
             with conectar() as conn:
-                # 1. Obtenemos el ranking general de promedios
-                # Nota: Usamos COALESCE para evitar errores si ejercicios_totales es 0
+                # Query que filtra solo los últimos 3 exámenes con datos del curso
                 query_ranking = """
                     SELECT a.nombre, 
                     AVG(
@@ -273,47 +272,57 @@ if modo == "Estudiantes":
                     FROM reportes_diarios r
                     JOIN clases c ON r.id_clase = c.id_clase
                     JOIN alumnos a ON r.id_alumno = a.id_alumno
-                    WHERE a.curso = ?
+                    WHERE a.curso = ? 
+                      AND c.id_clase IN (SELECT id_clase FROM clases ORDER BY id_clase DESC LIMIT 3)
                     GROUP BY a.id_alumno
                     ORDER BY promedio DESC
                 """
                 df_ranking = pd.read_sql_query(query_ranking, conn, params=(st.session_state.estudiante.curso,))
                 
                 if not df_ranking.empty:
-                    # Calculamos el puesto (1, 2, 3...)
                     df_ranking['puesto'] = range(1, len(df_ranking) + 1)
                     
-                    # Filtramos el Top 5 para mostrar
-                    top_5 = df_ranking.head(5).copy()
-                    top_5 = top_5.rename(columns={'nombre': 'Alumno', 'promedio': 'Rendimiento'})
-                    
-                    st.subheader("🏆 Cuadro de Honor")
-                    
-                    # Layout: Tabla a la izquierda, mensaje a la derecha
-                    c_tabla, c_puesto = st.columns([1.5, 1])
-                    
-                    with c_tabla:
-                        # Mostramos solo los nombres en la tabla pública
-                        st.table(top_5[['Alumno']].set_index(pd.Index(range(1, len(top_5) + 1))))
-                    
-                    with c_puesto:
-                        # Buscamos al alumno logueado
-                        yo = df_ranking[df_ranking['nombre'] == st.session_state.estudiante.nombre]
-                        if not yo.empty:
-                            p = yo.iloc[0]['puesto']
-                            st.markdown(f"### Tu posición: **#{p}**")
+                    st.markdown("### 🏆 Cuadro de Honor")
+                    st.caption("⚡ Basado en el rendimiento de los **últimos 3 exámenes**")
+
+                    # Creamos un contenedor con borde para que resalte
+                    with st.container(border=True):
+                        c_cuadro, c_personal = st.columns([1.5, 1])
+                        
+                        with c_cuadro:
+                            # Dibujitos/Emojis por puesto
+                            iconos = {1: "🥇", 2: "🥈", 3: "🥉", 4: "👤", 5: "👤"}
                             
-                            if p <= 5:
-                                st.success("🌟 ¡En el Top 5!")
-                            elif p <= 10:
-                                st.info("⚡ ¡Casi entras!")
-                            else:
-                                st.warning("💪 ¡A seguir sumando!")
+                            for i, row in df_ranking.head(5).iterrows():
+                                p = row['puesto']
+                                icono = iconos.get(p, "👤")
+                                # Mostramos una línea estética por cada top-performer
+                                st.markdown(f"{icono} **{p}° {row['nombre']}**")
+                        
+                        with c_personal:
+                            yo = df_ranking[df_ranking['nombre'] == st.session_state.estudiante.nombre]
+                            if not yo.empty:
+                                p_yo = yo.iloc[0]['puesto']
+                                st.write("🎯 **Tu Rendimiento**")
+                                
+                                # Estética de medalla personal
+                                if p_yo == 1:
+                                    st.subheader(f"👑 #{p_yo}")
+                                    st.success("¡Sos el líder!")
+                                elif p_yo <= 5:
+                                    st.subheader(f"🎖️ #{p_yo}")
+                                    st.success("¡Estás en el cuadro!")
+                                elif p_yo <= 10:
+                                    st.subheader(f"⚡ #{p_yo}")
+                                    st.info("¡Casi entrás!")
+                                else:
+                                    st.subheader(f"🚀 #{p_yo}")
+                                    st.warning("¡A seguir escalando!")
                 else:
-                    st.info("📉 El ranking se activará cuando haya notas registradas en este curso.")
+                    st.info("📉 El ranking se activará cuando haya notas registradas en las últimas clases.")
                     
         except Exception as e:
-            st.warning(f"Aviso: El Cuadro de Honor se está actualizando... ({e})")
+            st.error(f"Error cargando el ranking: {e}")
 
         st.divider()
 
