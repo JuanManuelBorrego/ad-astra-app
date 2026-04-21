@@ -11,7 +11,6 @@ from funciones import login_alumno, obtener_clase_activa
 import os
 import json
 
-st.set_page_config(layout="wide") #para que se vea en computadora usando todo el ancho
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -38,9 +37,12 @@ def aplicar_interfaz_cientifica():
             border-bottom: none !important;
         }
         
-        /* Reducir espacio superior */
+       /* --- FIX PARA EL ANCHO TOTAL EN COMPUTADORA --- */
         .main .block-container {
             padding-top: 1rem !important;
+            max-width: 95% !important; /* <--- ESTO ELIMINA LO ANGOSTO */
+            margin-left: auto;
+            margin-right: auto;
         }
 
         /* --- FIX PARA LA FLECHITA DEL SIDEBAR (Blanca) --- */
