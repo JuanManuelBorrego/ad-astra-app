@@ -259,7 +259,7 @@ if modo == "Estudiantes":
         # --- RANKING DINÁMICO (VERSIÓN FINAL SIN ERRORES DE COLUMNA) ---
         try:
             with conectar() as conn:
-                # 1. Identificamos las últimas 3 clases donde alumnos DE ESTE CURSO tuvieron actividad
+                # 1. Identificamos las últimas 5 clases donde alumnos DE ESTE CURSO tuvieron actividad
                 cursor = conn.cursor()
                 cursor.execute("""
                     SELECT DISTINCT r.id_clase 
