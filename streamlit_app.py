@@ -397,6 +397,24 @@ if modo == "Estudiantes":
                                 nota = st.session_state.estudiante.registrar_clase(
                                     st.session_state.id_clase_hoy, completados, aciertos
                                 )
+
+                                # --- NUEVO: GUARDAR ÚLTIMO EXAMEN EN JSON ---
+                                import json
+                                try:
+                                    # Convertimos el diccionario a una cadena de texto (JSON)
+                                    respuestas_json = json.dumps(st.session_state.respuestas_temporales)
+                                    
+                                    with conectar() as conn:
+                                        cursor = conn.cursor()
+                                        # INSERT OR REPLACE asegura que solo haya UNA fila por alumno
+                                        cursor.execute("""
+                                            INSERT OR REPLACE INTO ultimo_examen_alumno (id_alumno, id_clase, respuestas_json)
+                                            VALUES (?, ?, ?)
+                                        """, (st.session_state.estudiante.id, st.session_state.id_clase_hoy, respuestas_json))
+                                        conn.commit()
+                                except Exception as e:
+                                    # Lo ponemos en un log o warning por si falla, pero que no trabe la entrega
+                                    print(f"Error guardando JSON: {e}")
                     
                                 # --- EFECTOS NATIVOS ---
                                 st.balloons() 
