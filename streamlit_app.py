@@ -281,11 +281,19 @@ if modo == "Estudiantes":
                         AVG(
                             COALESCE(
                                 CASE 
+                                    -- 1. Si hay nota oral, esa es la nota de la clase
+                                    WHEN r.nota_oral > 0 THEN r.nota_oral
+                                    
+                                    -- 2. Si no hizo nada (y no hay nota oral), es un 1.0
                                     WHEN r.ejercicios_completados = 0 THEN 1.0 
-                                    ELSE ((CAST(r.ejercicios_completados AS REAL) / NULLIF(c.ejercicios_totales, 0)) + 
-                                         (CAST(r.ejercicios_correctos AS REAL) / NULLIF(r.ejercicios_completados, 0))) / 2 * 10 
+                                    
+                                    -- 3. Si no hay oral, calculamos la nota del día (Promedio Productividad y Precisión)
+                                    ELSE (
+                                        (CAST(r.ejercicios_completados AS REAL) / c.ejercicios_totales) + 
+                                        (CAST(r.ejercicios_correctos AS REAL) / r.ejercicios_completados)
+                                    ) / 2 * 10 
                                 END, 
-                                1.0 -- Si el reporte no existe (NULL), promedia un 1.0
+                                1.0 -- Castigo si no existe el reporte (inasistencia)
                             )
                         ) as promedio
                         FROM alumnos a
