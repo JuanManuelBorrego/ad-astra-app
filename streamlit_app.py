@@ -94,13 +94,26 @@ def aplicar_interfaz_cientifica():
             color: #FFFFFF !important;
         }
 
-        /* --- TARJETAS GLASSMORPHISM --- */
+        /* --- TARJETAS GLASSMORPHISM REFORZADAS --- */
         div[data-testid="stForm"], div.stCard, .stExpander {
             background: rgba(255, 255, 255, 0.08) !important;
             backdrop-filter: blur(12px);
-            padding: 2.5rem;
+            
+            /* Ajustamos el padding: 1.5rem arriba/abajo y 2rem a los costados */
+            padding: 1.5rem 2rem !important; 
+            
             border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.2);
+            
+            /* FORZAMOS EL ANCHO INTERNO */
+            width: 100% !important; 
+            min-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Quitar el límite de ancho que Streamlit le pone a los bloques de contenido internos */
+        [data-testid="stVerticalBlock"] > div {
+            width: 100% !important;
         }
 
         /* --- SIDEBAR --- */
