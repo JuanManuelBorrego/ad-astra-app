@@ -452,8 +452,8 @@ if modo == "Estudiantes":
                     if datos_memoria and feedback_ok:
                         id_clase_guardada, json_respuestas = datos_memoria
                         
-                        st.info(f"💡 Tienes disponible la revisión de la Clase {id_clase_guardada}")
-                        if st.button(f"🔎 VER CORRECCIÓN DETALLADA", key="btn_feedback_detallado"):
+                        st.info(f"💡 Tenés disponible la revisión de la Clase de ID: {id_clase_guardada}")
+                        if st.button(f"🔎 VER TU ÚLTIMO EXAMEN CORREGIDO", key="btn_feedback_detallado"):
                             respuestas_alumno = json.loads(json_respuestas)
                             
                             # Traemos las preguntas de esa clase para comparar
