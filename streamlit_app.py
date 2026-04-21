@@ -322,9 +322,14 @@ if modo == "Estudiantes":
                                     emoji = medallas.get(p, "👤")
                                     es_usuario = " (Vos)" if row['nombre'] == st.session_state.estudiante.nombre else ""
                                     
+                                    # Formateamos el promedio a un solo decimal (ej: 9.5)
+                                    promedio_formateado = f"{row['promedio']:.1f}"
+                                    
                                     # Formato: Negrita para el podio 1, 2 y 3
                                     nombre_fmt = f"**{row['nombre']}**" if p <= 3 else row['nombre']
-                                    st.markdown(f"{emoji} {p}° {nombre_fmt}{es_usuario}")
+                                    
+                                    # Imprimimos: Emoji Puesto Nombre (Vos) `Promedio`
+                                    st.markdown(f"{emoji} {p}° {nombre_fmt}{es_usuario} ` {promedio_formateado} `")
                                     
                             with c_yo:
                                 # --- POSICIÓN PERSONAL ---
