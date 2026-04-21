@@ -111,6 +111,17 @@ def aplicar_interfaz_cientifica():
             box-sizing: border-box !important;
         }
 
+        /* Reducir el espacio (gap) entre columnas para ganar ancho real */
+        [data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 auto !important;
+        }
+        
+        /* Opcional: si querés que el texto dentro del examen no tenga márgenes */
+        .stExpander p {
+            font-size: 1.1rem !important;
+            line-height: 1.5;
+        }
         
         /* --- SIDEBAR --- */
         section[data-testid="stSidebar"] {
