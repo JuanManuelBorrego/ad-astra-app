@@ -454,7 +454,7 @@ if modo == "Estudiantes":
                         st.info(f"💡 Tenés disponible la revisión detallada (Clase ID: {id_clase_guardada})")
                         
                         # Botón para desplegar la corrección
-                        if st.button(f"🔎 VER TU ÚLTIMO EXAMEN CORREGIDO", key="btn_feedback_detallado", use_container_width=True):
+                        if st.button(f"🔎 MIRÁ TU ÚLTIMO EXAMEN CORREGIDO", key="btn_feedback_detallado", use_container_width=True):
                             respuestas_alumno = json.loads(json_respuestas)
                             
                             with conectar() as conn:
