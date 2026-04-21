@@ -439,82 +439,69 @@ if modo == "Estudiantes":
                 try:
                     with conectar() as conn:
                         cursor = conn.cursor()
-                        # Verificamos permiso del profesor
                         cursor.execute("SELECT feedback_visible FROM configuracion_clase WHERE id = 1")
                         res_f = cursor.fetchone()
                         feedback_ok = res_f[0] == 1 if res_f else False
                         
-                        # Buscamos datos en la tabla de memoria
                         cursor.execute("SELECT id_clase, respuestas_json FROM ultimo_examen_alumno WHERE id_alumno = ?", 
                                        (st.session_state.estudiante.id,))
                         datos_memoria = cursor.fetchone()
-
+                
                     if datos_memoria and feedback_ok:
                         id_clase_guardada, json_respuestas = datos_memoria
                         st.info(f"💡 Tenés disponible la revisión detallada (Clase ID: {id_clase_guardada})")
                         
-                        # Botón para desplegar la corrección
+                        # EL SECRETO: Usar una variable en session_state para mantener la vista abierta
                         if st.button(f"🔎 MIRÁ TU ÚLTIMO EXAMEN CORREGIDO", key="btn_feedback_detallado", use_container_width=True):
-                            respuestas_alumno = json.loads(json_respuestas)
+                            st.session_state.mostrar_detalles = True
+                            st.session_state.indice_revision = 0  # Reiniciar al abrir
                             
-                            with conectar() as conn:
-                                df_p = pd.read_sql_query("""
-                                    SELECT id_pregunta, enunciado, correcta, opc_a, opc_b, opc_c, opc_d 
-                                    FROM preguntas WHERE id_clase = ?
-                                """, conn, params=(id_clase_guardada,))
+                        # Si la vista está activa, ejecutamos el carrusel
+                        if st.session_state.get('mostrar_detalles', False):
                             
-                            with st.expander("📝 Revisión Pregunta por Pregunta", expanded=True):
+                            # Traemos las preguntas UNA SOLA VEZ y las guardamos en memoria
+                            if 'df_revision' not in st.session_state or st.session_state.clase_cargada != id_clase_guardada:
+                                with conectar() as conn:
+                                    st.session_state.df_revision = pd.read_sql_query(
+                                        "SELECT id_pregunta, enunciado, correcta, opc_a, opc_b, opc_c, opc_d FROM preguntas WHERE id_clase = ?", 
+                                        conn, params=(id_clase_guardada,)
+                                    )
+                                st.session_state.clase_cargada = id_clase_guardada
+                                st.session_state.rtas_alumno_dict = json.loads(json_respuestas)
+                
+                            df_p = st.session_state.df_revision
+                            respuestas_alumno = st.session_state.rtas_alumno_dict
+                            total_preguntas = len(df_p)
+                
+                            with st.expander("📝 Detalle de tus respuestas", expanded=True):
+                                p = df_p.iloc[st.session_state.indice_revision]
                                 
-                                # 1. Inicializamos el índice si no existe
-                                if 'indice_revision' not in st.session_state:
-                                    st.session_state.indice_revision = 0
-                        
-                                # 2. Obtenemos la pregunta actual según el índice del DataFrame que ya descargamos
-                                total_preguntas = len(df_p)
-                                if total_preguntas > 0:
-                                    p = df_p.iloc[st.session_state.indice_revision]
-                                    
-                                    # --- RENDERIZADO DE LA PREGUNTA ACTUAL ---
-                                    st.markdown(f"### PREGUNTA {st.session_state.indice_revision + 1} de {total_preguntas}")
-                                    st.info(f"**{p['enunciado']}**")
-                                    
-                                    id_preg = str(p['id_pregunta'])
-                                    rta_alumno = respuestas_alumno.get(id_preg, 'N')
-                                    rta_correcta = str(p['correcta']).strip().upper()
-                                    
-                                    opciones_db = {'A': p['opc_a'], 'B': p['opc_b'], 'C': p['opc_c'], 'D': p['opc_d']}
-                                    
-                                    for letra, texto_opcion in opciones_db.items():
-                                        if texto_opcion:
-                                            if letra == rta_alumno and letra == rta_correcta:
-                                                st.success(f"🟢 **{letra}) {texto_opcion}** (Tu respuesta)")
-                                            elif letra == rta_alumno and letra != rta_correcta:
-                                                st.error(f"🔴 **{letra}) {texto_opcion}** (Tu respuesta)")
-                                            elif letra == rta_correcta:
-                                                st.warning(f"✅ **{letra}) {texto_opcion}** (Correcta)")
-                                            else:
-                                                st.write(f"⚪ {letra}) {texto_opcion}")
-                        
-                                    # --- NAVEGACIÓN DEL CARRUSEL ---
-                                    st.write("---")
-                                    col_izq, col_der = st.columns(2)
-                                    
-                                    with col_izq:
-                                        # Si estamos en la primera pregunta, el botón se desactiva visualmente o no hace nada
-                                        if st.button("⬅️ Anterior", use_container_width=True, disabled=(st.session_state.indice_revision == 0)):
-                                            st.session_state.indice_revision -= 1
-                                            st.rerun()
-                        
-                                    with col_der:
-                                        # Si estamos en la última, el botón se desactiva
-                                        if st.button("Siguiente ➡️", use_container_width=True, disabled=(st.session_state.indice_revision == total_preguntas - 1)):
-                                            st.session_state.indice_revision += 1
-                                            st.rerun()
-                                else:
-                                    st.write("No hay preguntas para mostrar.")
-                                    
+                                st.write(f"**Pregunta {st.session_state.indice_revision + 1} de {total_preguntas}**")
+                                st.info(f"**{p['enunciado']}**")
+                                
+                                # ... (Aquí va tu lógica de los IF/ELIF de las opciones A, B, C, D) ...
+                                # (Mantené el código de colores que ya tenías)
+                
+                                st.divider()
+                                col_izq, col_der, col_cerrar = st.columns([1, 1, 1])
+                                
+                                with col_izq:
+                                    if st.button("⬅️ Anterior", disabled=(st.session_state.indice_revision == 0)):
+                                        st.session_state.indice_revision -= 1
+                                        st.rerun()
+                
+                                with col_der:
+                                    if st.button("Siguiente ➡️", disabled=(st.session_state.indice_revision == total_preguntas - 1)):
+                                        st.session_state.indice_revision += 1
+                                        st.rerun()
+                                
+                                with col_cerrar:
+                                    if st.button("❌ Cerrar"):
+                                        st.session_state.mostrar_detalles = False
+                                        st.rerun()
+                
                     elif not feedback_ok:
-                        st.caption("🔒 La revisión detallada de respuestas no está habilitada por el profesor.")
+                        st.caption("🔒 La revisión no está habilitada por el profesor.")
                     else:
                         st.caption("ℹ️ No hay un examen reciente guardado para revisión detallada.")
                         
