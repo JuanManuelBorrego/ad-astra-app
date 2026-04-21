@@ -260,6 +260,7 @@ if modo == "Estudiantes":
         try:
             with conectar() as conn:
                 # 1. Buscamos las últimas 3 clases donde hubo actividad de ESTE CURSO específico
+                cursor = conn.cursor()
                 cursor.execute("""
                     SELECT DISTINCT id_clase 
                     FROM reportes_diarios 
