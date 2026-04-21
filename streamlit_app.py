@@ -451,7 +451,7 @@ if modo == "Estudiantes":
 
                     if datos_memoria and feedback_ok:
                         id_clase_guardada, json_respuestas = datos_memoria
-                        st.info(f"💡 Tienes disponible la revisión detallada (Clase {id_clase_guardada})")
+                        st.info(f"💡 Tenés disponible la revisión detallada (Clase ID: {id_clase_guardada})")
                         
                         # Botón para desplegar la corrección
                         if st.button(f"🔎 VER TU ÚLTIMO EXAMEN CORREGIDO", key="btn_feedback_detallado", use_container_width=True):
