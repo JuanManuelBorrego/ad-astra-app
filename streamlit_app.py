@@ -11,6 +11,8 @@ from funciones import login_alumno, obtener_clase_activa
 import os
 import json
 
+st.set_page_config(layout="wide") #para que se vea en computadora usando todo el ancho
+
 
 # --- 1. CONFIGURACIÓN DE PÁGINA (SIEMPRE PRIMERO) ---
 import streamlit as st
