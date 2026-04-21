@@ -479,9 +479,40 @@ if modo == "Estudiantes":
                                 st.write(f"**Pregunta {st.session_state.indice_revision + 1} de {total_preguntas}**")
                                 st.info(f"**{p['enunciado']}**")
                                 
-                                # ... (Aquí va tu lógica de los IF/ELIF de las opciones A, B, C, D) ...
-                                # (Mantené el código de colores que ya tenías)
-                
+                                # --- LÓGICA DE OPCIONES ---
+                                id_preg = str(p['id_pregunta'])
+                                rta_alumno = respuestas_alumno.get(id_preg, 'N')
+                                rta_correcta = str(p['correcta']).strip().upper()
+                                
+                                opciones_db = {
+                                    'A': p['opc_a'], 
+                                    'B': p['opc_b'], 
+                                    'C': p['opc_c'], 
+                                    'D': p['opc_d']
+                                }
+                                
+                                for letra, texto_opcion in opciones_db.items():
+                                    if texto_opcion:
+                                        # CASO 1: Correcta y marcada por alumno
+                                        if letra == rta_alumno and letra == rta_correcta:
+                                            st.success(f"🟢 **{letra}) {texto_opcion}** (Tu respuesta)")
+                                        
+                                        # CASO 2: Incorrecta y marcada por alumno
+                                        elif letra == rta_alumno and letra != rta_correcta:
+                                            st.error(f"🔴 **{letra}) {texto_opcion}** (Tu respuesta)")
+                                        
+                                        # CASO 3: Es la correcta (pero el alumno no la marcó o marcó otra)
+                                        elif letra == rta_correcta:
+                                            st.warning(f"✅ **{letra}) {texto_opcion}** (Esta era la correcta)")
+                                        
+                                        # CASO 4: Opción incorrecta no marcada
+                                        else:
+                                            st.write(f"⚪ {letra}) {texto_opcion}")
+                        
+                                if rta_alumno == 'N':
+                                    st.caption("⚠️ *No seleccionaste ninguna respuesta en esta pregunta.*")
+                                # --- FIN DE LÓGICA DE OPCIONES ---
+                                
                                 st.divider()
                                 col_izq, col_der, col_cerrar = st.columns([1, 1, 1])
                                 
