@@ -327,20 +327,20 @@ if modo == "Estudiantes":
                                     st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
                                     st.write("🎯 **Tu Posición**")
                                     
-                                    if p_actual == 1:
-                                        st.subheader(f"👑 #{p_actual}")
+                                    if p == 1:
+                                        st.subheader(f"👑 #{p}")
                                         st.success("¡Líder del curso!")
                                     
-                                    elif p_actual <= 5:
-                                        st.subheader(f"✨ #{p_actual}")
-                                        st.success("¡En el Cuadro!")
+                                    elif p <= 5:
+                                        st.subheader(f"✨ #{p}")
+                                        st.success("¡En el Cuadro de Honor!")
                                     
-                                    elif p_actual <= 10:
-                                        st.subheader(f"⚡ #{p_actual}")
-                                        st.info("¡Casi entrás!")
+                                    elif p <= 10:
+                                        st.subheader(f"⚡ #{p}")
+                                        st.info("Estás en el top 10: ¡A nada de entrar al Cuadro de Honor!")
                                     
                                     else:
-                                        st.subheader(f"🚀 #{p_actual}")
+                                        st.subheader(f"🚀 #{p}")
                                         st.warning("¡A seguir sumando!")
                                     
                                     st.markdown("</div>", unsafe_allow_html=True)
