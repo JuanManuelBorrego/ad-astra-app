@@ -323,7 +323,7 @@ if modo == "Estudiantes":
                                     es_usuario = " (Vos)" if row['nombre'] == st.session_state.estudiante.nombre else ""
                                     
                                     # Formateamos el promedio a un solo decimal (ej: 9.5)
-                                    promedio_formateado = f"{row['promedio']:.1f}"
+                                    promedio_formateado = f"{row['promedio']:.2f}"
                                     
                                     # Formato: Negrita para el podio 1, 2 y 3
                                     nombre_fmt = f"**{row['nombre']}**" if p <= 3 else row['nombre']
