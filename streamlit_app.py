@@ -301,25 +301,31 @@ if modo == "Estudiantes":
                     df_ranking = pd.read_sql_query(query_ranking, conn, params=params)
                     
                     if not df_ranking.empty:
-                        # --- LÓGICA DE EMPATES 'DENSE' (CONSECUTIVOS) ---
-                        df_ranking['puesto'] = df_ranking['promedio'].rank(method='dense', ascending=False).astype(int)
+                        # --- MÉTODO OLÍMPICO (Salta puestos si hay empate) ---
+                        df_ranking['puesto'] = df_ranking['promedio'].rank(method='min', ascending=False).astype(int)
                         
                         st.subheader("🏆 Cuadro de Honor")
-                        st.caption(f"⚡ Promedio de rendimiento en los últimos {len(ids_activas)} exámenes.")
+                        st.caption(f"📊 Promedio de los últimos {len(ids_activas)} exámenes (Inasistencia = 1.0).")
 
                         with st.container(border=True):
                             c_lista, c_yo = st.columns([1.5, 1])
                             
                             with c_lista:
                                 medallas = {1: "🥇", 2: "🥈", 3: "🥉", 4: "🏅", 5: "🏅"}
-                                # Mostramos a los alumnos en el top 5 de puestos
-                                for _, row in df_ranking[df_ranking['puesto'] <= 5].iterrows():
+                                
+                                # Mostramos a todos los que estén dentro del "Top 5" de posiciones
+                                # Si hay 6 personas en el puesto 1, se verán las 6.
+                                df_top = df_ranking[df_ranking['puesto'] <= 5]
+                                
+                                for _, row in df_top.iterrows():
                                     p = row['puesto']
                                     emoji = medallas.get(p, "👤")
                                     es_usuario = " (Vos)" if row['nombre'] == st.session_state.estudiante.nombre else ""
+                                    
+                                    # Formato: Negrita para el podio 1, 2 y 3
                                     nombre_fmt = f"**{row['nombre']}**" if p <= 3 else row['nombre']
                                     st.markdown(f"{emoji} {p}° {nombre_fmt}{es_usuario}")
-
+                                    
                             with c_yo:
                                 # --- POSICIÓN PERSONAL ---
                                 yo = df_ranking[df_ranking['nombre'] == st.session_state.estudiante.nombre]
