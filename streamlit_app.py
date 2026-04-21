@@ -256,73 +256,87 @@ if modo == "Estudiantes":
         st.title(f"👨‍🚀 Astro: {st.session_state.estudiante.nombre}")
         st.divider()
 
-        # --- RANKING DINÁMICO (ESTILO RIVER - ÚLTIMOS 3 EXÁMENES) ---
+        # --- CABECERA ---
+        st.title(f"👨‍🚀 Astra: {st.session_state.estudiante.nombre}")
+        st.divider()
+
+        # --- RANKING DINÁMICO (ESTILO DASHBOARD DE ALTO RENDIMIENTO) ---
         try:
             with conectar() as conn:
-                # Query que filtra solo los últimos 3 exámenes con datos del curso
-                query_ranking = """
-                    SELECT a.nombre, 
-                    AVG(
-                        CASE 
-                            WHEN r.ejercicios_completados = 0 THEN 1.0 
-                            ELSE ((CAST(r.ejercicios_completados AS REAL) / NULLIF(c.ejercicios_totales, 0)) + 
-                                 (CAST(r.ejercicios_correctos AS REAL) / NULLIF(r.ejercicios_completados, 0))) / 2 * 10 
-                        END
-                    ) as promedio
-                    FROM reportes_diarios r
-                    JOIN clases c ON r.id_clase = c.id_clase
-                    JOIN alumnos a ON r.id_alumno = a.id_alumno
-                    WHERE a.curso = ? 
-                      AND c.id_clase IN (SELECT id_clase FROM clases ORDER BY id_clase DESC LIMIT 3)
-                    GROUP BY a.id_alumno
-                    ORDER BY promedio DESC
-                """
-                df_ranking = pd.read_sql_query(query_ranking, conn, params=(st.session_state.estudiante.curso,))
-                
-                if not df_ranking.empty:
-                    df_ranking['puesto'] = range(1, len(df_ranking) + 1)
-                    
-                    st.markdown("### 🏆 Cuadro de Honor")
-                    st.caption("⚡ Basado en el rendimiento de los **últimos 3 exámenes**")
+                # 1. Buscamos los IDs de las últimas 3 clases que REALMENTE tienen notas registradas
+                cursor = conn.cursor()
+                cursor.execute("SELECT DISTINCT id_clase FROM reportes_diarios ORDER BY id_clase DESC LIMIT 3")
+                clases_activas = [row[0] for row in cursor.fetchall()]
 
-                    # Creamos un contenedor con borde para que resalte
-                    with st.container(border=True):
-                        c_cuadro, c_personal = st.columns([1.5, 1])
+                if clases_activas:
+                    # Ajuste para el formato de la consulta SQL
+                    ids_clases_str = f"({clases_activas[0]})" if len(clases_activas) == 1 else str(tuple(clases_activas))
+                    
+                    query_ranking = f"""
+                        SELECT a.nombre, 
+                        AVG(
+                            CASE 
+                                WHEN r.ejercicios_completados = 0 THEN 1.0 
+                                ELSE ((CAST(r.ejercicios_completados AS REAL) / NULLIF(c.ejercicios_totales, 0)) + 
+                                     (CAST(r.ejercicios_correctos AS REAL) / NULLIF(r.ejercicios_completados, 0))) / 2 * 10 
+                            END
+                        ) as promedio
+                        FROM reportes_diarios r
+                        JOIN clases c ON r.id_clase = c.id_clase
+                        JOIN alumnos a ON r.id_alumno = a.id_alumno
+                        WHERE a.curso = ? AND c.id_clase IN {ids_clases_str}
+                        GROUP BY a.id_alumno
+                        ORDER BY promedio DESC
+                    """
+                    df_ranking = pd.read_sql_query(query_ranking, conn, params=(st.session_state.estudiante.curso,))
+                    
+                    if not df_ranking.empty:
+                        df_ranking['puesto'] = range(1, len(df_ranking) + 1)
                         
-                        with c_cuadro:
-                            # Dibujitos/Emojis por puesto
-                            iconos = {1: "🥇", 2: "🥈", 3: "🥉", 4: "👤", 5: "👤"}
+                        # --- ESTÉTICA DEL CUADRO ---
+                        st.subheader("🏆 Cuadro de Honor")
+                        st.caption(f"📊 Basado en el promedio de los últimos {len(clases_activas)} exámenes realizados.")
+
+                        with st.container(border=True):
+                            c_lista, c_spacer, c_yo = st.columns([1.5, 0.2, 1])
                             
-                            for i, row in df_ranking.head(5).iterrows():
-                                p = row['puesto']
-                                icono = iconos.get(p, "👤")
-                                # Mostramos una línea estética por cada top-performer
-                                st.markdown(f"{icono} **{p}° {row['nombre']}**")
-                        
-                        with c_personal:
-                            yo = df_ranking[df_ranking['nombre'] == st.session_state.estudiante.nombre]
-                            if not yo.empty:
-                                p_yo = yo.iloc[0]['puesto']
-                                st.write("🎯 **Tu Rendimiento**")
-                                
-                                # Estética de medalla personal
-                                if p_yo == 1:
-                                    st.subheader(f"👑 #{p_yo}")
-                                    st.success("¡Sos el líder!")
-                                elif p_yo <= 5:
-                                    st.subheader(f"🎖️ #{p_yo}")
-                                    st.success("¡Estás en el cuadro!")
-                                elif p_yo <= 10:
-                                    st.subheader(f"⚡ #{p_yo}")
-                                    st.info("¡Casi entrás!")
-                                else:
-                                    st.subheader(f"🚀 #{p_yo}")
-                                    st.warning("¡A seguir escalando!")
+                            with c_lista:
+                                # Diccionario de medallas
+                                medallas = {1: "🥇", 2: "🥈", 3: "🥉", 4: "🏅", 5: "🏅"}
+                                for i, row in df_ranking.head(5).iterrows():
+                                    emoji = medallas.get(row['puesto'], "👤")
+                                    # Formato con negrita para resaltar el podio
+                                    texto_puesto = f"**{row['puesto']}°**" if row['puesto'] <= 3 else f"{row['puesto']}°"
+                                    st.write(f"{emoji} {texto_puesto} {row['nombre']}")
+
+                            with c_yo:
+                                # Localizamos al alumno en el ranking total
+                                fila_yo = df_ranking[df_ranking['nombre'] == st.session_state.estudiante.nombre]
+                                if not fila_yo.empty:
+                                    p = fila_yo.iloc[0]['puesto']
+                                    st.markdown(f"<div style='text-align: center;'>", unsafe_allow_html=True)
+                                    st.write("🎯 **Tu Posición**")
+                                    
+                                    if p == 1:
+                                        st.title(f"👑 #{p}")
+                                        st.success("¡Líder del curso!")
+                                    elif p <= 5:
+                                        st.title(f"✨ #{p}")
+                                        st.success("¡En el Cuadro!")
+                                    elif p <= 10:
+                                        st.title(f"⚡ #{p}")
+                                        st.info("¡Casi entrás!")
+                                    else:
+                                        st.title(f"🚀 #{p}")
+                                        st.warning("¡A seguir sumando!")
+                                    st.markdown(f"</div>", unsafe_allow_html=True)
+                    else:
+                        st.info("📉 No hay notas suficientes para armar el ranking aún.")
                 else:
-                    st.info("📉 El ranking se activará cuando haya notas registradas en las últimas clases.")
+                    st.info("📉 El Cuadro de Honor aparecerá tras los primeros exámenes.")
                     
         except Exception as e:
-            st.error(f"Error cargando el ranking: {e}")
+            st.warning(f"Aviso: El ranking se está actualizando... ({e})")
 
         st.divider()
 
