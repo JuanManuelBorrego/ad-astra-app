@@ -34,10 +34,10 @@ class Alumno:
         except:
             return False # Por seguridad, si falla la DB, no dejamos seguir
    #--------------------------------------------------------------------------------------------------------
-    # MÉTODO REGISTRAR CLASE: ES LARGO, POR ESO LO DIVIDÍ EN 6 PARTES
+    # MÉTODO REGISTRAR CLASE: MODIFICADO CON LÓGICA HÍBRIDA POR TRIMESTRE
     def registrar_clase(self, id_clase, completados, correctos, nota_oral=None):
         
-        # 1. CONTAR REALIDAD Y ACTUALIZAR MAESTRO
+        # 1. CONTAR REALIDAD, CONSULTAR TRIMESTRE Y ACTUALIZAR MAESTRO
         with conectar() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT COUNT(*) FROM preguntas WHERE id_clase = ?", (id_clase,))
@@ -47,14 +47,20 @@ class Alumno:
                 print(f"❌ Error: No se encontraron preguntas para la clase {id_clase}.")
                 return None
             
+            # Aprovechamos para consultar a qué trimestre pertenece esta clase
+            cursor.execute("SELECT trimestre FROM clases WHERE id_clase = ?", (id_clase,))
+            resultado_trimestre = cursor.fetchone()
+            # Si por alguna razón no encuentra la clase, por defecto asumimos 2 (o el trimestre actual)
+            trimestre = resultado_trimestre[0] if resultado_trimestre else 2
+            
             cursor.execute("UPDATE clases SET ejercicios_totales = ? WHERE id_clase = ?", 
                            (totales_reales, id_clase))
             conn.commit()
             
         totales = totales_reales 
 
-        # 2. CALCULAMOS LOS DOS PILARES
-        # A) ESFUERZO: Ahora basado en lo que el alumno REALMENTE intentó contestar
+        # 2. CALCULAMOS LOS DOS PILARES (Se mantienen para el historial/métricas)
+        # A) ESFUERZO: Basado en lo que el alumno REALMENTE intentó contestar
         esfuerzo = completados / totales
 
         # B) EFICACIA
@@ -62,18 +68,23 @@ class Alumno:
             eficacia = correctos / completados
         else:
             eficacia = 0
-            # IMPORTANTE: Si vino pero no hizo nada, la nota es 1.0
-            # Pero NO salimos del método todavía, dejamos que siga para registrar la ASISTENCIA
         
-        # 3. LÓGICA DE NOTA FINAL (Piso de 1.0 por la regla del 21/02)
+        # 3. LÓGICA DE NOTA FINAL (Piso de 1.0 por la regla del 21/02 + Hibridación de Fórmulas)
         if nota_oral is not None:
             nota_final = float(nota_oral)
         else:
             if completados == 0:
                 nota_final = 1.0
             else:
-                nota_final = round(((esfuerzo + eficacia) / 2) * 10, 2)
-                # Garantizamos que la nota nunca sea 0 si entregó el examen
+                # CONDICIONAL DE TRIMESTRE: Aquí se decide la fórmula
+                if trimestre == 1:
+                    # Fórmula original del 1° Trimestre (Promedio de Productividad y Precisión)
+                    nota_final = round(((esfuerzo + eficacia) / 2) * 10, 2)
+                else:
+                    # Nueva fórmula lineal para 2° y 3° Trimestre: (correctos / totales) * 10
+                    nota_final = round((correctos / totales) * 10, 2)
+                
+                # Garantizamos que la nota nunca sea menor a 1.0 si entregó el examen
                 nota_final = max(1.0, nota_final)
         
         # 4. GUARDAR EN EL OBJETO (MEMORIA)
@@ -85,7 +96,6 @@ class Alumno:
         }
 
         # 5. ENVIAR A LA BASE DE DATOS
-        # Nota: He añadido 'asistencia' para diferenciar del ausente total
         with conectar() as conn:
             cursor = conn.cursor()
             cursor.execute("""
