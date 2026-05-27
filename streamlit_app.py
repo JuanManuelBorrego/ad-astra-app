@@ -274,7 +274,7 @@ if modo == "Estudiantes":
                 if ids_activas:
                     placeholders = ', '.join(['?'] * len(ids_activas))
                     
-                    # 2. Query de Ranking Blindada: Fuerza el 1.0 si no hay reporte
+                    # 2. Query de Ranking Blindada: Hibridación de fórmulas según el trimestre
                     query_ranking = f"""
                         SELECT a.nombre, 
                         AVG(
@@ -286,17 +286,25 @@ if modo == "Estudiantes":
                                     -- 2. Si no hizo nada (y no hay nota oral), es un 1.0
                                     WHEN r.ejercicios_completados = 0 THEN 1.0 
                                     
-                                    -- 3. Si no hay oral, calculamos la nota del día (Promedio Productividad y Precisión)
-                                    ELSE (
+                                    -- 3. Si pertenece al 1er Trimestre, usa la fórmula original (Productividad + Precisión)
+                                    WHEN c.trimestre = 1 THEN (
                                         (CAST(r.ejercicios_completados AS REAL) / c.ejercicios_totales) + 
                                         (CAST(r.ejercicios_correctos AS REAL) / r.ejercicios_completados)
                                     ) / 2 * 10 
+                                    
+                                    -- 4. Si es cualquier otro trimestre (2° o 3°), usa la nueva fórmula lineal pura
+                                    ELSE 
+                                        (CAST(r.ejercicios_correctos AS REAL) / c.ejercicios_totales) * 10
                                 END, 
                                 1.0 -- Castigo si no existe el reporte (inasistencia)
                             )
                         ) as promedio
                         FROM alumnos a
-                        CROSS JOIN (SELECT id_clase, ejercicios_totales FROM clases WHERE id_clase IN ({placeholders})) c
+                        CROSS JOIN (
+                            SELECT id_clase, ejercicios_totales, trimestre 
+                            FROM clases 
+                            WHERE id_clase IN ({placeholders})
+                        ) c
                         LEFT JOIN reportes_diarios r ON a.id_alumno = r.id_alumno AND c.id_clase = r.id_clase
                         WHERE a.curso = ?
                         GROUP BY a.id_alumno
