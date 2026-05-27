@@ -676,12 +676,21 @@ if modo == "Estudiantes":
                                 r.nota_oral as 'Nota examen Oral',
                                 ROUND(
                                     CASE 
+                                        -- A. Si hay nota oral, se respeta
                                         WHEN r.nota_oral > 0 THEN r.nota_oral
+                                        
+                                        -- B. Si asistió pero no entregó nada (o es ausente no justificado), es 1.0
                                         WHEN r.ejercicios_completados = 0 THEN 1.0
-                                        ELSE (
+                                        
+                                        -- C. Si es el 1er Trimestre, usa la fórmula original
+                                        WHEN c.trimestre = 1 THEN (
                                             (CAST(r.ejercicios_completados AS REAL) / c.ejercicios_totales) + 
                                             (CAST(r.ejercicios_correctos AS REAL) / r.ejercicios_completados)
                                         ) / 2 * 10
+                                        
+                                        -- D. Para 2do y 3er Trimestre, aplica la nueva fórmula lineal
+                                        ELSE 
+                                            (CAST(r.ejercicios_correctos AS REAL) / c.ejercicios_totales) * 10
                                     END, 2
                                 ) as 'Nota final de la clase'
                             FROM reportes_diarios r
