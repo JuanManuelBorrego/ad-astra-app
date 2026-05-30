@@ -46,13 +46,7 @@ class Alumno:
             if totales_reales == 0:
                 print(f"❌ Error: No se encontraron preguntas para la clase {id_clase}.")
                 return None
-            
-            # Aprovechamos para consultar a qué trimestre pertenece esta clase
-            cursor.execute("SELECT trimestre FROM clases WHERE id_clase = ?", (id_clase,))
-            resultado_trimestre = cursor.fetchone()
-            # Si por alguna razón no encuentra la clase, por defecto asumimos 2 (o el trimestre actual)
-            trimestre = resultado_trimestre[0] if resultado_trimestre else 2
-            
+                
             cursor.execute("UPDATE clases SET ejercicios_totales = ? WHERE id_clase = ?", 
                            (totales_reales, id_clase))
             conn.commit()
@@ -76,13 +70,9 @@ class Alumno:
             if completados == 0:
                 nota_final = 1.0
             else:
-                # CONDICIONAL DE TRIMESTRE: Aquí se decide la fórmula
-                if trimestre == 1:
-                    # Fórmula original del 1° Trimestre (Promedio de Productividad y Precisión)
-                    nota_final = round(((esfuerzo + eficacia) / 2) * 10, 2)
-                else:
-                    # Nueva fórmula lineal para 2° y 3° Trimestre: (correctos / totales) * 10
-                    nota_final = round((correctos / totales) * 10, 2)
+                # 🎯 fórmula lineal directa para todo lo que se cargue
+                div_totales = totales if (totales is not None and totales > 0) else 1
+                nota_final = round((correctos / div_totales) * 10, 2)   
                 
                 # Garantizamos que la nota nunca sea menor a 1.0 si entregó el examen
                 nota_final = max(1.0, nota_final)
